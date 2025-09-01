@@ -3,7 +3,10 @@ package unischedule.users.entity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name="events")
@@ -12,23 +15,34 @@ public class Event {
     @Column(name="event_id")
     private Long id;
     
-    //calendar id
+    @OneToOne
+    @JoinColumn(name = "calendar_id")
+    private Calendar calendar;
     
-    //creator id
+    @Column(name = "creator_id")
+    private Long creatorId;
     
-    //title
+    @Column(name = "title")
+    private String title;
     
-    //content
+    @Column(name = "content")
+    private String content;
     
-    //start at
+    @Column(name = "start_at")
+    private LocalDateTime startAt;
     
-    //end at
+    @Column(name = "end_at")
+    private LocalDateTime endAt;
     
-    //state
+    @Column(name = "state")
+    private String state;
     
-    //recurrence rule id
+    @Column(name = "recurrence_rule_id")
+    private Long recurrenceRuleId;
     
-    //created at
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
     
-    //updated at
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 }
