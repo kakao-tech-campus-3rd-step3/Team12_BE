@@ -4,6 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
@@ -15,7 +16,7 @@ public class Event {
     @Column(name="event_id")
     private Long id;
     
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "calendar_id")
     private Calendar calendar;
     
