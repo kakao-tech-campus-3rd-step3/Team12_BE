@@ -16,10 +16,6 @@ public class Event {
     @Column(name="event_id")
     private Long id;
     
-    @ManyToOne
-    @JoinColumn(name = "calendar_id")
-    private Calendar calendar;
-    
     @Column(name = "creator_id")
     private Long creatorId;
     
@@ -46,4 +42,8 @@ public class Event {
     
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+    
+    @ManyToOne
+    @JoinColumn(name = "calendar_id")
+    private Calendar calendar;
 }

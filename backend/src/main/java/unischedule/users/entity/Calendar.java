@@ -3,8 +3,11 @@ package unischedule.users.entity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name="calendars")
@@ -30,4 +33,7 @@ public class Calendar {
     
     @Column(name="updated_at")
     private LocalDateTime updatedAt;
+    
+    @OneToMany(mappedBy = "calendar")
+    private List<Event> events = new ArrayList<>();
 }
