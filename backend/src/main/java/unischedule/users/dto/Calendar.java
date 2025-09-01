@@ -4,6 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name="calendars")
@@ -12,15 +13,21 @@ public class Calendar {
     @Column(name="calendar_id")
     private Long id;
     
-    //owner id
+    @Column(name="owner_id")
+    private Long ownerId;
     
-    //team id
+    @Column(name="team_id")
+    private Long teamId;
     
-    //summary
+    @Column(name="summary")
+    private String summary;
     
-    //description
+    @Column(name="description")
+    private String description;
     
-    //created at
+    @Column(name="created_at")
+    private LocalDateTime createdAt;
     
-    //updated at
+    @Column(name="updated_at")
+    private LocalDateTime updatedAt;
 }
