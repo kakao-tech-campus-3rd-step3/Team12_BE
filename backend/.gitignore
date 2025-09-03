@@ -1,24 +1,29 @@
+# Project docs
 HELP.md
-.gradle
+
+# Gradle
+.gradle/
 build/
 !gradle/wrapper/gradle-wrapper.jar
+!gradlew
+!gradlew.bat
 !**/src/main/**/build/
 !**/src/test/**/build/
 
-### STS ###
+# STS / Eclipse
 .apt_generated
 .classpath
 .factorypath
 .project
-.settings
+.settings/
 .springBeans
 .sts4-cache
 bin/
 !**/src/main/**/bin/
 !**/src/test/**/bin/
 
-### IntelliJ IDEA ###
-.idea
+# IntelliJ IDEA
+.idea/
 *.iws
 *.iml
 *.ipr
@@ -26,18 +31,30 @@ out/
 !**/src/main/**/out/
 !**/src/test/**/out/
 
-### NetBeans ###
+# NetBeans
 /nbproject/private/
 /nbbuild/
 /dist/
 /nbdist/
 /.nb-gradle/
 
-### VS Code ###
+# VS Code
 .vscode/
 
-### Mac OS ###
-.DS_Store
-
-### env ###
+# Environment & Credentials
 .env
+*.env
+*.key
+*.pem
+*.keystore
+
+# Logs & Build Artifacts
+logs/
+*.log
+*.jar
+*.war
+*.ear
+
+# OS-specific
+.DS_Store
+Thumbs.db
