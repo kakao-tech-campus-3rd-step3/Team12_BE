@@ -1,4 +1,4 @@
-package unischedule.member_.entity;
+package unischedule.member.entity;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;

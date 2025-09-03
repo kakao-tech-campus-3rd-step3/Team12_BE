@@ -8,7 +8,6 @@ import org.springframework.security.core.GrantedAuthority;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
-import java.security.Key;
 import java.util.Date;
 import java.util.stream.Collectors;
 
@@ -20,7 +19,7 @@ public class JwtTokenProvider {
     public JwtTokenProvider(
             @Value("${jwt.secret}")
             String secretKey,
-            @Value("{jwt.accessTokenTimeoutSec}")
+            @Value("${jwt.accessTokenTimeoutSec}")
             long accessTokenTimeoutSec,
             @Value("${jwt.refreshTokenTimeoutSec}")
             long refreshTokenTimeoutSec
