@@ -1,16 +1,19 @@
 package unischedule.auth.jwt;
 
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.stream.Collectors;
 
+@Component
 public class JwtTokenProvider {
     private final SecretKey secretKey;
     private final long accessTokenTimeoutMs;
@@ -38,9 +41,36 @@ public class JwtTokenProvider {
         Date validity = new Date(now.getTime() + accessTokenTimeoutMs);
 
         return Jwts.builder()
+                .subject(authentication.getName())
+                .claim("auth", authorities)
                 .issuedAt(now)
                 .expiration(validity)
                 .signWith(secretKey)
                 .compact();
+    }
+
+    public boolean validateToken(String token) {
+        try {
+            Claims claims = getClaims(token);
+            return !claims
+                    .getExpiration()
+                    .before(new Date());
+        }
+        catch (Exception ex) {
+            return false;
+        }
+    }
+
+    public String getEmail(String token) {
+        return getClaims(token)
+                .getSubject();
+    }
+
+    private Claims getClaims(String token) {
+        return Jwts.parser()
+                .verifyWith(secretKey)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
     }
 }
