@@ -5,7 +5,7 @@ resource "aws_vpc" "this" {
   enable_dns_hostnames = true
 
   tags = {
-    Name = "uni-schedule-vpc"
+    Name    = "uni-schedule-vpc"
     Project = "uni-schedule"
   }
 }
@@ -20,8 +20,8 @@ resource "aws_subnet" "public_subnet" {
   availability_zone       = data.aws_availability_zones.available_zones.names[count.index]
 
   tags = {
-    Name        = "uni-schedule-public-subnet-${count.index + 1}"
-    Project     = "uni-schedule"
+    Name    = "uni-schedule-public-subnet-${count.index + 1}"
+    Project = "uni-schedule"
   }
 }
 
@@ -29,8 +29,8 @@ resource "aws_internet_gateway" "internet_gateway" {
   vpc_id = aws_vpc.this.id
 
   tags = {
-    Name        = "uni-schedule-igw"
-    Project     = "uni-schedule"
+    Name    = "uni-schedule-igw"
+    Project = "uni-schedule"
   }
 }
 
@@ -43,8 +43,8 @@ resource "aws_route_table" "route_table" {
   }
 
   tags = {
-    Name        = "uni-schedule-public-rt"
-    Project     = "uni-schedule"
+    Name    = "uni-schedule-public-rt"
+    Project = "uni-schedule"
   }
 }
 
