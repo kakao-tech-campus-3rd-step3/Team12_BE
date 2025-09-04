@@ -70,4 +70,19 @@ public class Event {
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
     }
+    
+    // 테스트 전용
+    public Event(Long id, Long creatorId, String title, String content,
+        LocalDateTime startAt, LocalDateTime endAt, String state, Boolean isPrivate) {
+        this.id = id;
+        this.creatorId = creatorId;
+        this.title = title;
+        this.content = content;
+        this.startAt = startAt;
+        this.endAt = endAt;
+        this.state = state;
+        this.isPrivate = isPrivate;
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
 }
