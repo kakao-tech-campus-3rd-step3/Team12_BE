@@ -13,6 +13,9 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedBy;
+import org.springframework.data.annotation.LastModifiedDate;
 
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -48,9 +51,11 @@ public class Event {
     @Column(name = "recurrence_rule_id")
     private Long recurrenceRuleId;
     
+    @CreatedDate
     @Column(name = "created_at")
     private LocalDateTime createdAt;
     
+    @LastModifiedDate
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
     
@@ -70,8 +75,6 @@ public class Event {
         this.endAt = endAt;
         this.state = state;
         this.isPrivate = isPrivate;
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
     }
     
     // 테스트 전용
@@ -85,7 +88,5 @@ public class Event {
         this.endAt = endAt;
         this.state = state;
         this.isPrivate = isPrivate;
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
     }
 }
