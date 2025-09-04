@@ -1,5 +1,7 @@
 package unischedule.users.dto;
 
-public record EventGetRequestDto(String startAt, String endAt, Long userId) {
+import java.time.LocalDateTime;
+
+public record EventGetRequestDto(LocalDateTime startAt, LocalDateTime endAt, Long userId) {
 
 }

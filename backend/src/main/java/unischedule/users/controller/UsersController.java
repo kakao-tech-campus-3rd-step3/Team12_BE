@@ -1,5 +1,6 @@
 package unischedule.users.controller;
 
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -30,10 +31,12 @@ public class UsersController {
     }
     
     @GetMapping("/{userId}/events")
-    public ResponseEntity<EventGetResponseDto> getEvent(
+    public ResponseEntity<List<EventGetResponseDto>> getEvent(
         @RequestBody EventGetRequestDto requestDto
     ) {
-        EventGetResponseDto responseDto = usersService.getEvent(requestDto);
+        List<EventGetResponseDto> responseDto = usersService.getEvents(requestDto);
         return ResponseEntity.ok(responseDto);
     }
+    //현재는 태그 없이 바로 리스트형태 반환
+    //추후 태그 필요 시 태그를 포함하는 Dto 형태로 다시 작성할 필요 있음
 }
