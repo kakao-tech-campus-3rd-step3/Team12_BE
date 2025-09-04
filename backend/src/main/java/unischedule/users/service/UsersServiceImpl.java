@@ -38,7 +38,7 @@ public class UsersServiceImpl implements UsersService {
         
         return new EventCreateResponseDto(
             saved.getId(),
-            1L,
+            saved.getCreatorId(),
             saved.getTitle(),
             saved.getContent(),
             saved.getStartAt(),
