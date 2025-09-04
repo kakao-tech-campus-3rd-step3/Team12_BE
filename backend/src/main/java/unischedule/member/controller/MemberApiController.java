@@ -6,18 +6,18 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import unischedule.auth.jwt.JwtTokenProvider;
 import unischedule.member.dto.LoginRequestDto;
 import unischedule.member.dto.MemberRegistrationDto;
 import unischedule.member.dto.MemberTokenResponseDto;
-import unischedule.member.entity.Member;
 import unischedule.member.service.MemberService;
 
 @Controller
+@RequestMapping("/api/members")
 @RequiredArgsConstructor
 public class MemberApiController {
     private final JwtTokenProvider jwtTokenProvider;
