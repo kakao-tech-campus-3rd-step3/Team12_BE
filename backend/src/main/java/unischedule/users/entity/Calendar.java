@@ -34,6 +34,7 @@ public class Calendar {
     @Column(name="updated_at")
     private LocalDateTime updatedAt;
     
+    // 우선 개인에 맞춰 작성하면서 넣은것, 추후 삭제 필요
     @OneToMany(mappedBy = "calendar")
     private List<Event> events = new ArrayList<>();
 }

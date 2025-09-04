@@ -5,12 +5,17 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name="events")
+@Getter
 public class Event {
     @Id
     @Column(name="event_id")
@@ -34,6 +39,9 @@ public class Event {
     @Column(name = "state")
     private String state;
     
+    @Column(name="is_private")
+    private Boolean isPrivate;
+    
     @Column(name = "recurrence_rule_id")
     private Long recurrenceRuleId;
     
@@ -43,7 +51,23 @@ public class Event {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
     
+    //우선 개인에 맞춰 세팅, 추후 수정 필요
     @ManyToOne
     @JoinColumn(name = "calendar_id")
     private Calendar calendar;
+    
+    @Builder
+    public Event(Long creatorId, String title, String content,
+        LocalDateTime startAt, LocalDateTime endAt,
+        String state, Boolean isPrivate) {
+        this.creatorId = creatorId;
+        this.title = title;
+        this.content = content;
+        this.startAt = startAt;
+        this.endAt = endAt;
+        this.state = state;
+        this.isPrivate = isPrivate;
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
 }
