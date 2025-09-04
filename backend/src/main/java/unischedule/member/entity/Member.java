@@ -23,12 +23,12 @@ public class Member {
 
     }
 
-    public Member(String nickname, String email, String password, LocalDateTime createdAt, LocalDateTime updatedAt) {
-        this.nickname = nickname;
+    public Member(String email, String nickname, String password) {
         this.email = email;
+        this.nickname = nickname;
         this.password = password;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
     }
 
     public String getNickname() {
