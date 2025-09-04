@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import unischedule.users.dto.EventCreateRequestDto;
 import unischedule.users.dto.EventCreateResponseDto;
-import unischedule.users.dto.EventGetRequestDto;
 import unischedule.users.dto.EventGetResponseDto;
 import unischedule.users.service.UsersService;
 

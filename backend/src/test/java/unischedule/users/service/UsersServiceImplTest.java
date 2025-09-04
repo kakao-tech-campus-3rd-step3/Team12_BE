@@ -13,7 +13,6 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import unischedule.users.dto.EventCreateRequestDto;
 import unischedule.users.dto.EventCreateResponseDto;
-import unischedule.users.dto.EventGetRequestDto;
 import unischedule.users.dto.EventGetResponseDto;
 import unischedule.users.entity.Event;
 import unischedule.users.repository.CalendarRepository;
@@ -80,8 +79,6 @@ class UsersServiceImplTest {
         // Mockito로 findByStartAtGreaterThanEqualAndEndAtLessThanEqual 호출 시 반환값 지정
         Mockito.when(eventRepository.findByCreatorIdAndStartAtGreaterThanEqualAndEndAtLessThanEqual(userId, start, end))
             .thenReturn(List.of(event1, event2));
-        
-        EventGetRequestDto requestDto = new EventGetRequestDto(start, end, 1L);
         
         // when
         List<EventGetResponseDto> result = usersService.getEvents(start, end, userId);
