@@ -49,7 +49,7 @@ class UsersServiceImplTest {
             .thenReturn(savedEvent);
         
         // when
-        EventCreateResponseDto result = usersService.makeEvent(requestDto);
+        EventCreateResponseDto result = usersService.makeEvent(1L, requestDto);
         
         // then
         assertThat(result.eventId()).isEqualTo(1L);
@@ -61,6 +61,7 @@ class UsersServiceImplTest {
         // given
         LocalDateTime start = LocalDateTime.of(2025, 9, 1, 0, 0);
         LocalDateTime end   = LocalDateTime.of(2025, 9, 30, 23, 59);
+        Long userId = 1L;
         
         Event event1 = new Event(
             1L, 1L, "회의", "주간 회의",
@@ -77,13 +78,13 @@ class UsersServiceImplTest {
         );
         
         // Mockito로 findByStartAtGreaterThanEqualAndEndAtLessThanEqual 호출 시 반환값 지정
-        Mockito.when(eventRepository.findByStartAtGreaterThanEqualAndEndAtLessThanEqual(start, end))
+        Mockito.when(eventRepository.findByCreatorIdAndStartAtGreaterThanEqualAndEndAtLessThanEqual(userId, start, end))
             .thenReturn(List.of(event1, event2));
         
         EventGetRequestDto requestDto = new EventGetRequestDto(start, end, 1L);
         
         // when
-        List<EventGetResponseDto> result = usersService.getEvents(requestDto);
+        List<EventGetResponseDto> result = usersService.getEvents(start, end, userId);
         
         // then
         assertThat(result).hasSize(2);

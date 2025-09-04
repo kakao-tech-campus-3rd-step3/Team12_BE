@@ -22,10 +22,10 @@ public class UsersServiceImpl implements UsersService {
     
     //아직 유저 정보를 받아올 수 없기 때문에, 임의로 채움. 추후 유저 구현 확인 후 수정 필요
     @Override
-    public EventCreateResponseDto makeEvent(EventCreateRequestDto requestDto) {
+    public EventCreateResponseDto makeEvent(Long userId, EventCreateRequestDto requestDto) {
         
         Event newEvent = Event.builder()
-            .creatorId(1L)
+            .creatorId(userId)
             .title(requestDto.title())
             .content(requestDto.description())
             .startAt(requestDto.startTime())
@@ -49,13 +49,11 @@ public class UsersServiceImpl implements UsersService {
     }
     
     @Override
-    public List<EventGetResponseDto> getEvents(EventGetRequestDto requestDto) {
-        LocalDateTime startAt = requestDto.startAt();
-        LocalDateTime endAt = requestDto.endAt();
-        
-        List<Event> findEvents = eventRepository.findByStartAtGreaterThanEqualAndEndAtLessThanEqual(
-            startAt, endAt
-        );
+    public List<EventGetResponseDto> getEvents(LocalDateTime startAt, LocalDateTime endAt, Long userId) {
+        List<Event> findEvents = eventRepository
+            .findByCreatorIdAndStartAtGreaterThanEqualAndEndAtLessThanEqual(
+                userId, startAt, endAt
+            );
         
         return findEvents.stream().map(
             event -> new EventGetResponseDto(

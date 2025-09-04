@@ -27,7 +27,8 @@ class EventRepositoryTest {
         
         // when
         Event saved = eventRepository.save(event);
-        List<Event> events = eventRepository.findByStartAtGreaterThanEqualAndEndAtLessThanEqual(
+        List<Event> events = eventRepository.findByCreatorIdAndStartAtGreaterThanEqualAndEndAtLessThanEqual(
+            1L,
             LocalDateTime.of(2025, 9, 1, 0, 0),
             LocalDateTime.of(2025, 9, 30, 23, 59)
         );
