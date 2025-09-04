@@ -58,7 +58,7 @@ public class UsersServiceImpl implements UsersService {
                 event.getId(), event.getTitle(), event.getContent(), event.getStartAt(),
                 event.getEndAt(), event.getIsPrivate(), event.getCreatorId(), null
             )
-        ).collect(Collectors.toList());
+        ).toList();
     }
     
     //수정은 현재 테크 스펙 상 다른 도메인에 있어, 추후 추가 작성 필요
