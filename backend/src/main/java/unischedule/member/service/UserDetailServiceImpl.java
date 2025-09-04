@@ -1,5 +1,6 @@
 package unischedule.member.service;
 
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -28,11 +29,12 @@ public class UserDetailServiceImpl implements UserDetailsService {
     }
 
     private UserDetails createUserDetails(Member member) {
+        SimpleGrantedAuthority grantedAuthority = new SimpleGrantedAuthority("ROLE_USER");
 
         return new User(
                 member.getEmail(),
                 member.getPassword(),
-                Collections.emptyList()
+                Collections.singleton(grantedAuthority)
         );
     }
 
