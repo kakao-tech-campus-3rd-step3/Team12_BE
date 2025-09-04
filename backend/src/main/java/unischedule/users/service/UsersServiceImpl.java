@@ -1,6 +1,10 @@
 package unischedule.users.service;
 
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cglib.core.Local;
 import org.springframework.stereotype.Service;
 import unischedule.users.dto.EventCreateRequestDto;
 import unischedule.users.dto.EventCreateResponseDto;
@@ -45,7 +49,22 @@ public class UsersServiceImpl implements UsersService {
     }
     
     @Override
-    public EventGetResponseDto getEvent(EventGetRequestDto requestDto) {
-        return null;
+    public List<EventGetResponseDto> getEvents(EventGetRequestDto requestDto) {
+        LocalDateTime startAt = requestDto.startAt();
+        LocalDateTime endAt = requestDto.endAt();
+        
+        List<Event> findEvents = eventRepository.findByStartAtGreaterThanEqualAndEndAtLessThanEqual(
+            startAt, endAt
+        );
+        
+        return findEvents.stream().map(
+            event -> new EventGetResponseDto(
+                event.getId(), event.getTitle(), event.getContent(), event.getStartAt(),
+                event.getEndAt(), event.getIsPrivate(), event.getCreatorId(), null
+            )
+        ).collect(Collectors.toList());
     }
+    
+    //수정은 현재 테크 스펙 상 다른 도메인에 있어, 추후 추가 작성 필요
+    //삭제는 현재 테크 스펙 상 없음
 }
