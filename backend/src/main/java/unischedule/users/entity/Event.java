@@ -27,32 +27,32 @@ public class Event {
     @Column(name="event_id")
     private Long id;
     
-    @Column(name = "creator_id")
+    @Column(name = "creator_id", nullable = false, updatable = false)
     private Long creatorId;
     
-    @Column(name = "title")
+    @Column(name = "title", nullable = false)
     private String title;
     
     @Column(name = "content")
     private String content;
     
-    @Column(name = "start_at")
+    @Column(name = "start_at", nullable = false)
     private LocalDateTime startAt;
     
-    @Column(name = "end_at")
+    @Column(name = "end_at", nullable = false)
     private LocalDateTime endAt;
     
-    @Column(name = "state")
+    @Column(name = "state", nullable = false)
     private String state;
     
-    @Column(name="is_private")
+    @Column(name="is_private", nullable = false)
     private Boolean isPrivate;
     
     @Column(name = "recurrence_rule_id")
     private Long recurrenceRuleId;
     
     @CreatedDate
-    @Column(name = "created_at")
+    @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
     
     @LastModifiedDate
