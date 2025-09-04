@@ -34,16 +34,7 @@ public class UsersServiceImpl implements UsersService {
         
         Event saved = eventRepository.save(newEvent);
         
-        return new EventCreateResponseDto(
-            saved.getId(),
-            saved.getCreatorId(),
-            saved.getTitle(),
-            saved.getContent(),
-            saved.getStartAt(),
-            saved.getEndAt(),
-            saved.getIsPrivate(),
-            null
-        );
+        return new EventCreateResponseDto(saved);
     }
     
     @Override
@@ -54,10 +45,7 @@ public class UsersServiceImpl implements UsersService {
             );
         
         return findEvents.stream().map(
-            event -> new EventGetResponseDto(
-                event.getId(), event.getTitle(), event.getContent(), event.getStartAt(),
-                event.getEndAt(), event.getIsPrivate(), event.getCreatorId(), null
-            )
+            EventGetResponseDto::new
         ).toList();
     }
     
