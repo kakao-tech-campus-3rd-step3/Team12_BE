@@ -1,6 +1,8 @@
 package unischedule.member.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
@@ -25,18 +27,18 @@ public class MemberApiController {
     private final MemberService memberService;
 
     @PostMapping("/signup")
-    public ResponseEntity<String> signup(@RequestBody MemberRegistrationDto requestDto) {
+    public ResponseEntity<String> signup(@Valid @RequestBody MemberRegistrationDto requestDto) {
         if (memberService.isMemberExists(requestDto.email())) {
             return ResponseEntity.badRequest().body("이미 사용중인 이메일입니다.");
         }
 
         memberService.registerMember(requestDto);
 
-        return ResponseEntity.ok("회원가입이 완료되었습니다.");
+        return ResponseEntity.status(HttpStatus.CREATED).body("회원가입이 완료되었습니다.");
     }
 
     @PostMapping("/login")
-    public ResponseEntity<MemberTokenResponseDto> login(@RequestBody LoginRequestDto requestDto) {
+    public ResponseEntity<MemberTokenResponseDto> login(@Valid @RequestBody LoginRequestDto requestDto) {
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(requestDto.email(), requestDto.password());
 
         Authentication authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
