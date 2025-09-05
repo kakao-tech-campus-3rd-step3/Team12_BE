@@ -72,7 +72,7 @@ public class JwtTokenProvider {
 
         Collection<? extends GrantedAuthority> authorities = Arrays.stream(claims.get("auth")
                 .toString()
-                .split(", "))
+                .split(","))
                 .map(SimpleGrantedAuthority::new)
                 .toList();
 
