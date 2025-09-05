@@ -9,7 +9,7 @@ import unischedule.exception.dto.ErrorResponseDto;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(EntityNotFoundException.class)
-    public ResponseEntity<ErrorResponseDto> handleEntityNotFound(EntityNotFoundException ex) {
+    public ResponseEntity<ErrorResponseDto> handleEntityNotFound() {
         return ResponseEntity.notFound().build();
     }
 
