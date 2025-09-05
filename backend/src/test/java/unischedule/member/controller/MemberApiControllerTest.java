@@ -11,6 +11,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import unischedule.auth.jwt.JwtTokenProvider;
@@ -29,6 +30,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@ActiveProfiles("test")
 class MemberApiControllerTest {
     @Autowired
     private MockMvc mockMvc;
@@ -43,7 +45,7 @@ class MemberApiControllerTest {
     private JwtTokenProvider jwtTokenProvider;
 
     @MockitoBean
-    private AuthenticationManagerBuilder authenticationManagerBuilder;
+    private AuthenticationManager authenticationManager;
 
     @Test
     @DisplayName("회원가입 - 200")
@@ -57,7 +59,7 @@ class MemberApiControllerTest {
         mockMvc.perform(post("/api/members/signup")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(registrationDto)))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$").value("회원가입이 완료되었습니다."));
     }
 
@@ -83,9 +85,8 @@ class MemberApiControllerTest {
         LoginRequestDto requestDto = new LoginRequestDto("test12@gmail.com", "p1a2s3s4word");
         Authentication authentication = new UsernamePasswordAuthenticationToken(requestDto.email(), requestDto.password());
 
-        AuthenticationManager mockAuthenticationManager = mock(AuthenticationManager.class);
-        given(authenticationManagerBuilder.getObject()).willReturn(mockAuthenticationManager);
-        given(mockAuthenticationManager.authenticate(any())).willReturn(authentication);
+        //AuthenticationManager mockAuthenticationManager = mock(AuthenticationManager.class);
+        given(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).willReturn(authentication);
         given(jwtTokenProvider.createAccessToken(any(Authentication.class))).willReturn("test-access-token");
 
         // when & then

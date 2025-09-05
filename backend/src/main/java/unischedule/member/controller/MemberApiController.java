@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
@@ -23,7 +24,7 @@ import unischedule.member.service.MemberService;
 @RequiredArgsConstructor
 public class MemberApiController {
     private final JwtTokenProvider jwtTokenProvider;
-    private final AuthenticationManagerBuilder authenticationManagerBuilder;
+    private final AuthenticationManager authenticationManager;
     private final MemberService memberService;
 
     @PostMapping("/signup")
@@ -41,7 +42,7 @@ public class MemberApiController {
     public ResponseEntity<MemberTokenResponseDto> login(@Valid @RequestBody LoginRequestDto requestDto) {
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(requestDto.email(), requestDto.password());
 
-        Authentication authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
+        Authentication authentication = authenticationManager.authenticate(authenticationToken);
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         String accessToken = jwtTokenProvider.createAccessToken(authentication);
