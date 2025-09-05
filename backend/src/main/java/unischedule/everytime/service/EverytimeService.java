@@ -31,7 +31,8 @@ public class EverytimeService {
                 .blockOptional()
                 .orElseThrow(() -> new ExternalApiException("에브리타임 API 호출에 실패했습니다."));
 
-        if (response.primaryTables() == null || response.primaryTables().primaryTable().isEmpty()) {
+        if (response.primaryTables() == null || response.primaryTables().primaryTable().isEmpty() ||
+                response.table() == null) {
             throw new InvalidInputException("해당 시간표를 찾을 수 없습니다.");
         }
 
