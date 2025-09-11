@@ -23,9 +23,6 @@ class UsersServiceImplTest {
     @Mock
     private EventRepository eventRepository;
     
-    @Mock
-    private CalendarRepository calendarRepository;
-    
     @InjectMocks
     private UsersServiceImpl usersService;
     
@@ -77,7 +74,7 @@ class UsersServiceImplTest {
         );
         
         // Mockito로 findByStartAtGreaterThanEqualAndEndAtLessThanEqual 호출 시 반환값 지정
-        Mockito.when(eventRepository.findByCreatorIdAndStartAtGreaterThanEqualAndEndAtLessThanEqual(userId, start, end))
+        Mockito.when(eventRepository.findByCreatorIdAndStartAtLessThanEqualAndEndAtGreaterThanEqual(userId, start, end))
             .thenReturn(List.of(event1, event2));
         
         // when
