@@ -1,7 +1,9 @@
 package unischedule.events.controller;
 
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -25,4 +27,10 @@ public class EventsController {
         EventGetResponseDto responseDto = eventsService.modifyEvent(eventId, requestDto);
         return ResponseEntity.ok(responseDto);
     }
+    
+    //아래 부분은 테크 스펙에 대한 정리가 있고 난 이후에나 구현 가능할 듯
+//    @GetMapping("/{userId}/today")
+//    public ResponseEntity<List<EventGetResponseDto>> todayEvent() {
+//
+//    }
 }
