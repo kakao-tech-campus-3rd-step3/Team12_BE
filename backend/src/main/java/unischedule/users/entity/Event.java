@@ -16,6 +16,7 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
+import unischedule.events.dto.EventModifyRequestDto;
 
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -88,5 +89,13 @@ public class Event {
         this.endAt = endAt;
         this.state = state;
         this.isPrivate = isPrivate;
+    }
+    
+    public void modifyContent(EventModifyRequestDto requestDto) {
+        this.title = requestDto.title();
+        this.content = requestDto.description();
+        this.startAt = requestDto.startTime();
+        this.endAt = requestDto.endTime();
+        this.isPrivate = requestDto.isPrivate();
     }
 }
