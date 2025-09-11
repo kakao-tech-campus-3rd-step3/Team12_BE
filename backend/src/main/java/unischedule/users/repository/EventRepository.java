@@ -14,7 +14,11 @@ public interface EventRepository extends JpaRepository<Event, Long> {
         LocalDateTime startAt
     );
     
-    boolean existsByCreatorIdAndStartAtLessThanAndEndAtGreaterThan(Long userId, LocalDateTime endAt, LocalDateTime startAt);
+    boolean existsByCreatorIdAndStartAtLessThanAndEndAtGreaterThan(
+        Long userId,
+        LocalDateTime endAt,
+        LocalDateTime startAt
+    );
     
     boolean existsByCreatorIdAndIdNotAndStartAtLessThanAndEndAtGreaterThan(
         Long creatorId,
