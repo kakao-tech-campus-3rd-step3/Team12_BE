@@ -92,10 +92,10 @@ public class Event {
     }
     
     public void modifyContent(EventModifyRequestDto requestDto) {
-        this.title = requestDto.title();
-        this.content = requestDto.description();
-        this.startAt = requestDto.startTime();
-        this.endAt = requestDto.endTime();
-        this.isPrivate = requestDto.isPrivate();
+        this.title = requestDto.title() != null ? requestDto.title() : this.title;
+        this.content = requestDto.description() != null ? requestDto.description() : this.title;
+        this.startAt = requestDto.startTime() != null ? requestDto.startTime() : this.startAt;
+        this.endAt = requestDto.endTime() != null ? requestDto.endTime() : this.endAt;
+        this.isPrivate = requestDto.isPrivate() != null ? requestDto.isPrivate() : this.isPrivate;
     }
 }

@@ -14,6 +14,7 @@ import unischedule.users.repository.EventRepository;
 public class EventsServiceImpl implements EventsService {
     
     private final EventRepository eventRepository;
+    
     @Override
     @Transactional
     public EventGetResponseDto modifyEvent(Long eventId, EventModifyRequestDto requestDto) {
