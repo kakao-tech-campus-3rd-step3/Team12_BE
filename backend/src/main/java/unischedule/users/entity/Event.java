@@ -91,11 +91,31 @@ public class Event {
         this.isPrivate = isPrivate;
     }
     
-    public void modifyContent(EventModifyRequestDto requestDto) {
-        this.title = requestDto.title() != null ? requestDto.title() : this.title;
-        this.content = requestDto.description() != null ? requestDto.description() : this.title;
-        this.startAt = requestDto.startTime() != null ? requestDto.startTime() : this.startAt;
-        this.endAt = requestDto.endTime() != null ? requestDto.endTime() : this.endAt;
-        this.isPrivate = requestDto.isPrivate() != null ? requestDto.isPrivate() : this.isPrivate;
+    public void modifyEvent(EventModifyRequestDto requestDto) {
+        if(requestDto.title() != null) modifyTitle(requestDto.title());
+        if(requestDto.description() != null) modifyContent(requestDto.description());
+        if(requestDto.startTime() != null) modifyStartAt(requestDto.startTime());
+        if(requestDto.endTime() != null) modifyEndAt(requestDto.endTime());
+        if(requestDto.isPrivate() != null) modifyPrivate(requestDto.isPrivate());
+    }
+    
+    public void modifyTitle(String title) {
+        this.title = title;
+    }
+    
+    public void modifyContent(String content) {
+        this.content = content;
+    }
+    
+    public void modifyStartAt(LocalDateTime startAt) {
+        this.startAt = startAt;
+    }
+    
+    public void modifyEndAt(LocalDateTime endAt) {
+        this.endAt = endAt;
+    }
+    
+    public void modifyPrivate(Boolean isPrivate) {
+        this.isPrivate = isPrivate;
     }
 }

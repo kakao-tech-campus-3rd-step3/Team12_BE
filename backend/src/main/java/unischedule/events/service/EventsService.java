@@ -34,7 +34,7 @@ public class EventsService {
             }
         }
         
-        findEvent.modifyContent(requestDto);
+        findEvent.modifyEvent(requestDto);
         
         return new EventGetResponseDto(findEvent);
     }
