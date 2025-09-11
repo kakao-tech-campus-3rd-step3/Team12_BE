@@ -8,6 +8,6 @@ import unischedule.users.entity.Event;
 
 @Repository
 public interface EventRepository extends JpaRepository<Event, Long> {
-    List<Event> findByCreatorIdAndStartAtGreaterThanEqualAndEndAtLessThanEqual(
+    List<Event> findByCreatorIdAndStartAtLessThanEqualAndEndAtGreaterThanEqual(
         Long creatorId, LocalDateTime startAt, LocalDateTime endAt);
 }

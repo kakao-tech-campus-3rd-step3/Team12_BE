@@ -41,7 +41,7 @@ public class UsersServiceImpl implements UsersService {
     @Override
     public List<EventGetResponseDto> getEvents(LocalDateTime startAt, LocalDateTime endAt, Long userId) {
         List<Event> findEvents = eventRepository
-            .findByCreatorIdAndStartAtGreaterThanEqualAndEndAtLessThanEqual(
+            .findByCreatorIdAndStartAtLessThanEqualAndEndAtGreaterThanEqual(
                 userId, startAt, endAt
             );
         
