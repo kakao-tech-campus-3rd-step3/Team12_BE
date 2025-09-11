@@ -1,8 +1,11 @@
 package unischedule.users.controller;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -35,11 +38,15 @@ public class UsersController {
     
     @GetMapping("/{userId}/events")
     public ResponseEntity<List<EventGetResponseDto>> getEvent(
-        @RequestParam LocalDateTime startAt,
-        @RequestParam LocalDateTime endAt,
+        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startAt,
+        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endAt,
         @PathVariable Long userId
     ) {
-        List<EventGetResponseDto> responseDto = usersService.getEvents(startAt, endAt, userId);
+        // 날짜 → LocalDateTime 변환
+        LocalDateTime startDateTime = startAt.atStartOfDay();           // 00:00
+        LocalDateTime endDateTime = endAt.atTime(LocalTime.MAX);        // 23:59:59.999999999
+        
+        List<EventGetResponseDto> responseDto = usersService.getEvents(startDateTime, endDateTime, userId);
         return ResponseEntity.ok(responseDto);
     }
     //현재는 태그 없이 바로 리스트형태 반환
