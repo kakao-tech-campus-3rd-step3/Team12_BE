@@ -35,6 +35,9 @@ public class UsersController {
         EventCreateResponseDto responseDto = usersService.makeEvent(userId, requestDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(responseDto);
     }
+    //추후 실제 테스트 때 들어오는 일정의 형식에 따라
+    //Dto 내부의 데이터를 일부 파싱해야할 가능성 있음
+    //이는 실제 CD 과정을 거쳐서 테스트 해봐야할 영역
     
     @GetMapping("/{userId}/events")
     public ResponseEntity<List<EventGetResponseDto>> getEvent(
