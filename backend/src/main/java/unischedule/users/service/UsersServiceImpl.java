@@ -3,14 +3,13 @@ package unischedule.users.service;
 import jakarta.transaction.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import unischedule.exception.InvalidInputException;
 import unischedule.users.dto.EventCreateRequestDto;
 import unischedule.users.dto.EventCreateResponseDto;
 import unischedule.users.dto.EventGetResponseDto;
 import unischedule.users.entity.Event;
-import unischedule.users.repository.CalendarRepository;
 import unischedule.users.repository.EventRepository;
 
 @Service
@@ -18,10 +17,19 @@ import unischedule.users.repository.EventRepository;
 public class UsersServiceImpl implements UsersService {
     private final EventRepository eventRepository;
     
-    //아직 유저 정보를 받아올 수 없기 때문에, 임의로 채움. 추후 유저 구현 확인 후 수정 필요
     @Override
     @Transactional
     public EventCreateResponseDto makeEvent(Long userId, EventCreateRequestDto requestDto) {
+        
+        boolean conflict = eventRepository.existsByCreatorIdAndStartAtLessThanAndEndAtGreaterThan(
+            userId,
+            requestDto.endTime(),
+            requestDto.startTime()
+        );
+        
+        if (conflict) {
+            throw new InvalidInputException("겹치는 일정이 있어 등록할 수 없습니다.");
+        }
         
         Event newEvent = Event.builder()
             .creatorId(userId)

@@ -10,4 +10,6 @@ import unischedule.users.entity.Event;
 public interface EventRepository extends JpaRepository<Event, Long> {
     List<Event> findByCreatorIdAndStartAtLessThanEqualAndEndAtGreaterThanEqual(
         Long creatorId, LocalDateTime startAt, LocalDateTime endAt);
+    
+    boolean existsByCreatorIdAndStartAtLessThanAndEndAtGreaterThan(Long userId, LocalDateTime startAt, LocalDateTime endAt);
 }
