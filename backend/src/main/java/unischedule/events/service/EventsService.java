@@ -1,5 +1,5 @@
 package unischedule.events.service;
 
-public class EventsService {
+public interface EventsService {
 
 }
