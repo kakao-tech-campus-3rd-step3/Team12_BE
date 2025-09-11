@@ -23,8 +23,6 @@ public class EventsServiceImpl implements EventsService {
         
         findEvent.modifyContent(requestDto);
         
-        eventRepository.save(findEvent);
-        
         return new EventGetResponseDto(findEvent);
     }
 }

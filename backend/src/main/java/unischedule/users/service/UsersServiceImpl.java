@@ -1,5 +1,6 @@
 package unischedule.users.service;
 
+import jakarta.transaction.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -15,11 +16,11 @@ import unischedule.users.repository.EventRepository;
 @Service
 @RequiredArgsConstructor
 public class UsersServiceImpl implements UsersService {
-    private final CalendarRepository calendarRepository;
     private final EventRepository eventRepository;
     
     //아직 유저 정보를 받아올 수 없기 때문에, 임의로 채움. 추후 유저 구현 확인 후 수정 필요
     @Override
+    @Transactional
     public EventCreateResponseDto makeEvent(Long userId, EventCreateRequestDto requestDto) {
         
         Event newEvent = Event.builder()
