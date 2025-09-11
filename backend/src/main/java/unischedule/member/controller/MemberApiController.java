@@ -28,10 +28,6 @@ public class MemberApiController {
 
     @PostMapping("/signup")
     public ResponseEntity<String> signup(@Valid @RequestBody MemberRegistrationDto requestDto) {
-        if (memberService.isMemberExists(requestDto.email())) {
-            return ResponseEntity.badRequest().body("이미 사용중인 이메일입니다.");
-        }
-
         memberService.registerMember(requestDto);
 
         return ResponseEntity.status(HttpStatus.CREATED).body("회원가입이 완료되었습니다.");
