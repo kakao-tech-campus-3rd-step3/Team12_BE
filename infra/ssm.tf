@@ -12,7 +12,8 @@ data "aws_ssm_parameter" "db_url" {
 }
 
 data "aws_ssm_parameter" "jwt_secret" {
-  name = "/uni-schedule/config/jwt_secret"
+  name            = "/uni-schedule/config/jwt_secret"
+  with_decryption = true
 }
 
 data "aws_ssm_parameter" "jwt_access_token_timeout_sec" {
