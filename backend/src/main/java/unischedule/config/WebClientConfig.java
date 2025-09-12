@@ -6,6 +6,7 @@ import io.netty.handler.timeout.ReadTimeoutHandler;
 import io.netty.handler.timeout.WriteTimeoutHandler;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
@@ -20,9 +21,22 @@ import reactor.netty.http.client.HttpClient;
 public class WebClientConfig {
 
     private static final String EVERYTIME_BASE_URL = "https://api.everytime.kr";
-    private static final int TIMEOUT_SECONDS = 10;
-    private static final int CONNECT_TIMEOUT_MILLIS = 5000;
+    private static final String OPENAI_BASE_URL = "https://api.openai.com/v1";
+
     private static final int MAX_MEMORY_SIZE = 1024 * 1024;
+
+    @Value("${openai.api.key}")
+    private String openAiApiKey;
+
+    private HttpClient httpClient(Duration responseTimeout, Duration connectTimeout) {
+        return HttpClient.create()
+                .responseTimeout(responseTimeout)
+                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, (int) connectTimeout.toMillis())
+                .doOnConnected(conn -> conn
+                        .addHandlerLast(new ReadTimeoutHandler(responseTimeout.toMillis(), TimeUnit.MILLISECONDS))
+                        .addHandlerLast(new WriteTimeoutHandler(responseTimeout.toMillis(), TimeUnit.MILLISECONDS))
+                );
+    }
 
     @Bean(name = "everytimeWebClient")
     public WebClient everytimeWebClient() {
@@ -39,14 +53,18 @@ public class WebClientConfig {
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED_VALUE)
                 // 타임아웃 관련 설정
                 .clientConnector(new ReactorClientHttpConnector(
-                        HttpClient.create()
-                                .responseTimeout(Duration.ofSeconds(TIMEOUT_SECONDS))
-                                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, CONNECT_TIMEOUT_MILLIS)
-                                .doOnConnected(conn -> conn
-                                        .addHandlerLast(new ReadTimeoutHandler(TIMEOUT_SECONDS, TimeUnit.SECONDS))
-                                        .addHandlerLast(new WriteTimeoutHandler(TIMEOUT_SECONDS))
-                                )
-                ))
+                        httpClient(Duration.ofSeconds(10), Duration.ofSeconds(5))))
+                .build();
+    }
+
+    @Bean(name = "openAiWebClient")
+    public WebClient openAiWebClient() {
+        return WebClient.builder()
+                .baseUrl(OPENAI_BASE_URL)
+                .clientConnector(new ReactorClientHttpConnector(
+                        httpClient(Duration.ofSeconds(30), Duration.ofSeconds(5))))
+                .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + openAiApiKey)
+                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .build();
     }
 }
