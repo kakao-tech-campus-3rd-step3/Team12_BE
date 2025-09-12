@@ -106,7 +106,6 @@ class MemberApiControllerTest {
 
     @Test
     @DisplayName("토큰 재발급")
-    @WithMockUser
     void refresh() throws Exception {
         // given
         AccessTokenRefreshRequestDto requestDto = new AccessTokenRefreshRequestDto("test-refresh-token");
