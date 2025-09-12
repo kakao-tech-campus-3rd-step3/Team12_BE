@@ -3,6 +3,8 @@ package unischedule.everytime.service;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+import unischedule.everytime.client.OpenAiClient;
 import unischedule.everytime.dto.TimetableDetailDto;
 import unischedule.everytime.dto.TimetableDto;
 import unischedule.everytime.dto.external.EverytimeTimetableRawResponseDto;
@@ -15,6 +17,7 @@ import unischedule.exception.InvalidInputException;
 @RequiredArgsConstructor
 public class EverytimeService {
 
+    private final OpenAiClient openAiClient;
     private final EverytimeClient everytimeClient;
     private final EverytimeTimetableMapper everytimeTimetableMapper;
 
@@ -26,6 +29,10 @@ public class EverytimeService {
     public TimetableDetailDto getTimetableDetail(String identifier) {
         EverytimeTimetableRawResponseDto rawResponse = getTimetableData(identifier);
         return TimetableDetailDto.from(rawResponse.table());
+    }
+
+    public TimetableDetailDto getTimetableDetailFromImage(MultipartFile image) {
+        return openAiClient.extractFromImage(image).block();
     }
 
     private EverytimeTimetableRawResponseDto getTimetableData(String identifier) {
