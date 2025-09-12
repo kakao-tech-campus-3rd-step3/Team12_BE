@@ -3,12 +3,13 @@ resource "aws_ecs_cluster" "this" {
 }
 
 resource "aws_ecs_task_definition" "this" {
-  family                   = "uni-schedule-task"
+  family             = "uni-schedule-task"
   requires_compatibilities = ["FARGATE"]
-  network_mode             = "awsvpc"
-  cpu                      = "256"
-  memory                   = "512"
-  execution_role_arn       = aws_iam_role.ecs_task_execution.arn
+  network_mode       = "awsvpc"
+  cpu                = "256"
+  memory             = "512"
+  execution_role_arn = aws_iam_role.ecs_task_execution.arn
+  task_role_arn      = aws_iam_role.ecs_task.arn
 
   runtime_platform {
     cpu_architecture        = "ARM64"
@@ -29,9 +30,12 @@ resource "aws_ecs_task_definition" "this" {
       ]
 
       environment = [
-        { name = "SPRING_DATASOURCE_URL", value = data.aws_ssm_parameter.db_url.value },
-        { name = "SPRING_DATASOURCE_USERNAME", value = data.aws_ssm_parameter.db_username.value },
-        { name = "SPRING_DATASOURCE_PASSWORD", value = data.aws_ssm_parameter.db_password.value }
+        { name = "SPRING_DATASOURCE_URL", value = data.aws_ssm_parameter.db_url.value }
+      ]
+
+      secrets = [
+        { name = "SPRING_DATASOURCE_USERNAME", valueFrom = data.aws_ssm_parameter.db_username.arn },
+        { name = "SPRING_DATASOURCE_PASSWORD", valueFrom = data.aws_ssm_parameter.db_password.arn }
       ]
 
       logConfiguration = {
@@ -50,13 +54,13 @@ resource "aws_lb" "this" {
   name               = "uni-schedule-lb"
   internal           = false
   load_balancer_type = "application"
-  security_groups    = [aws_security_group.lb.id]
+  security_groups = [aws_security_group.lb.id]
   subnets            = aws_subnet.public_subnet[*].id
 }
 
 resource "aws_lb_target_group" "this" {
   name        = "uni-schedule-tg"
-  port        = 8080 #80
+  port        = 8080
   protocol    = "HTTP"
   vpc_id      = aws_vpc.this.id
   target_type = "ip"
@@ -65,7 +69,7 @@ resource "aws_lb_target_group" "this" {
     path                = "/actuator/health"
     matcher             = "200-399"
     interval            = 30
-    timeout             = 20 #10
+    timeout             = 20
     healthy_threshold   = 2
     unhealthy_threshold = 5
   }
@@ -82,18 +86,17 @@ resource "aws_lb_listener" "this" {
   }
 }
 
-# ECS Service
 resource "aws_ecs_service" "this" {
   name                              = "uni-schedule-service"
   cluster                           = aws_ecs_cluster.this.id
   task_definition                   = aws_ecs_task_definition.this.arn
-  desired_count                     = 2
+  desired_count                     = 1
   launch_type                       = "FARGATE"
   health_check_grace_period_seconds = 300
 
   network_configuration {
     subnets          = aws_subnet.public_subnet[*].id
-    security_groups  = [aws_security_group.ecs_instance.id]
+    security_groups = [aws_security_group.ecs_instance.id]
     assign_public_ip = true
   }
 
