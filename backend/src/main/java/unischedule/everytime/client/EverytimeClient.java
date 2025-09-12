@@ -1,4 +1,4 @@
-package unischedule.everytime.service;
+package unischedule.everytime.client;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -11,7 +11,7 @@ import unischedule.everytime.dto.external.EverytimeTimetableRawResponseDto;
 
 @Component
 @RequiredArgsConstructor
-class EverytimeClient {
+public class EverytimeClient {
 
     private static final String TIMETABLE_URI = "/find/timetable/table/friend";
     private static final String USER_AGENT =
@@ -19,7 +19,7 @@ class EverytimeClient {
 
     private final WebClient everytimeWebClient;
 
-    Mono<EverytimeTimetableRawResponseDto> fetchTimetable(String identifier) {
+    public Mono<EverytimeTimetableRawResponseDto> fetchTimetable(String identifier) {
         return everytimeWebClient.post()
                 .uri(TIMETABLE_URI)
                 .header(HttpHeaders.USER_AGENT, USER_AGENT)
