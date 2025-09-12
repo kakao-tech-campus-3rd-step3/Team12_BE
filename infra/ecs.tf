@@ -30,12 +30,15 @@ resource "aws_ecs_task_definition" "this" {
       ]
 
       environment = [
-        { name = "SPRING_DATASOURCE_URL", value = data.aws_ssm_parameter.db_url.value }
+        { name = "SPRING_DATASOURCE_URL", value = data.aws_ssm_parameter.db_url.value },
+        { name = "JWT_ACCESS_TOKEN_TIMEOUT_SEC", value = data.aws_ssm_parameter.jwt_access_token_timeout_sec.value },
+        { name = "JWT_REFRESH_TOKEN_TIMEOUT_SEC", value = data.aws_ssm_parameter.jwt_refresh_token_timeout_sec.value }
       ]
 
       secrets = [
         { name = "SPRING_DATASOURCE_USERNAME", valueFrom = data.aws_ssm_parameter.db_username.arn },
-        { name = "SPRING_DATASOURCE_PASSWORD", valueFrom = data.aws_ssm_parameter.db_password.arn }
+        { name = "SPRING_DATASOURCE_PASSWORD", valueFrom = data.aws_ssm_parameter.db_password.arn },
+        { name = "JWT_SECRET", valueFrom = data.aws_ssm_parameter.jwt_secret.arn }
       ]
 
       logConfiguration = {
