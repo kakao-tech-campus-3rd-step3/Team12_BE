@@ -6,6 +6,8 @@ import org.springframework.stereotype.Service;
 import unischedule.everytime.dto.TimetableDetailDto;
 import unischedule.everytime.dto.TimetableDto;
 import unischedule.everytime.dto.external.EverytimeTimetableRawResponseDto;
+import unischedule.everytime.client.EverytimeClient;
+import unischedule.everytime.mapper.EverytimeTimetableMapper;
 import unischedule.exception.ExternalApiException;
 import unischedule.exception.InvalidInputException;
 
