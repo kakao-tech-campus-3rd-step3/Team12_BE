@@ -23,3 +23,8 @@ data "aws_ssm_parameter" "jwt_access_token_timeout_sec" {
 data "aws_ssm_parameter" "jwt_refresh_token_timeout_sec" {
   name = "/uni-schedule/config/jwt_refresh_token_timeout_sec"
 }
+
+data "aws_ssm_parameter" "openai_api_key" {
+  name            = "/uni-schedule/config/openai_api_key"
+  with_decryption = true
+}
