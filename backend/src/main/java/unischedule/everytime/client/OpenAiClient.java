@@ -29,7 +29,7 @@ public class OpenAiClient {
                     "messages", List.of(
                             Map.of("role", "user", "content", List.of(
                                     Map.of("type", "text", "text",
-                                            "이 시간표 이미지를 JSON으로 변환해줘. 과목명, 교수, 요일, 시작/끝 시간, 장소 포함. 시작 시간, 끝 시간은 정각이 아닐 수도 있어."),
+                                            "이 시간표 이미지를 JSON으로 변환해줘. 과목명, 교수, 요일, 시작/끝 시간, 장소 포함. 시작 시간, 끝 시간은 정각이 아닐 수도 있어. dayOfWeek는 월요일이 0임."),
                                     Map.of("type", "image_url", "image_url",
                                             Map.of("url", "data:image/png;base64," + base64Image))
                             ))
