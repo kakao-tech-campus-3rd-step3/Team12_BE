@@ -2,6 +2,8 @@ package unischedule.users.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -23,15 +25,13 @@ class UsersServiceImplTest {
     @Mock
     private EventRepository eventRepository;
     
-    @Mock
-    private CalendarRepository calendarRepository;
-    
     @InjectMocks
-    private UsersServiceImpl usersService;
+    private UsersService usersService;
     
     @Test
     void testMakeEvent() {
         // given
+        
         EventCreateRequestDto requestDto = new EventCreateRequestDto(
             "회의", "주간 회의",
             LocalDateTime.now(), LocalDateTime.now().plusHours(1),
@@ -44,8 +44,12 @@ class UsersServiceImplTest {
             "CONFIRMED", true
         );
         
-        Mockito.when(eventRepository.save(Mockito.any(Event.class)))
+        Mockito.when(eventRepository.save(any(Event.class)))
             .thenReturn(savedEvent);
+        
+        Mockito.when(eventRepository.existsByCreatorIdAndStartAtLessThanAndEndAtGreaterThan(eq(1L), any(LocalDateTime.class), any(
+                LocalDateTime.class)))
+            .thenReturn(false);
         
         // when
         EventCreateResponseDto result = usersService.makeEvent(1L, requestDto);
@@ -77,7 +81,7 @@ class UsersServiceImplTest {
         );
         
         // Mockito로 findByStartAtGreaterThanEqualAndEndAtLessThanEqual 호출 시 반환값 지정
-        Mockito.when(eventRepository.findByCreatorIdAndStartAtGreaterThanEqualAndEndAtLessThanEqual(userId, start, end))
+        Mockito.when(eventRepository.findByCreatorIdAndStartAtLessThanAndEndAtGreaterThan(userId, end, start))
             .thenReturn(List.of(event1, event2));
         
         // when

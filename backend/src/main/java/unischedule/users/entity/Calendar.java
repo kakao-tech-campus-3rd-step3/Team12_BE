@@ -5,11 +5,14 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import unischedule.member.entity.Member;
 
 @Entity
 @Table(name="calendars")
@@ -19,8 +22,9 @@ public class Calendar {
     @Column(name="calendar_id")
     private Long id;
     
-    @Column(name="owner_id")
-    private Long ownerId;
+    @OneToOne
+    @JoinColumn(name = "owner_id")
+    private Member owner;
     
     @Column(name="team_id")
     private Long teamId;
