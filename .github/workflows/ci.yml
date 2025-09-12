@@ -86,11 +86,11 @@ jobs:
           env:
             BACKEND_IMAGE: ${{ needs.ci-backend.outputs.tag }}
           
-          run:
+          run: |
             image_tags=""
             if [ -n "$BACKEND_IMAGE" ]; then
               image_tags="$image_tags -var backend_image_tag=$BACKEND_IMAGE"
             fi
 
-          echo "Applying Terraform with images: $image_tags"
-          terraform apply -auto-approve $image_tags
+            echo "Applying Terraform with images: $image_tags"
+            terraform apply -auto-approve $image_tags
