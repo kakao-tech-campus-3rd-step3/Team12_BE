@@ -10,16 +10,11 @@ resource "aws_ecs_task_definition" "this" {
   memory             = "512"
   execution_role_arn = aws_iam_role.ecs_task_execution.arn
   task_role_arn      = aws_iam_role.ecs_task.arn
-
-  runtime_platform {
-    cpu_architecture        = "ARM64"
-    operating_system_family = "LINUX"
-  }
-
+  
   container_definitions = jsonencode([
     {
       name      = "backend"
-      image     = "${data.aws_caller_identity.current.account_id}.dkr.ecr.ap-northeast-2.amazonaws.com/backend:latest",
+      image     = "${data.aws_caller_identity.current.account_id}.dkr.ecr.ap-northeast-2.amazonaws.com/backend:${var.backend_image_tag}",
       essential = true
 
       portMappings = [
@@ -30,12 +25,15 @@ resource "aws_ecs_task_definition" "this" {
       ]
 
       environment = [
-        { name = "SPRING_DATASOURCE_URL", value = data.aws_ssm_parameter.db_url.value }
+        { name = "SPRING_DATASOURCE_URL", value = data.aws_ssm_parameter.db_url.value },
+        { name = "JWT_ACCESS_TOKEN_TIMEOUT_SEC", value = data.aws_ssm_parameter.jwt_access_token_timeout_sec.value },
+        { name = "JWT_REFRESH_TOKEN_TIMEOUT_SEC", value = data.aws_ssm_parameter.jwt_refresh_token_timeout_sec.value }
       ]
 
       secrets = [
         { name = "SPRING_DATASOURCE_USERNAME", valueFrom = data.aws_ssm_parameter.db_username.arn },
-        { name = "SPRING_DATASOURCE_PASSWORD", valueFrom = data.aws_ssm_parameter.db_password.arn }
+        { name = "SPRING_DATASOURCE_PASSWORD", valueFrom = data.aws_ssm_parameter.db_password.arn },
+        { name = "JWT_SECRET", valueFrom = data.aws_ssm_parameter.jwt_secret.arn }
       ]
 
       logConfiguration = {
