@@ -1,4 +1,4 @@
-package unischedule.everytime.service;
+package unischedule.everytime.mapper;
 
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -8,9 +8,9 @@ import unischedule.everytime.dto.external.EverytimeTimetableRawResponseDto;
 
 @Component
 @RequiredArgsConstructor
-class EverytimeTimetableMapper {
+public class EverytimeTimetableMapper {
 
-    protected List<TimetableDto> toTimetableDtos(EverytimeTimetableRawResponseDto rawResponse) {
+    public List<TimetableDto> toTimetableDtos(EverytimeTimetableRawResponseDto rawResponse) {
         return rawResponse.primaryTables().primaryTable().stream()
                 .map(TimetableDto::from)
                 .toList();

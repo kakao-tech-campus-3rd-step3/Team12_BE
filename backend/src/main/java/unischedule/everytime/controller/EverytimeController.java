@@ -6,9 +6,12 @@ import org.springframework.http.ResponseEntity;
 import jakarta.validation.constraints.Pattern;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 import unischedule.everytime.dto.TimetableDetailDto;
 import unischedule.everytime.dto.TimetableDto;
 import unischedule.everytime.service.EverytimeService;
@@ -36,6 +39,12 @@ public class EverytimeController {
             @Pattern(regexp = "^[A-Za-z0-9]{20}$", message = "유효하지 않은 에브리타임 식별자입니다.")
             String identifier) {
         return ResponseEntity.ok(everytimeService.getTimetableDetail(identifier));
+    }
+
+    @PostMapping("/timetable")
+    public ResponseEntity<TimetableDetailDto> getTimetableDetailFromImage(
+            @RequestPart("image") MultipartFile image) {
+        return ResponseEntity.ok(everytimeService.getTimetableDetailFromImage(image));
     }
 
     private String getIdentifierFromEverytimeUrl(String urlString) {
