@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import unischedule.auth.jwt.JwtTokenProvider;
+import unischedule.auth.service.RefreshTokenService;
+import unischedule.member.dto.AccessTokenRefreshRequestDto;
 import unischedule.member.dto.LoginRequestDto;
 import unischedule.member.dto.MemberRegistrationDto;
 import unischedule.member.dto.MemberTokenResponseDto;
@@ -25,6 +27,7 @@ public class MemberApiController {
     private final JwtTokenProvider jwtTokenProvider;
     private final AuthenticationManager authenticationManager;
     private final MemberService memberService;
+    private final RefreshTokenService refreshTokenService;
 
     @PostMapping("/signup")
     public ResponseEntity<String> signup(@Valid @RequestBody MemberRegistrationDto requestDto) {
@@ -41,7 +44,15 @@ public class MemberApiController {
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         String accessToken = jwtTokenProvider.createAccessToken(authentication);
+        String refreshToken = jwtTokenProvider.createRefreshToken(authentication);
 
-        return ResponseEntity.ok(new MemberTokenResponseDto(accessToken));
+        return ResponseEntity.ok(new MemberTokenResponseDto(accessToken, refreshToken));
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<MemberTokenResponseDto> refresh(@Valid @RequestBody AccessTokenRefreshRequestDto requestDto) {
+        String newAccessToken = refreshTokenService.reissueAccessToken(requestDto.refreshToken());
+
+        return ResponseEntity.ok(new MemberTokenResponseDto(newAccessToken, requestDto.refreshToken()));
     }
 }
