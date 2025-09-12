@@ -65,32 +65,32 @@ jobs:
       run:
         working-directory: infra
       
-      steps:
-        - name: Checkout
-          uses: actions/checkout@v4
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-        - name: Configure AWS credentials
-          uses: aws-actions/configure-aws-credentials@v4
-          with:
-            aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-            aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-            aws-region: ${{ env.AWS_REGION }}
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
 
-        - name: Setup Terraform
-          uses: hashicorp/setup-terraform@v2
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
 
-        - name: Terraform init
-          run: terraform init
+      - name: Terraform init
+        run: terraform init
 
-        - name: Terraform Apply
-          env:
-            BACKEND_IMAGE: ${{ needs.ci-backend.outputs.tag }}
-          
-          run: |
-            image_tags=""
-            if [ -n "$BACKEND_IMAGE" ]; then
-              image_tags="$image_tags -var backend_image_tag=$BACKEND_IMAGE"
-            fi
+      - name: Terraform Apply
+        env:
+          BACKEND_IMAGE: ${{ needs.ci-backend.outputs.tag }}
+        
+        run: |
+          image_tags=""
+          if [ -n "$BACKEND_IMAGE" ]; then
+            image_tags="$image_tags -var backend_image_tag=$BACKEND_IMAGE"
+          fi
 
-            echo "Applying Terraform with images: $image_tags"
-            terraform apply -auto-approve $image_tags
+          echo "Applying Terraform with images: $image_tags"
+          terraform apply -auto-approve $image_tags
