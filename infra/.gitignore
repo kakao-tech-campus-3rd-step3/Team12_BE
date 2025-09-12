@@ -1,5 +1,5 @@
 .terraform/
-
+.idea
 *.tfstate
 *.tfstate.*
 *.tfvars

@@ -6,6 +6,7 @@
 ## 현재 구성된 리소스
 - IAM
     - uni-schedule-user: 관리자 권한(AdministratorAccess)을 가진 IAM User
+    - ecsTaskExecutionRole: ECS Task가 ECR에서 이미지 Pull 및 CloudWatch 로그를 기록할 수 있도록 하는 IAM Role
 
 - VPC
     - uni-schedule-vpc: 기본 VPC (CIDR: 10.0.0.0/16)
@@ -22,12 +23,25 @@
 
 - Security Group
     - DB 접근용 보안 그룹 (3306 포트 오픈)
+    - ALB 보안 그룹: 80 포트 외부 오픈
+    - ECS Task 보안 그룹: ALB에서 들어오는 트래픽(8080) 허용
 
+- ECS & ALB
+    - ECS Cluster (uni-schedule-cluster)
+    - ECS Task Definition (uni-schedule-task)
+        - ARM64 / Fargate 기반
+        - Backend 컨테이너 (포트 8080)
+        - DB 연결 정보(Environment 변수 → SSM Parameter Store에서 주입)
+        - CloudWatch Logs(/ecs/backend) 연동
+    - ECS Service (uni-schedule-service)
+    - Application Load Balancer
+        - 리스너(80) → Target Group(8080) 포워딩
+        - Health Check /actuator/health
+
+- CloudWatch
+    - Log Group: /ecs/backend (보존 기간 14일)
 
 ## 앞으로 남은 작업
-- ECS Cluster 구성
-    - Backend 컨테이너를 ECS Task로 배포하고 오토스케일링 구성
-
 - Frontend Hosting
     - React 프론트엔드를 S3 + CloudFront 기반 정적 호스팅
 
