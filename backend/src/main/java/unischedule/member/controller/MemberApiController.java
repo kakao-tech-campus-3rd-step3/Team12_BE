@@ -8,10 +8,10 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import unischedule.auth.jwt.JwtTokenProvider;
 import unischedule.auth.service.RefreshTokenService;
 import unischedule.member.dto.AccessTokenRefreshRequestDto;
@@ -20,7 +20,7 @@ import unischedule.member.dto.MemberRegistrationDto;
 import unischedule.member.dto.MemberTokenResponseDto;
 import unischedule.member.service.MemberService;
 
-@Controller
+@RestController
 @RequestMapping("/api/members")
 @RequiredArgsConstructor
 public class MemberApiController {
@@ -44,7 +44,7 @@ public class MemberApiController {
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         String accessToken = jwtTokenProvider.createAccessToken(authentication);
-        String refreshToken = jwtTokenProvider.createRefreshToken(authentication);
+        String refreshToken = refreshTokenService.issueRefreshToken(authentication);
 
         return ResponseEntity.ok(new MemberTokenResponseDto(accessToken, refreshToken));
     }

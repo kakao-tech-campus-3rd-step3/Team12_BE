@@ -25,7 +25,7 @@ public class Member {
     private String nickname;
     @Column(nullable = false, updatable = false, length = 50)
     private String email;
-    @Column(nullable = false, length = 50)
+    @Column(nullable = false, length = 255)
     private String password;
     @CreatedDate
     private LocalDateTime createdAt;
