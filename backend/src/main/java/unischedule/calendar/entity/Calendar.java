@@ -21,26 +21,20 @@ import unischedule.member.entity.Member;
 public class Calendar {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name="calendar_id")
-    private Long id;
+    private Long calendarId;
     
     @OneToOne
-    @JoinColumn(name = "owner_id")
-    private Member owner;
-    
-    @Column(name="team_id")
+    private Member member;
+
     private Long teamId;
-    
-    @Column(name="summary")
-    private String summary;
-    
-    @Column(name="description")
+
+    @Column(nullable = false, length = 255)
+    private String title;
+
     private String description;
-    
-    @Column(name="created_at")
+
     private LocalDateTime createdAt;
-    
-    @Column(name="updated_at")
+
     private LocalDateTime updatedAt;
     
     // 우선 개인에 맞춰 작성하면서 넣은것, 추후 삭제 필요
