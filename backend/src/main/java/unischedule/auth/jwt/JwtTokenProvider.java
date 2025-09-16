@@ -65,8 +65,10 @@ public class JwtTokenProvider {
 
         return Jwts.builder()
                 .subject(authentication.getName())
+                .claim("auth", authorities)
                 .issuedAt(now)
                 .expiration(validity)
+                .signWith(secretKey)
                 .compact();
     }
 
