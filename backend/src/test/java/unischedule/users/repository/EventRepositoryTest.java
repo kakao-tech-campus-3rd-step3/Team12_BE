@@ -18,8 +18,7 @@ class EventRepositoryTest {
     @Test
     void testSaveAndFind() {
         // given
-        Event event = new Event(
-            1L, 1L, "회의", "주간 회의",
+        Event event = new Event(1L, "회의", "주간 회의",
             LocalDateTime.of(2025, 9, 10, 10, 0),
             LocalDateTime.of(2025, 9, 10, 11, 0),
             "CONFIRMED", true
@@ -27,10 +26,11 @@ class EventRepositoryTest {
         
         // when
         Event saved = eventRepository.save(event);
-        List<Event> events = eventRepository.findByCreatorIdAndStartAtGreaterThanEqualAndEndAtLessThanEqual(
+        List<Event> events = eventRepository.findByCreatorIdAndStartAtLessThanAndEndAtGreaterThan(
             1L,
-            LocalDateTime.of(2025, 9, 1, 0, 0),
-            LocalDateTime.of(2025, 9, 30, 23, 59)
+            LocalDateTime.of(2025, 9, 30, 23, 59),
+            LocalDateTime.of(2025, 9, 1, 0, 0)
+            
         );
         
         // then

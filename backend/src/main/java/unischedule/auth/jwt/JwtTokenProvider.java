@@ -55,6 +55,21 @@ public class JwtTokenProvider {
                 .compact();
     }
 
+    public String createRefreshToken(Authentication authentication) {
+        String authorities = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.joining(","));
+
+        Date now = new Date();
+        Date validity = new Date(now.getTime() + refreshTokenTimeoutMs);
+
+        return Jwts.builder()
+                .subject(authentication.getName())
+                .issuedAt(now)
+                .expiration(validity)
+                .compact();
+    }
+
     public boolean validateToken(String token) {
         try {
             Claims claims = getClaims(token);
