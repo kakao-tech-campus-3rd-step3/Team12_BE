@@ -20,8 +20,7 @@ public class UsersService {
     @Transactional
     public EventCreateResponseDto makeEvent(Long userId, EventCreateRequestDto requestDto) {
         
-        boolean conflict = eventRepository.existsByCreatorIdAndStartAtLessThanAndEndAtGreaterThan(
-            userId,
+        boolean conflict = eventRepository.existsByStartAtLessThanAndEndAtGreaterThan(
             requestDto.endTime(),
             requestDto.startTime()
         );
@@ -31,7 +30,6 @@ public class UsersService {
         }
         
         Event newEvent = Event.builder()
-            .creatorId(userId)
             .title(requestDto.title())
             .content(requestDto.description())
             .startAt(requestDto.startTime())
@@ -47,8 +45,8 @@ public class UsersService {
     
     public List<EventGetResponseDto> getEvents(LocalDateTime startAt, LocalDateTime endAt, Long userId) {
         List<Event> findEvents = eventRepository
-            .findByCreatorIdAndStartAtLessThanAndEndAtGreaterThan(
-                userId, endAt, startAt
+            .findByStartAtLessThanAndEndAtGreaterThan(
+                endAt, startAt
             );
         
         return findEvents.stream().map(

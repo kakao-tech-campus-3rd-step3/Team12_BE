@@ -18,9 +18,8 @@ class EventRepositoryTest {
     @Test
     void testSaveAndFind() {
         // given
-        Event event = new Event(1L, "회의", "주간 회의",
-            LocalDateTime.of(2025, 9, 10, 10, 0),
-            LocalDateTime.of(2025, 9, 10, 11, 0),
+        Event event = new Event("회의", "주간 회의",
+            LocalDateTime.now(), LocalDateTime.now(),
             "CONFIRMED", true
         );
         
@@ -36,6 +35,6 @@ class EventRepositoryTest {
         // then
         assertThat(events).hasSize(1);
         assertThat(events.get(0).getTitle()).isEqualTo("회의");
-        assertThat(saved.getId()).isNotNull(); // DB가 자동 생성한 id 확인
+        assertThat(saved.getEventId()).isNotNull(); // DB가 자동 생성한 id 확인
     }
 }

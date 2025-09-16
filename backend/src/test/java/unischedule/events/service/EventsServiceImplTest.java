@@ -35,8 +35,7 @@ class EventsServiceImplTest {
         LocalDateTime end   = LocalDateTime.of(2025, 9, 1, 3, 0);
         EventModifyRequestDto requestDto = new EventModifyRequestDto("새 제목", "새 내용", null, null, null);
         
-        Event event = new Event(
-            1L, 1L, "회의", "주간 회의",
+        Event event = new Event(1L, "회의", "주간 회의",
             start, end, "CONFIRMED", true);
         given(eventRepository.findById(eventId)).willReturn(Optional.of(event));
         

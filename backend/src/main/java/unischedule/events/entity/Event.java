@@ -13,8 +13,6 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
 import unischedule.events.dto.EventModifyRequestDto;
 import unischedule.calendar.entity.Calendar;
 
@@ -26,39 +24,27 @@ public class Event {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name="event_id")
-    private Long id;
+    private Long eventId;
     
-    @Column(name = "creator_id", nullable = false, updatable = false)
-    private Long creatorId;
-    
-    @Column(name = "title", nullable = false)
+    @Column(nullable = false)
     private String title;
-    
-    @Column(name = "content")
+
     private String content;
     
-    @Column(name = "start_at", nullable = false)
+    @Column(nullable = false)
     private LocalDateTime startAt;
     
-    @Column(name = "end_at", nullable = false)
+    @Column(nullable = false)
     private LocalDateTime endAt;
     
-    @Column(name = "state", nullable = false)
+    @Column(nullable = false)
     private String state;
     
-    @Column(name="is_private", nullable = false)
+    @Column(nullable = false)
     private Boolean isPrivate;
     
     @Column(name = "recurrence_rule_id")
     private Long recurrenceRuleId;
-    
-    @CreatedDate
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
-    
-    @LastModifiedDate
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
     
     //우선 개인에 맞춰 세팅, 추후 수정 필요
     @ManyToOne
@@ -66,23 +52,14 @@ public class Event {
     private Calendar calendar;
     
     @Builder
-    public Event(Long creatorId, String title, String content,
-        LocalDateTime startAt, LocalDateTime endAt,
-        String state, Boolean isPrivate) {
-        this.creatorId = creatorId;
-        this.title = title;
-        this.content = content;
-        this.startAt = startAt;
-        this.endAt = endAt;
-        this.state = state;
-        this.isPrivate = isPrivate;
-    }
-    
-    // 테스트 전용
-    public Event(Long id, Long creatorId, String title, String content,
-        LocalDateTime startAt, LocalDateTime endAt, String state, Boolean isPrivate) {
-        this.id = id;
-        this.creatorId = creatorId;
+    public Event(
+            String title,
+            String content,
+            LocalDateTime startAt,
+            LocalDateTime endAt,
+            String state,
+            Boolean isPrivate
+    ) {
         this.title = title;
         this.content = content;
         this.startAt = startAt;

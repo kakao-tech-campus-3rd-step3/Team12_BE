@@ -22,9 +22,7 @@ public class EventsService {
             .orElseThrow(() -> new EntityNotFoundException("해당 이벤트가 없습니다."));
         
         if (requestDto.startTime() != null || requestDto.endTime() != null) {
-            boolean conflict = eventRepository.existsByCreatorIdAndIdNotAndStartAtLessThanAndEndAtGreaterThan(
-                findEvent.getCreatorId(),
-                eventId,
+            boolean conflict = eventRepository.existsByStartAtLessThanAndEndAtGreaterThan(
                 requestDto.endTime() != null ? requestDto.endTime() : findEvent.getEndAt(),
                 requestDto.startTime() != null ? requestDto.startTime() : findEvent.getStartAt()
             );

@@ -37,7 +37,7 @@ class UsersServiceImplTest {
         );
         
         Event savedEvent = new Event(
-            1L, 1L, "회의", "주간 회의",
+            1L, "회의", "주간 회의",
             requestDto.startTime(), requestDto.endTime(),
             "CONFIRMED", true
         );
@@ -65,14 +65,14 @@ class UsersServiceImplTest {
         Long userId = 1L;
         
         Event event1 = new Event(
-            1L, 1L, "회의", "주간 회의",
+            1L, "회의", "주간 회의",
             LocalDateTime.of(2025, 9, 10, 10, 0),
             LocalDateTime.of(2025, 9, 10, 11, 0),
             "CONFIRMED", true
         );
         
         Event event2 = new Event(
-            2L, 1L, "워크샵", "분기별 워크샵",
+            1L, "워크샵", "분기별 워크샵",
             LocalDateTime.of(2025, 9, 15, 14, 0),
             LocalDateTime.of(2025, 9, 15, 17, 0),
             "CONFIRMED", false

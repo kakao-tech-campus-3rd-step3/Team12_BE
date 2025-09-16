@@ -13,18 +13,19 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import unischedule.common.entity.BaseEntity;
 import unischedule.events.entity.Event;
 import unischedule.member.entity.Member;
 
 @Entity
 @Table(name="calendars")
-public class Calendar {
+public class Calendar extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long calendarId;
     
     @OneToOne
-    private Member member;
+    private Member owner;
 
     private Long teamId;
 
@@ -32,10 +33,6 @@ public class Calendar {
     private String title;
 
     private String description;
-
-    private LocalDateTime createdAt;
-
-    private LocalDateTime updatedAt;
     
     // 우선 개인에 맞춰 작성하면서 넣은것, 추후 삭제 필요
     @OneToMany(mappedBy = "calendar")
