@@ -1,14 +1,14 @@
 package unischedule.users.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import unischedule.users.entity.Event;
+import unischedule.events.entity.Event;
+import unischedule.events.repository.EventRepository;
 
 @DataJpaTest
 class EventRepositoryTest {

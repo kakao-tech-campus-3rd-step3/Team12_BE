@@ -6,11 +6,11 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import unischedule.exception.InvalidInputException;
-import unischedule.users.dto.EventCreateRequestDto;
-import unischedule.users.dto.EventCreateResponseDto;
-import unischedule.users.dto.EventGetResponseDto;
-import unischedule.users.entity.Event;
-import unischedule.users.repository.EventRepository;
+import unischedule.events.dto.EventCreateRequestDto;
+import unischedule.events.dto.EventCreateResponseDto;
+import unischedule.events.dto.EventGetResponseDto;
+import unischedule.events.entity.Event;
+import unischedule.events.repository.EventRepository;
 
 @Service
 @RequiredArgsConstructor

@@ -1,4 +1,4 @@
-package unischedule.users.dto;
+package unischedule.events.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

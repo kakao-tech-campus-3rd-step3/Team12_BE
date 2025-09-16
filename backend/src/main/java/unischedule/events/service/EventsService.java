@@ -6,9 +6,9 @@ import org.springframework.transaction.annotation.Transactional;
 import unischedule.events.dto.EventModifyRequestDto;
 import unischedule.exception.EntityNotFoundException;
 import unischedule.exception.InvalidInputException;
-import unischedule.users.dto.EventGetResponseDto;
-import unischedule.users.entity.Event;
-import unischedule.users.repository.EventRepository;
+import unischedule.events.dto.EventGetResponseDto;
+import unischedule.events.entity.Event;
+import unischedule.events.repository.EventRepository;
 
 @Service
 @RequiredArgsConstructor

@@ -1,8 +1,8 @@
-package unischedule.users.repository;
+package unischedule.calendar.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-import unischedule.users.entity.Calendar;
+import unischedule.calendar.entity.Calendar;
 
 @Repository
 public interface CalendarRepository extends JpaRepository<Calendar, Long> {

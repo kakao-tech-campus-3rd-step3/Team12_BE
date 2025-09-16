@@ -1,7 +1,6 @@
 package unischedule.users.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 
@@ -13,12 +12,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import unischedule.users.dto.EventCreateRequestDto;
-import unischedule.users.dto.EventCreateResponseDto;
-import unischedule.users.dto.EventGetResponseDto;
-import unischedule.users.entity.Event;
-import unischedule.users.repository.CalendarRepository;
-import unischedule.users.repository.EventRepository;
+import unischedule.events.dto.EventCreateRequestDto;
+import unischedule.events.dto.EventCreateResponseDto;
+import unischedule.events.dto.EventGetResponseDto;
+import unischedule.events.entity.Event;
+import unischedule.events.repository.EventRepository;
 
 @ExtendWith(MockitoExtension.class) // Mockito 초기화
 class UsersServiceImplTest {

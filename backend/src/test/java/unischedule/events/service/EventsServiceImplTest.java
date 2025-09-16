@@ -2,9 +2,7 @@ package unischedule.events.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 
@@ -17,9 +15,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import unischedule.events.dto.EventModifyRequestDto;
 import unischedule.exception.EntityNotFoundException;
-import unischedule.users.dto.EventGetResponseDto;
-import unischedule.users.entity.Event;
-import unischedule.users.repository.EventRepository;
+import unischedule.events.dto.EventGetResponseDto;
+import unischedule.events.entity.Event;
+import unischedule.events.repository.EventRepository;
 
 @ExtendWith(MockitoExtension.class)
 class EventsServiceImplTest {

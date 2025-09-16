@@ -1,4 +1,4 @@
-package unischedule.users.entity;
+package unischedule.events.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -14,9 +14,9 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
 import unischedule.events.dto.EventModifyRequestDto;
+import unischedule.calendar.entity.Calendar;
 
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)

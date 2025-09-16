@@ -1,7 +1,7 @@
-package unischedule.users.dto;
+package unischedule.events.dto;
 
 import java.time.LocalDateTime;
-import unischedule.users.entity.Event;
+import unischedule.events.entity.Event;
 
 public record EventGetResponseDto(Long eventId, String title, String description, LocalDateTime startTime,
                                   LocalDateTime endTime, Boolean isPrivate, Long ownerId, Long teamId) {

@@ -1,4 +1,4 @@
-package unischedule.users.entity;
+package unischedule.calendar.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -12,6 +12,8 @@ import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+
+import unischedule.events.entity.Event;
 import unischedule.member.entity.Member;
 
 @Entity
