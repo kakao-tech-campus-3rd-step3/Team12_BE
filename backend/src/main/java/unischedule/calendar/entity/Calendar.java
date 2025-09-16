@@ -18,7 +18,7 @@ import unischedule.events.entity.Event;
 import unischedule.member.entity.Member;
 
 @Entity
-@Table(name="calendars")
+@Table(name = "calendars")
 public class Calendar extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
