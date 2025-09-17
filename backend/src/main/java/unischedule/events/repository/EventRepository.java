@@ -18,13 +18,13 @@ public interface EventRepository extends JpaRepository<Event, Long> {
     @Query("""
             SELECT e
             FROM Event e
-            WHERE e.calendar.calendarId = :calendarId
+            WHERE e.calendar.calendarId IN :calendarIds
             AND e.endAt >= :startAt
             AND e.startAt <= :endAt
     """)
     List<Event> findScheduleInPeriod(
-            @Param("calendarId")
-            Long calendarId,
+            @Param("calendarIds")
+            List<Long> calendarIds,
             @Param("startAt")
             LocalDateTime startAt,
             @Param("endAt")
@@ -39,13 +39,13 @@ public interface EventRepository extends JpaRepository<Event, Long> {
     @Query("""
             SELECT count(e) > 0
             FROM Event e
-            WHERE e.calendar.calendarId = :calendarId
+            WHERE e.calendar.calendarId IN :calendarIds
             AND e.endAt >= :startAt
             AND e.startAt <= :endAt
     """)
     boolean existsScheduleInPeriod(
             @Param("calendarId")
-            Long calendarId,
+            List<Long> calendarIds,
             @Param("startAt")
             LocalDateTime startAt,
             @Param("endAt")

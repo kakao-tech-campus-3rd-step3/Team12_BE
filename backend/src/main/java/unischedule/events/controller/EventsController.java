@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -31,9 +33,12 @@ public class EventsController {
 
     @PostMapping("/add")
     public ResponseEntity<EventCreateResponseDto> makeEvent(
-            @RequestBody EventCreateRequestDto requestDto
+            @AuthenticationPrincipal
+            UserDetails userDetails,
+            @RequestBody
+            EventCreateRequestDto requestDto
     ) {
-        EventCreateResponseDto responseDto = eventsService.makeEvent(requestDto);
+        EventCreateResponseDto responseDto = eventsService.makeEvent(userDetails.getUsername(), requestDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(responseDto);
     }
     //추후 실제 테스트 때 들어오는 일정의 형식에 따라
@@ -41,15 +46,21 @@ public class EventsController {
     //이는 실제 CD 과정을 거쳐서 테스트 해봐야할 영역
 
     @GetMapping
-    public ResponseEntity<List<EventGetResponseDto>> getEvent(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startAt,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endAt
+    public ResponseEntity<List<EventGetResponseDto>> getMyEvents(
+            @AuthenticationPrincipal
+            UserDetails userDetails,
+            @RequestParam
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate startAt,
+            @RequestParam
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate endAt
     ) {
         // 날짜 → LocalDateTime 변환
         LocalDateTime startDateTime = startAt.atStartOfDay();           // 00:00
         LocalDateTime endDateTime = endAt.atTime(LocalTime.MAX);        // 23:59:59.999999999
 
-        List<EventGetResponseDto> responseDto = eventsService.getEvents(startDateTime, endDateTime);
+        List<EventGetResponseDto> responseDto = eventsService.getEvents(userDetails.getUsername(), startDateTime, endDateTime);
         return ResponseEntity.ok(responseDto);
     }
     //현재는 태그 없이 바로 리스트형태 반환

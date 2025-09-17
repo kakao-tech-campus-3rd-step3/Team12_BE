@@ -48,8 +48,8 @@ public class Event extends BaseEntity {
     private Long recurrenceRuleId;
     
     //우선 개인에 맞춰 세팅, 추후 수정 필요
-    @ManyToOne
-    @JoinColumn(name = "calendar_id")
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "calendar_id", nullable = false)
     private Calendar calendar;
     
     @Builder

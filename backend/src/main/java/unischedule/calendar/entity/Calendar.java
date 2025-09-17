@@ -13,11 +13,13 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import lombok.Getter;
 import unischedule.common.entity.BaseEntity;
 import unischedule.events.entity.Event;
 import unischedule.member.entity.Member;
 
 @Entity
+@Getter
 @Table(name = "calendars")
 public class Calendar extends BaseEntity {
     @Id

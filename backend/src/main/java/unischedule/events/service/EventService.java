@@ -3,6 +3,8 @@ package unischedule.events.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import unischedule.calendar.entity.Calendar;
+import unischedule.calendar.repository.CalendarRepository;
 import unischedule.events.dto.EventCreateRequestDto;
 import unischedule.events.dto.EventCreateResponseDto;
 import unischedule.events.dto.EventModifyRequestDto;
@@ -11,23 +13,32 @@ import unischedule.exception.InvalidInputException;
 import unischedule.events.dto.EventGetResponseDto;
 import unischedule.events.entity.Event;
 import unischedule.events.repository.EventRepository;
+import unischedule.member.entity.Member;
+import unischedule.member.repository.MemberRepository;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class EventService {
-    
+    private final MemberRepository memberRepository;
     private final EventRepository eventRepository;
+    private final CalendarRepository calendarRepository;
 
     @Transactional
-    public EventCreateResponseDto makeEvent(EventCreateRequestDto requestDto) {
+    public EventCreateResponseDto makeEvent(String email, EventCreateRequestDto requestDto) {
+        Member member = memberRepository.findByEmail(email)
+                .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
 
-        boolean conflict = eventRepository.existsByStartAtLessThanAndEndAtGreaterThan(
-                requestDto.endTime(),
-                requestDto.startTime()
-        );
+        List<Calendar> calendars = calendarRepository.findByOwner(member);
+
+        List<Long> calendarIds = calendars.stream()
+                .map(Calendar::getCalendarId)
+                .toList();
+
+        boolean conflict = eventRepository.existsScheduleInPeriod(calendarIds, requestDto.endTime(), requestDto.startTime());
 
         if (conflict) {
             throw new InvalidInputException("겹치는 일정이 있어 등록할 수 없습니다.");
@@ -48,15 +59,25 @@ public class EventService {
     }
 
     @Transactional(readOnly = true)
-    public List<EventGetResponseDto> getEvents(LocalDateTime startAt, LocalDateTime endAt) {
-        List<Event> findEvents = eventRepository
-                .findByStartAtLessThanAndEndAtGreaterThan(
-                        endAt, startAt
-                );
+    public List<EventGetResponseDto> getEvents(String email, LocalDateTime startAt, LocalDateTime endAt) {
+        Member member = memberRepository.findByEmail(email)
+                .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
 
-        return findEvents.stream().map(
-                EventGetResponseDto::new
-        ).toList();
+        List<Calendar> calendars = calendarRepository.findByOwner(member);
+
+        if (calendars.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<Long> calendarIds = calendars.stream()
+                .map(Calendar::getCalendarId)
+                .toList();
+
+        List<Event> findEvents = eventRepository.findScheduleInPeriod(calendarIds, endAt, startAt);
+
+        return findEvents.stream()
+                .map(EventGetResponseDto::new)
+                .toList();
     }
 
     //수정은 현재 테크 스펙 상 다른 도메인에 있어, 추후 추가 작성 필요
