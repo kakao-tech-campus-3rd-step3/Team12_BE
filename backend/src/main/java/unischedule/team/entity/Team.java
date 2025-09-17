@@ -24,4 +24,9 @@ public class Team extends BaseEntity {
     protected Team() {
 
     }
+
+    public Team(String name, String inviteCode) {
+        this.name = name;
+        this.inviteCode = inviteCode;
+    }
 }

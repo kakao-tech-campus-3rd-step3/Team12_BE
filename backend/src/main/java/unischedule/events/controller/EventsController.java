@@ -43,7 +43,6 @@ public class EventsController {
     }
     //추후 실제 테스트 때 들어오는 일정의 형식에 따라
     //Dto 내부의 데이터를 일부 파싱해야할 가능성 있음
-    //이는 실제 CD 과정을 거쳐서 테스트 해봐야할 영역
 
     @GetMapping
     public ResponseEntity<List<EventGetResponseDto>> getMyEvents(
@@ -77,7 +76,7 @@ public class EventsController {
         return ResponseEntity.ok(responseDto);
     }
     
-    //아래 부분은 테크 스펙에 대한 정리가 있고 난 이후에나 구현 가능할 듯
+    //아래 부분은 테크 스펙에 대한 정리 이후 구현
 //    @GetMapping("/{userId}/today")
 //    public ResponseEntity<List<EventGetResponseDto>> todayEvent() {
 //

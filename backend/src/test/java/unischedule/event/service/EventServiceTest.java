@@ -27,7 +27,7 @@ import unischedule.events.service.EventService;
 import unischedule.member.entity.Member;
 import unischedule.member.repository.MemberRepository;
 
-@ExtendWith(MockitoExtension.class) // Mockito 초기화
+@ExtendWith(MockitoExtension.class)
 class EventServiceTest {
     @Mock
     private EventRepository eventRepository;
