@@ -12,7 +12,7 @@ import unischedule.events.entity.Event;
 public interface EventRepository extends JpaRepository<Event, Long> {
     /**
      * 사용자의 특정 기간동안의 모든 일정 조회
-     * @param calendarIds
+     * @param memberId
      * @param startAt
      * @param endAt
      * @return
@@ -20,13 +20,13 @@ public interface EventRepository extends JpaRepository<Event, Long> {
     @Query("""
             SELECT e
             FROM Event e
-            WHERE e.calendar.calendarId IN :calendarIds
+            WHERE e.calendar.owner.memberId = :memberId
             AND e.endAt >= :startAt
             AND e.startAt <= :endAt
     """)
     List<Event> findScheduleInPeriod(
-            @Param("calendarIds")
-            List<Long> calendarIds,
+            @Param("memberId")
+            Long memberId,
             @Param("startAt")
             LocalDateTime startAt,
             @Param("endAt")
@@ -35,7 +35,7 @@ public interface EventRepository extends JpaRepository<Event, Long> {
 
     /**
      * 사용자의 특정 기간동안의 일정 존재 여부 확인
-     * @param calendarIds
+     * @param memberId
      * @param startAt
      * @param endAt
      * @return
@@ -43,13 +43,13 @@ public interface EventRepository extends JpaRepository<Event, Long> {
     @Query("""
             SELECT count(e) > 0
             FROM Event e
-            WHERE e.calendar.calendarId IN :calendarIds
+            WHERE e.calendar.owner.memberId = :memberId
             AND e.endAt >= :startAt
             AND e.startAt <= :endAt
     """)
     boolean existsScheduleInPeriod(
-            @Param("calendarIds")
-            List<Long> calendarIds,
+            @Param("memberId")
+            Long memberId,
             @Param("startAt")
             LocalDateTime startAt,
             @Param("endAt")
@@ -58,7 +58,7 @@ public interface EventRepository extends JpaRepository<Event, Long> {
 
     /**
      * 특정 이벤트를 제외하고 시간 중복 확인 (일정 수정 시 사용)
-     * @param calendarIds
+     * @param memberId
      * @param startAt
      * @param endAt
      * @param eventId
@@ -67,14 +67,14 @@ public interface EventRepository extends JpaRepository<Event, Long> {
     @Query("""
             SELECT count(e) > 0
             FROM Event e
-            WHERE e.calendar.calendarId IN :calendarIds
+            WHERE e.calendar.owner.memberId = :memberId
             AND e.eventId != :eventId
             AND e.endAt > :startAt
             AND e.startAt < :endAt
     """)
     boolean existsScheduleInPeriodExcludingEvent(
-            @Param("calendarIds")
-            List<Long> calendarIds,
+            @Param("memberId")
+            Long memberId,
             @Param("startAt")
             LocalDateTime startAt,
             @Param("endAt")

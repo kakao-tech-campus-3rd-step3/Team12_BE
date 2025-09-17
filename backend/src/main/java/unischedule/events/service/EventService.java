@@ -18,7 +18,6 @@ import unischedule.member.entity.Member;
 import unischedule.member.repository.MemberRepository;
 
 import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -41,13 +40,11 @@ public class EventService {
             throw new AccessDeniedException("해당 캘린더에 일정을 추가할 권한이 없습니다.");
         }
 
-        List<Calendar> calendars = calendarRepository.findByOwner(member);
-
-        List<Long> calendarIds = calendars.stream()
-                .map(Calendar::getCalendarId)
-                .toList();
-
-        boolean conflict = eventRepository.existsScheduleInPeriod(calendarIds, requestDto.endTime(), requestDto.startTime());
+        boolean conflict = eventRepository.existsScheduleInPeriod(
+                member.getMemberId(),
+                requestDto.startTime(),
+                requestDto.endTime()
+        );
 
         if (conflict) {
             throw new InvalidInputException("겹치는 일정이 있어 등록할 수 없습니다.");
@@ -72,17 +69,11 @@ public class EventService {
         Member member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
 
-        List<Calendar> calendars = calendarRepository.findByOwner(member);
-
-        if (calendars.isEmpty()) {
-            return Collections.emptyList();
-        }
-
-        List<Long> calendarIds = calendars.stream()
-                .map(Calendar::getCalendarId)
-                .toList();
-
-        List<Event> findEvents = eventRepository.findScheduleInPeriod(calendarIds, endAt, startAt);
+        List<Event> findEvents = eventRepository.findScheduleInPeriod(
+                member.getMemberId(),
+                startAt,
+                endAt
+        );
 
         return findEvents.stream()
                 .map(EventGetResponseDto::new)
@@ -107,14 +98,8 @@ public class EventService {
             LocalDateTime newStartAt = requestDto.startTime() != null ? requestDto.startTime() : findEvent.getStartAt();
             LocalDateTime newEndAt = requestDto.endTime() != null ? requestDto.endTime() : findEvent.getEndAt();
 
-            List<Calendar> calendars = calendarRepository.findByOwner(member);
-
-            List<Long> calendarIds = calendars.stream()
-                    .map(Calendar::getCalendarId)
-                    .toList();
-
             boolean conflict = eventRepository.existsScheduleInPeriodExcludingEvent(
-                    calendarIds,
+                    member.getMemberId(),
                     newStartAt,
                     newEndAt,
                     requestDto.eventId()
