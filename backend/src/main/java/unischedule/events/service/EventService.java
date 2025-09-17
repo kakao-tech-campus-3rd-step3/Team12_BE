@@ -84,14 +84,25 @@ public class EventService {
     //삭제는 현재 테크 스펙 상 없음
     
     @Transactional
-    public EventGetResponseDto modifyEvent(Long eventId, EventModifyRequestDto requestDto) {
+    public EventGetResponseDto modifyEvent(String email, Long eventId, EventModifyRequestDto requestDto) {
         Event findEvent = eventRepository.findById(eventId)
             .orElseThrow(() -> new EntityNotFoundException("해당 이벤트가 없습니다."));
         
         if (requestDto.startTime() != null || requestDto.endTime() != null) {
-            boolean conflict = eventRepository.existsByStartAtLessThanAndEndAtGreaterThan(
-                requestDto.endTime() != null ? requestDto.endTime() : findEvent.getEndAt(),
-                requestDto.startTime() != null ? requestDto.startTime() : findEvent.getStartAt()
+
+            Member member = memberRepository.findByEmail(email)
+                    .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
+
+            List<Calendar> calendars = calendarRepository.findByOwner(member);
+
+            List<Long> calendarIds = calendars.stream()
+                    .map(Calendar::getCalendarId)
+                    .toList();
+
+            boolean conflict = eventRepository.existsScheduleInPeriod(
+                    calendarIds,
+                    requestDto.endTime() != null ? requestDto.endTime() : findEvent.getEndAt(),
+                    requestDto.startTime() != null ? requestDto.startTime() : findEvent.getStartAt()
             );
             
             if (conflict) {

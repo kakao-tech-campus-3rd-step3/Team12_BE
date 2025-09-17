@@ -10,11 +10,6 @@ import unischedule.events.entity.Event;
 
 @Repository
 public interface EventRepository extends JpaRepository<Event, Long> {
-    List<Event> findByStartAtLessThanAndEndAtGreaterThan(
-        LocalDateTime endAt,
-        LocalDateTime startAt
-    );
-
     @Query("""
             SELECT e
             FROM Event e
@@ -29,11 +24,6 @@ public interface EventRepository extends JpaRepository<Event, Long> {
             LocalDateTime startAt,
             @Param("endAt")
             LocalDateTime endAt
-    );
-    
-    boolean existsByStartAtLessThanAndEndAtGreaterThan(
-        LocalDateTime endAt,
-        LocalDateTime startAt
     );
 
     @Query("""

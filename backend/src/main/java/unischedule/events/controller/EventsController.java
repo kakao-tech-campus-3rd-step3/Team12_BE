@@ -68,10 +68,14 @@ public class EventsController {
     
     @PatchMapping("/{eventId}")
     public ResponseEntity<EventGetResponseDto> modifyEvent(
-        @PathVariable Long eventId,
-        @RequestBody EventModifyRequestDto requestDto
+            @AuthenticationPrincipal
+            UserDetails userDetails,
+            @PathVariable
+            Long eventId,
+            @RequestBody
+            EventModifyRequestDto requestDto
     ) {
-        EventGetResponseDto responseDto = eventsService.modifyEvent(eventId, requestDto);
+        EventGetResponseDto responseDto = eventsService.modifyEvent(userDetails.getUsername(), eventId, requestDto);
         return ResponseEntity.ok(responseDto);
     }
     
