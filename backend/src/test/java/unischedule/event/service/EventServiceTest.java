@@ -43,16 +43,18 @@ class EventServiceTest {
     void makeEvent() {
         // given
         String userEmail = "test@example.com";
+        Long memberId = 1L;
         Long calendarId = 1L;
 
-        Member owner = new Member(userEmail, "testtest", "1q2w3e4r!");
-        Calendar realCalendar = new Calendar(owner, null, "test", "캘린더");
+        Member realOwner = new Member(userEmail, "testtest", "1q2w3e4r!");
+        Member owner = Mockito.spy(realOwner);
+        given(owner.getMemberId()).willReturn(memberId);
 
+        Calendar realCalendar = new Calendar(owner, null, "test", "캘린더");
         Calendar calendar = Mockito.spy(realCalendar);
-        given(calendar.getCalendarId()).willReturn(calendarId);
 
         EventCreateRequestDto requestDto = new EventCreateRequestDto(
-            1L, "새 회의", "주간 회의",
+            calendarId, "새 회의", "주간 회의",
             LocalDateTime.now(), LocalDateTime.now().plusHours(1),
             true
         );
@@ -64,8 +66,8 @@ class EventServiceTest {
         );
 
         given(memberRepository.findByEmail(userEmail)).willReturn(Optional.of(owner));
-        given(calendarRepository.findByOwner(owner)).willReturn(List.of(calendar));
-        given(eventRepository.existsScheduleInPeriod(eq(List.of(calendarId)), any(), any())).willReturn(false);
+        given(calendarRepository.findById(calendarId)).willReturn(Optional.of(calendar));
+        given(eventRepository.existsScheduleInPeriod(eq(memberId), any(), any())).willReturn(false);
         given(eventRepository.save(any(Event.class))).willReturn(event);
         
         // when
@@ -82,15 +84,13 @@ class EventServiceTest {
     void getMemberSchedule() {
         // given
         String userEmail = "test@gmail.com";
+        Long memberId = 1L;
         LocalDateTime start = LocalDateTime.of(2025, 9, 1, 0, 0);
         LocalDateTime end   = LocalDateTime.of(2025, 9, 30, 23, 59);
 
-        Member member = new Member(userEmail, "testtest", "1q2w3e4r!");
-        Calendar realCalendar = new Calendar(member, null, "test", "asdf");
-
-        Calendar calendar = Mockito.spy(realCalendar);
-
-        given(calendar.getCalendarId()).willReturn(1L);
+        Member realMember = new Member(userEmail, "testtest", "1q2w3e4r!");
+        Member member = Mockito.spy(realMember);
+        given(member.getMemberId()).willReturn(memberId);
 
         Event event1 = new Event(
             "회의", "주간 회의",
@@ -105,12 +105,9 @@ class EventServiceTest {
             "CONFIRMED", false
         );
 
-        event1.connectCalendar(calendar);
-        event2.connectCalendar(calendar);
 
         given(memberRepository.findByEmail(userEmail)).willReturn(Optional.of(member));
-        given(calendarRepository.findByOwner(member)).willReturn(List.of(calendar));
-        given(eventRepository.findScheduleInPeriod(eq(List.of(calendar.getCalendarId())), any(), any()))
+        given(eventRepository.findScheduleInPeriod(eq(memberId), any(), any()))
                 .willReturn(List.of(event1, event2));
         
         // when

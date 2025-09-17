@@ -40,7 +40,7 @@ class EventRepositoryTest {
         // when
         eventRepository.save(event);
         List<Event> events = eventRepository.findScheduleInPeriod(
-                List.of(savedCalendar.getCalendarId()),
+                1L,
                 LocalDateTime.of(2025, 9, 1, 0, 0),
                 LocalDateTime.of(2025, 9, 30, 23, 59)
         );
