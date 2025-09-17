@@ -13,6 +13,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import unischedule.common.entity.BaseEntity;
 import unischedule.events.dto.EventModifyRequestDto;
 import unischedule.calendar.entity.Calendar;
 
@@ -20,7 +21,7 @@ import unischedule.calendar.entity.Calendar;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name="events")
 @Getter
-public class Event {
+public class Event extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name="event_id")
