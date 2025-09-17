@@ -40,7 +40,7 @@ class EventsServiceImplTest {
         given(eventRepository.findById(eventId)).willReturn(Optional.of(event));
         
         // when
-        EventGetResponseDto response = eventsService.modifyEvent(eventId, requestDto);
+        EventGetResponseDto response = eventsService.modifyEvent("test@gmail.com", requestDto);
         
         // then
         assertThat(response.title()).isEqualTo("새 제목");
@@ -56,7 +56,7 @@ class EventsServiceImplTest {
         given(eventRepository.findById(eventId)).willReturn(Optional.empty());
         
         // when & then
-        assertThatThrownBy(() -> eventsService.modifyEvent(eventId, requestDto))
+        assertThatThrownBy(() -> eventsService.modifyEvent("test@gmail.com", requestDto))
             .isInstanceOf(EntityNotFoundException.class)
             .hasMessage("해당 이벤트가 없습니다.");
     }

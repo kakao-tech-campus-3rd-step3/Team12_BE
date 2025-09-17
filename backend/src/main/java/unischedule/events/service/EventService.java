@@ -1,6 +1,7 @@
 package unischedule.events.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import unischedule.calendar.entity.Calendar;
@@ -19,6 +20,7 @@ import unischedule.member.repository.MemberRepository;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +33,13 @@ public class EventService {
     public EventCreateResponseDto makeEvent(String email, EventCreateRequestDto requestDto) {
         Member member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
+
+        Calendar targetCalendar = calendarRepository.findById(requestDto.calendarId())
+                .orElseThrow(() -> new EntityNotFoundException("해당 캘린더를 찾을 수 없습니다."));
+
+        if(!Objects.equals(targetCalendar.getOwner().getMemberId(), member.getMemberId())) {
+            throw new AccessDeniedException("해당 캘린더에 일정을 추가할 권한이 없습니다.");
+        }
 
         List<Calendar> calendars = calendarRepository.findByOwner(member);
 
@@ -80,18 +89,23 @@ public class EventService {
                 .toList();
     }
 
-    //수정은 현재 테크 스펙 상 다른 도메인에 있어, 추후 추가 작성 필요
     //삭제는 현재 테크 스펙 상 없음
     
     @Transactional
-    public EventGetResponseDto modifyEvent(String email, Long eventId, EventModifyRequestDto requestDto) {
-        Event findEvent = eventRepository.findById(eventId)
-            .orElseThrow(() -> new EntityNotFoundException("해당 이벤트가 없습니다."));
-        
-        if (requestDto.startTime() != null || requestDto.endTime() != null) {
+    public EventGetResponseDto modifyEvent(String email, EventModifyRequestDto requestDto) {
+        Member member = memberRepository.findByEmail(email)
+                .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
 
-            Member member = memberRepository.findByEmail(email)
-                    .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
+        Event findEvent = eventRepository.findById(requestDto.eventId())
+            .orElseThrow(() -> new EntityNotFoundException("해당 이벤트가 없습니다."));
+
+        if(!Objects.equals(findEvent.getCalendar().getOwner().getMemberId(), member.getMemberId())) {
+            throw new AccessDeniedException("해당 일정을 수정할 권한이 없습니다.");
+        }
+
+        if (requestDto.startTime() != null || requestDto.endTime() != null) {
+            LocalDateTime newStartAt = requestDto.startTime() != null ? requestDto.startTime() : findEvent.getStartAt();
+            LocalDateTime newEndAt = requestDto.endTime() != null ? requestDto.endTime() : findEvent.getEndAt();
 
             List<Calendar> calendars = calendarRepository.findByOwner(member);
 
@@ -99,10 +113,11 @@ public class EventService {
                     .map(Calendar::getCalendarId)
                     .toList();
 
-            boolean conflict = eventRepository.existsScheduleInPeriod(
+            boolean conflict = eventRepository.existsScheduleInPeriodExcludingEvent(
                     calendarIds,
-                    requestDto.endTime() != null ? requestDto.endTime() : findEvent.getEndAt(),
-                    requestDto.startTime() != null ? requestDto.startTime() : findEvent.getStartAt()
+                    newStartAt,
+                    newEndAt,
+                    requestDto.eventId()
             );
             
             if (conflict) {

@@ -66,16 +66,14 @@ public class EventsController {
     //현재는 태그 없이 바로 리스트형태 반환
     //추후 태그 필요 시 태그를 포함하는 Dto 형태로 다시 작성할 필요 있음
     
-    @PatchMapping("/{eventId}")
+    @PatchMapping("/modify")
     public ResponseEntity<EventGetResponseDto> modifyEvent(
             @AuthenticationPrincipal
             UserDetails userDetails,
-            @PathVariable
-            Long eventId,
             @RequestBody
             EventModifyRequestDto requestDto
     ) {
-        EventGetResponseDto responseDto = eventsService.modifyEvent(userDetails.getUsername(), eventId, requestDto);
+        EventGetResponseDto responseDto = eventsService.modifyEvent(userDetails.getUsername(), requestDto);
         return ResponseEntity.ok(responseDto);
     }
     
