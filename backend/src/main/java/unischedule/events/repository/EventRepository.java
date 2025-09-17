@@ -44,7 +44,7 @@ public interface EventRepository extends JpaRepository<Event, Long> {
             AND e.startAt <= :endAt
     """)
     boolean existsScheduleInPeriod(
-            @Param("calendarId")
+            @Param("calendarIds")
             List<Long> calendarIds,
             @Param("startAt")
             LocalDateTime startAt,

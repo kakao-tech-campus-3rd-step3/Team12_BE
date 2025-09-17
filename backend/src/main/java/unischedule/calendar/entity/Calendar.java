@@ -6,6 +6,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
@@ -17,6 +18,7 @@ import lombok.Getter;
 import unischedule.common.entity.BaseEntity;
 import unischedule.events.entity.Event;
 import unischedule.member.entity.Member;
+import unischedule.team.entity.Team;
 
 @Entity
 @Getter
@@ -26,10 +28,11 @@ public class Calendar extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long calendarId;
     
-    @OneToOne
+    @ManyToOne
     private Member owner;
 
-    private Long teamId;
+    @ManyToOne
+    private Team team;
 
     @Column(nullable = false, length = 255)
     private String title;
@@ -39,4 +42,15 @@ public class Calendar extends BaseEntity {
     // 우선 개인에 맞춰 작성하면서 넣은것, 추후 삭제 필요
     @OneToMany(mappedBy = "calendar")
     private List<Event> events = new ArrayList<>();
+
+    protected Calendar() {
+
+    }
+
+    public Calendar(Member owner, Team team, String title, String description) {
+        this.owner = owner;
+        this.team = team;
+        this.title = title;
+        this.description = description;
+    }
 }

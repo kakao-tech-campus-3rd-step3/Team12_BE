@@ -96,4 +96,8 @@ public class Event extends BaseEntity {
     public void modifyPrivate(Boolean isPrivate) {
         this.isPrivate = isPrivate;
     }
+
+    public void connectCalendar(Calendar calendar) {
+        this.calendar = calendar;
+    }
 }

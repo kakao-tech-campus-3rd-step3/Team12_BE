@@ -33,7 +33,7 @@ class EventsServiceImplTest {
         Long eventId = 1L;
         LocalDateTime start = LocalDateTime.of(2025, 9, 1, 0, 0);
         LocalDateTime end   = LocalDateTime.of(2025, 9, 1, 3, 0);
-        EventModifyRequestDto requestDto = new EventModifyRequestDto("새 제목", "새 내용", null, null, null);
+        EventModifyRequestDto requestDto = new EventModifyRequestDto(1L, "새 제목", "새 내용", null, null, null);
         
         Event event = new Event("회의", "주간 회의",
             start, end, "CONFIRMED", true);
@@ -51,7 +51,7 @@ class EventsServiceImplTest {
     void modifyEvent_notFound_throwsException() {
         // given
         Long eventId = 99L;
-        EventModifyRequestDto requestDto = new EventModifyRequestDto("제목", "내용", null, null, null);
+        EventModifyRequestDto requestDto = new EventModifyRequestDto(1L, "제목", "내용", null, null, null);
         
         given(eventRepository.findById(eventId)).willReturn(Optional.empty());
         

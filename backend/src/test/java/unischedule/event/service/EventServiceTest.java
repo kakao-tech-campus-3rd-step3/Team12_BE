@@ -1,0 +1,123 @@
+package unischedule.event.service;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.BDDMockito.given;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
+import unischedule.calendar.entity.Calendar;
+import unischedule.calendar.repository.CalendarRepository;
+import unischedule.events.dto.EventCreateRequestDto;
+import unischedule.events.dto.EventCreateResponseDto;
+import unischedule.events.dto.EventGetResponseDto;
+import unischedule.events.entity.Event;
+import unischedule.events.repository.EventRepository;
+import unischedule.events.service.EventService;
+import unischedule.member.entity.Member;
+import unischedule.member.repository.MemberRepository;
+
+@ExtendWith(MockitoExtension.class) // Mockito 초기화
+class EventServiceTest {
+    @Mock
+    private EventRepository eventRepository;
+    @Mock
+    private MemberRepository memberRepository;
+    @Mock
+    private CalendarRepository calendarRepository;
+    @InjectMocks
+    private EventService eventService;
+    
+    @Test
+    @DisplayName("특정 캘린더에 새 일정 등록")
+    void makeEvent() {
+        // given
+        String userEmail = "test@example.com";
+        Long calendarId = 1L;
+
+        Member owner = new Member(userEmail, "testtest", "1q2w3e4r!");
+        Calendar realCalendar = new Calendar(owner, null, "test", "캘린더");
+
+        Calendar calendar = Mockito.spy(realCalendar);
+        given(calendar.getCalendarId()).willReturn(calendarId);
+
+        EventCreateRequestDto requestDto = new EventCreateRequestDto(
+            1L, "새 회의", "주간 회의",
+            LocalDateTime.now(), LocalDateTime.now().plusHours(1),
+            true
+        );
+        
+        Event event = new Event(
+            "새 회의", "주간 회의",
+            requestDto.startTime(), requestDto.endTime(),
+            "CONFIRMED", true
+        );
+
+        given(memberRepository.findByEmail(userEmail)).willReturn(Optional.of(owner));
+        given(calendarRepository.findByOwner(owner)).willReturn(List.of(calendar));
+        given(eventRepository.existsScheduleInPeriod(eq(List.of(calendarId)), any(), any())).willReturn(false);
+        given(eventRepository.save(any(Event.class))).willReturn(event);
+        
+        // when
+        EventCreateResponseDto result = eventService.makeEvent(userEmail, requestDto);
+        
+        // then
+        assertThat(result).isNotNull();
+        assertThat(result.title()).isEqualTo("새 회의");
+        assertThat(result.description()).isEqualTo("주간 회의");
+    }
+    
+    @Test
+    @DisplayName("사용자가 소유한 모든 캘린더 일정 기간 조회")
+    void getMemberSchedule() {
+        // given
+        String userEmail = "test@gmail.com";
+        LocalDateTime start = LocalDateTime.of(2025, 9, 1, 0, 0);
+        LocalDateTime end   = LocalDateTime.of(2025, 9, 30, 23, 59);
+
+        Member member = new Member(userEmail, "testtest", "1q2w3e4r!");
+        Calendar realCalendar = new Calendar(member, null, "test", "asdf");
+
+        Calendar calendar = Mockito.spy(realCalendar);
+
+        given(calendar.getCalendarId()).willReturn(1L);
+
+        Event event1 = new Event(
+            "회의", "주간 회의",
+            LocalDateTime.of(2025, 9, 10, 10, 0),
+            LocalDateTime.of(2025, 9, 10, 11, 0),
+            "CONFIRMED", true
+        );
+        
+        Event event2 = new Event("워크샵", "분기별 워크샵",
+            LocalDateTime.of(2025, 9, 15, 14, 0),
+            LocalDateTime.of(2025, 9, 15, 17, 0),
+            "CONFIRMED", false
+        );
+
+        event1.connectCalendar(calendar);
+        event2.connectCalendar(calendar);
+
+        given(memberRepository.findByEmail(userEmail)).willReturn(Optional.of(member));
+        given(calendarRepository.findByOwner(member)).willReturn(List.of(calendar));
+        given(eventRepository.findScheduleInPeriod(eq(List.of(calendar.getCalendarId())), any(), any()))
+                .willReturn(List.of(event1, event2));
+        
+        // when
+        List<EventGetResponseDto> result = eventService.getEvents(userEmail, start, end);
+        
+        // then
+        assertThat(result).hasSize(2);
+        assertThat(result.get(0).title()).isEqualTo(event1.getTitle());
+    }
+}

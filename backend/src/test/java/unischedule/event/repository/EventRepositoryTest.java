@@ -1,4 +1,4 @@
-package unischedule.users.repository;
+package unischedule.event.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
