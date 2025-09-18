@@ -75,7 +75,7 @@ public class EventService {
         );
 
         return findEvents.stream()
-                .map(EventGetResponseDto::new)
+                .map(EventGetResponseDto::from)
                 .toList();
     }
 
@@ -109,7 +109,7 @@ public class EventService {
         
         findEvent.modifyEvent(requestDto);
         
-        return new EventGetResponseDto(findEvent);
+        return EventGetResponseDto.from(findEvent);
     }
 
     private static void checkValidity(Calendar findEvent, Member member, String msg) {

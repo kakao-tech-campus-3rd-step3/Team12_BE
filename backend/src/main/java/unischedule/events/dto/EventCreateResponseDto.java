@@ -1,8 +1,6 @@
 package unischedule.events.dto;
 
 import java.time.LocalDateTime;
-
-import jakarta.validation.constraints.NotNull;
 import unischedule.events.entity.Event;
 
 public record EventCreateResponseDto(
