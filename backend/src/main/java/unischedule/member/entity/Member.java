@@ -18,7 +18,7 @@ import java.time.LocalDateTime;
 @Entity
 @Getter
 @Table(name = "members")
-public class Member extends BaseEntity {
+public class Member {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long memberId;
