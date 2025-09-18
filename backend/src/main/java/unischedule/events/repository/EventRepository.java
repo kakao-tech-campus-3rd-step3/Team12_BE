@@ -24,7 +24,7 @@ public interface EventRepository extends JpaRepository<Event, Long> {
             AND e.endAt >= :startAt
             AND e.startAt <= :endAt
     """)
-    List<Event> findScheduleInPeriod(
+    List<Event> findPersonalScheduleInPeriod(
             @Param("memberId")
             Long memberId,
             @Param("startAt")
@@ -44,10 +44,10 @@ public interface EventRepository extends JpaRepository<Event, Long> {
             SELECT count(e) > 0
             FROM Event e
             WHERE e.calendar.owner.memberId = :memberId
-            AND e.endAt >= :startAt
-            AND e.startAt <= :endAt
+            AND e.endAt > :startAt
+            AND e.startAt < :endAt
     """)
-    boolean existsScheduleInPeriod(
+    boolean existsPersonalScheduleInPeriod(
             @Param("memberId")
             Long memberId,
             @Param("startAt")
@@ -72,7 +72,7 @@ public interface EventRepository extends JpaRepository<Event, Long> {
             AND e.endAt > :startAt
             AND e.startAt < :endAt
     """)
-    boolean existsScheduleInPeriodExcludingEvent(
+    boolean existsPersonalScheduleInPeriodExcludingEvent(
             @Param("memberId")
             Long memberId,
             @Param("startAt")

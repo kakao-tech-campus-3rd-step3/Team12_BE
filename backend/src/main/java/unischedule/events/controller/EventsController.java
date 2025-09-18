@@ -8,7 +8,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -38,7 +37,7 @@ public class EventsController {
             @RequestBody
             EventCreateRequestDto requestDto
     ) {
-        EventCreateResponseDto responseDto = eventsService.makeEvent(userDetails.getUsername(), requestDto);
+        EventCreateResponseDto responseDto = eventsService.makePersonalEvent(userDetails.getUsername(), requestDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(responseDto);
     }
     //추후 실제 테스트 때 들어오는 일정의 형식에 따라
@@ -59,7 +58,7 @@ public class EventsController {
         LocalDateTime startDateTime = startAt.atStartOfDay();           // 00:00
         LocalDateTime endDateTime = endAt.atTime(LocalTime.MAX);        // 23:59:59.999999999
 
-        List<EventGetResponseDto> responseDto = eventsService.getEvents(userDetails.getUsername(), startDateTime, endDateTime);
+        List<EventGetResponseDto> responseDto = eventsService.getPersonalEvents(userDetails.getUsername(), startDateTime, endDateTime);
         return ResponseEntity.ok(responseDto);
     }
     //현재는 태그 없이 바로 리스트형태 반환
@@ -72,7 +71,7 @@ public class EventsController {
             @RequestBody
             EventModifyRequestDto requestDto
     ) {
-        EventGetResponseDto responseDto = eventsService.modifyEvent(userDetails.getUsername(), requestDto);
+        EventGetResponseDto responseDto = eventsService.modifyPersonalEvent(userDetails.getUsername(), requestDto);
         return ResponseEntity.ok(responseDto);
     }
     

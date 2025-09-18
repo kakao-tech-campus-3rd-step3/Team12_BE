@@ -68,11 +68,11 @@ class EventServiceTest {
 
         given(memberRepository.findByEmail(userEmail)).willReturn(Optional.of(owner));
         given(calendarRepository.findById(calendarId)).willReturn(Optional.of(calendar));
-        given(eventRepository.existsScheduleInPeriod(eq(memberId), any(), any())).willReturn(false);
+        given(eventRepository.existsPersonalScheduleInPeriod(eq(memberId), any(), any())).willReturn(false);
         given(eventRepository.save(any(Event.class))).willReturn(event);
         
         // when
-        EventCreateResponseDto result = eventService.makeEvent(userEmail, requestDto);
+        EventCreateResponseDto result = eventService.makePersonalEvent(userEmail, requestDto);
         
         // then
         assertThat(result).isNotNull();
@@ -108,11 +108,11 @@ class EventServiceTest {
 
 
         given(memberRepository.findByEmail(userEmail)).willReturn(Optional.of(member));
-        given(eventRepository.findScheduleInPeriod(eq(memberId), any(), any()))
+        given(eventRepository.findPersonalScheduleInPeriod(eq(memberId), any(), any()))
                 .willReturn(List.of(event1, event2));
         
         // when
-        List<EventGetResponseDto> result = eventService.getEvents(userEmail, start, end);
+        List<EventGetResponseDto> result = eventService.getPersonalEvents(userEmail, start, end);
         
         // then
         assertThat(result).hasSize(2);

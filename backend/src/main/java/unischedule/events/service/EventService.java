@@ -30,7 +30,7 @@ public class EventService {
     private final CalendarRepository calendarRepository;
 
     @Transactional
-    public EventCreateResponseDto makeEvent(String email, EventCreateRequestDto requestDto) {
+    public EventCreateResponseDto makePersonalEvent(String email, EventCreateRequestDto requestDto) {
         Member member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
 
@@ -41,7 +41,7 @@ public class EventService {
             throw new AccessDeniedException("해당 캘린더에 일정을 추가할 권한이 없습니다.");
         }
 
-        boolean conflict = eventRepository.existsScheduleInPeriod(
+        boolean conflict = eventRepository.existsPersonalScheduleInPeriod(
                 member.getMemberId(),
                 requestDto.startTime(),
                 requestDto.endTime()
@@ -66,11 +66,11 @@ public class EventService {
     }
 
     @Transactional(readOnly = true)
-    public List<EventGetResponseDto> getEvents(String email, LocalDateTime startAt, LocalDateTime endAt) {
+    public List<EventGetResponseDto> getPersonalEvents(String email, LocalDateTime startAt, LocalDateTime endAt) {
         Member member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
 
-        List<Event> findEvents = eventRepository.findScheduleInPeriod(
+        List<Event> findEvents = eventRepository.findPersonalScheduleInPeriod(
                 member.getMemberId(),
                 startAt,
                 endAt
@@ -84,7 +84,7 @@ public class EventService {
     //삭제는 현재 테크 스펙 상 없음
     
     @Transactional
-    public EventGetResponseDto modifyEvent(String email, EventModifyRequestDto requestDto) {
+    public EventGetResponseDto modifyPersonalEvent(String email, EventModifyRequestDto requestDto) {
         Member member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
 
@@ -99,7 +99,7 @@ public class EventService {
             LocalDateTime newStartAt = requestDto.startTime() != null ? requestDto.startTime() : findEvent.getStartAt();
             LocalDateTime newEndAt = requestDto.endTime() != null ? requestDto.endTime() : findEvent.getEndAt();
 
-            boolean conflict = eventRepository.existsScheduleInPeriodExcludingEvent(
+            boolean conflict = eventRepository.existsPersonalScheduleInPeriodExcludingEvent(
                     member.getMemberId(),
                     newStartAt,
                     newEndAt,
