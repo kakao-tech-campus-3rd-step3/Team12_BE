@@ -75,6 +75,7 @@ public class JwtTokenProvider {
     public boolean validateToken(String token) {
         try {
             Claims claims = getClaims(token);
+            // 현재 시간이 만료 시간 이전인지 확인
             return !claims
                     .getExpiration()
                     .before(new Date());
@@ -87,6 +88,7 @@ public class JwtTokenProvider {
     public Authentication getAuthentication(String token) {
         Claims claims = getClaims(token);
 
+        // 토큰의 "auth" 클레임을 콤마로 분리해 권한 리스트 생성
         Collection<? extends GrantedAuthority> authorities = Arrays.stream(claims.get("auth")
                 .toString()
                 .split(","))
@@ -103,6 +105,11 @@ public class JwtTokenProvider {
                 .getSubject();
     }
 
+    /**
+     * 토큰 파싱 후 Claims 객체 반환 (JWT 페이로드)
+     * @param token
+     * @return
+     */
     private Claims getClaims(String token) {
         return Jwts.parser()
                 .verifyWith(secretKey)
