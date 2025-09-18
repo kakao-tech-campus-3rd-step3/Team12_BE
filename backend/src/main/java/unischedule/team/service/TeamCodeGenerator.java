@@ -11,7 +11,7 @@ public class TeamCodeGenerator {
     private static final String CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*";
     private final SecureRandom secureRandom = new SecureRandom();
     
-    public String generateRandomCode() {
+    public String generate() {
         StringBuilder sb = new StringBuilder();
         
         for (int i = 0; i < DEFAULT_LENGTH; i++) {

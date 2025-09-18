@@ -6,4 +6,6 @@ import unischedule.team.entity.Team;
 
 @Repository
 public interface TeamRepository extends JpaRepository<Team, Long> {
+    
+    boolean existsByInviteCode(String code);
 }
