@@ -1,4 +1,4 @@
-package unischedule.config;
+package unischedule.common.config;
 
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import io.netty.channel.ChannelOption;
