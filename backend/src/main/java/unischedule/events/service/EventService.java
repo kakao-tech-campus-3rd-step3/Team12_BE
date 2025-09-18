@@ -79,8 +79,6 @@ public class EventService {
                 .map(EventGetResponseDto::from)
                 .toList();
     }
-
-    //삭제는 현재 테크 스펙 상 없음
     
     @Transactional
     public EventGetResponseDto modifyPersonalEvent(String email, EventModifyRequestDto requestDto) {
@@ -113,6 +111,24 @@ public class EventService {
         return EventGetResponseDto.from(findEvent);
     }
 
+    @Transactional
+    public void deletePersonalEvent(String email, Long eventId) {
+        Member member = memberRepository.findByEmail(email)
+                .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new EntityNotFoundException("해당 일정을 찾을 수 없습니다."));
+
+        checkCalendarOwnership(event.getCalendar(), member, "해당 일정을 삭제할 권한이 없습니다.");
+
+        eventRepository.delete(event);
+    }
+
+    /**
+     * 캘린더 소유 권한 체크 메서드
+     * @param findEvent
+     * @param member
+     * @param msg
+     */
     private static void checkCalendarOwnership(Calendar findEvent, Member member, String msg) {
         if (!Objects.equals(findEvent.getOwner().getMemberId(), member.getMemberId())) {
             throw new AccessDeniedException(msg);
