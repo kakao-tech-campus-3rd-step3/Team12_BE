@@ -220,7 +220,7 @@ class EventServiceTest {
         // when & then
         assertThatThrownBy(() -> eventService.modifyPersonalEvent(userEmail, requestDto))
                 .isInstanceOf(AccessDeniedException.class)
-                .hasMessage("해당 일정을 수정할 권한이 없습니다.");
+                .hasMessage("해당 캘린더에 대한 접근 권한이 없습니다.");
     }
 
     @Test

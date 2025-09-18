@@ -37,7 +37,7 @@ public class EventService {
         Calendar targetCalendar = calendarRepository.findById(requestDto.calendarId())
                 .orElseThrow(() -> new EntityNotFoundException("해당 캘린더를 찾을 수 없습니다."));
 
-        checkCalendarOwnership(targetCalendar, member, "해당 캘린더에 일정을 추가할 권한이 없습니다.");
+        validateCalendarOwnership(targetCalendar, member);
 
         boolean conflict = eventRepository.existsPersonalScheduleInPeriod(
                 member.getMemberId(),
@@ -88,7 +88,7 @@ public class EventService {
         Event findEvent = eventRepository.findById(requestDto.eventId())
             .orElseThrow(() -> new EntityNotFoundException("해당 이벤트가 없습니다."));
 
-        checkCalendarOwnership(findEvent.getCalendar(), member, "해당 일정을 수정할 권한이 없습니다.");
+        validateCalendarOwnership(findEvent.getCalendar(), member);
 
         if (requestDto.startTime() != null || requestDto.endTime() != null) {
             LocalDateTime newStartAt = requestDto.startTime() != null ? requestDto.startTime() : findEvent.getStartAt();
@@ -118,7 +118,7 @@ public class EventService {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new EntityNotFoundException("해당 일정을 찾을 수 없습니다."));
 
-        checkCalendarOwnership(event.getCalendar(), member, "해당 일정을 삭제할 권한이 없습니다.");
+        validateCalendarOwnership(event.getCalendar(), member);
 
         eventRepository.delete(event);
     }
@@ -127,11 +127,10 @@ public class EventService {
      * 캘린더 소유 권한 체크 메서드
      * @param findEvent
      * @param member
-     * @param msg
      */
-    private static void checkCalendarOwnership(Calendar findEvent, Member member, String msg) {
+    private static void validateCalendarOwnership(Calendar findEvent, Member member) {
         if (!Objects.equals(findEvent.getOwner().getMemberId(), member.getMemberId())) {
-            throw new AccessDeniedException(msg);
+            throw new AccessDeniedException("해당 캘린더에 대한 접근 권한이 없습니다.");
         }
     }
 }
