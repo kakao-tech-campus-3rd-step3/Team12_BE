@@ -22,6 +22,7 @@ import unischedule.events.dto.EventCreateRequestDto;
 import unischedule.events.dto.EventCreateResponseDto;
 import unischedule.events.dto.EventGetResponseDto;
 import unischedule.events.entity.Event;
+import unischedule.events.entity.EventState;
 import unischedule.events.repository.EventRepository;
 import unischedule.events.service.EventService;
 import unischedule.member.entity.Member;
@@ -62,7 +63,7 @@ class EventServiceTest {
         Event event = new Event(
             "새 회의", "주간 회의",
             requestDto.startTime(), requestDto.endTime(),
-            "CONFIRMED", true
+            EventState.CONFIRMED, true
         );
 
         given(memberRepository.findByEmail(userEmail)).willReturn(Optional.of(owner));
@@ -96,13 +97,13 @@ class EventServiceTest {
             "회의", "주간 회의",
             LocalDateTime.of(2025, 9, 10, 10, 0),
             LocalDateTime.of(2025, 9, 10, 11, 0),
-            "CONFIRMED", true
+            EventState.CONFIRMED, true
         );
         
         Event event2 = new Event("워크샵", "분기별 워크샵",
             LocalDateTime.of(2025, 9, 15, 14, 0),
             LocalDateTime.of(2025, 9, 15, 17, 0),
-            "CONFIRMED", false
+            EventState.CONFIRMED, false
         );
 
 

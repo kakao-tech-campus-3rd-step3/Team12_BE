@@ -61,4 +61,8 @@ public class Calendar extends BaseEntity {
         this.title = title;
         this.description = description;
     }
+
+    public Calendar(Member owner, String title, String description) {
+        this(owner, null, title, description);
+    }
 }

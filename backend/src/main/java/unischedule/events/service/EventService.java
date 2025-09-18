@@ -9,6 +9,7 @@ import unischedule.calendar.repository.CalendarRepository;
 import unischedule.events.dto.EventCreateRequestDto;
 import unischedule.events.dto.EventCreateResponseDto;
 import unischedule.events.dto.EventModifyRequestDto;
+import unischedule.events.entity.EventState;
 import unischedule.exception.EntityNotFoundException;
 import unischedule.exception.InvalidInputException;
 import unischedule.events.dto.EventGetResponseDto;
@@ -55,7 +56,7 @@ public class EventService {
                 .content(requestDto.description())
                 .startAt(requestDto.startTime())
                 .endAt(requestDto.endTime())
-                .state("CONFIRMED")
+                .state(EventState.CONFIRMED)
                 .isPrivate(requestDto.isPrivate())
                 .build();
 

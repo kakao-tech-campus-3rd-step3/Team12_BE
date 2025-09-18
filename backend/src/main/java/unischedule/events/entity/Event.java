@@ -2,6 +2,8 @@ package unischedule.events.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -37,9 +39,10 @@ public class Event extends BaseEntity {
     
     @Column(nullable = false)
     private LocalDateTime endAt;
-    
+
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String state;
+    private EventState state;
     
     @Column(nullable = false)
     private Boolean isPrivate;
@@ -58,7 +61,7 @@ public class Event extends BaseEntity {
             String content,
             LocalDateTime startAt,
             LocalDateTime endAt,
-            String state,
+            EventState state,
             Boolean isPrivate
     ) {
         this.title = title;
