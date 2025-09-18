@@ -78,7 +78,7 @@ public class EventControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(requestDto)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.eventId").value(1L))
+                .andExpect(jsonPath("$.event_id").value(1L))
                 .andExpect(jsonPath("$.title").value("Test Event"));
     }
 
@@ -104,7 +104,7 @@ public class EventControllerTest {
                 .param("startAt", "2025-09-01")
                 .param("endAt", "2025-09-30"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].eventId").value(1L))
+                .andExpect(jsonPath("$[0].event_id").value(1L))
                 .andExpect(jsonPath("$[0].title").value("Test Event"));
     }
 
