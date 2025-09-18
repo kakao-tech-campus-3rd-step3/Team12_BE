@@ -51,12 +51,13 @@ public class TeamService {
         Team saved = teamRepository.save(newTeam);
         
         /*
-        // 팀과 개인의 연관관계 구현해서 저장하는 코드 추가 필요 (중계 테이블 필요 때문에 반드시 소통 필요)
+        팀과 개인의 연관관계 구현해서 저장하는 코드 추가 필요 (중계 테이블 필요 때문에 반드시 소통 필요)
+        나 - 생성된 팀 연관관계를 테이블에 저장
          */
         
         Calendar teamCalendar = new Calendar(
             findMember, saved, "팀 캘린더", "팀 캘린더입니다."
-        ); //유저 정보 불러오기 필요
+        );
         
         calendarRepository.save(teamCalendar);
         
@@ -78,8 +79,12 @@ public class TeamService {
         Team findTeam = teamRepository.findByInviteCode(requestDto.visitCode())
             .orElseThrow(() -> new EntityNotFoundException("요청한 정보의 팀이 없습니다."));
         
+        Member findMember = memberRepository.findByEmail(email)
+            .orElseThrow(() -> new EntityNotFoundException("해당 멤버가 없습니다."));
+        
         /*
         팀과 개인의 연관관계 구현해서 저장하는 코드 추가 필요
+        나 - 검색한 팀 연관관계를 테이블에 저장
          */
         
         return new TeamJoinResponseDto(
