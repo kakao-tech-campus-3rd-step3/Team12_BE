@@ -37,9 +37,7 @@ public class EventService {
         Calendar targetCalendar = calendarRepository.findById(requestDto.calendarId())
                 .orElseThrow(() -> new EntityNotFoundException("해당 캘린더를 찾을 수 없습니다."));
 
-        if(!Objects.equals(targetCalendar.getOwner().getMemberId(), member.getMemberId())) {
-            throw new AccessDeniedException("해당 캘린더에 일정을 추가할 권한이 없습니다.");
-        }
+        checkValidity(targetCalendar, member, "해당 캘린더에 일정을 추가할 권한이 없습니다.");
 
         boolean conflict = eventRepository.existsPersonalScheduleInPeriod(
                 member.getMemberId(),
@@ -62,7 +60,7 @@ public class EventService {
 
         Event saved = eventRepository.save(newEvent);
 
-        return new EventCreateResponseDto(saved);
+        return EventCreateResponseDto.from(saved);
     }
 
     @Transactional(readOnly = true)
@@ -91,9 +89,7 @@ public class EventService {
         Event findEvent = eventRepository.findById(requestDto.eventId())
             .orElseThrow(() -> new EntityNotFoundException("해당 이벤트가 없습니다."));
 
-        if(!Objects.equals(findEvent.getCalendar().getOwner().getMemberId(), member.getMemberId())) {
-            throw new AccessDeniedException("해당 일정을 수정할 권한이 없습니다.");
-        }
+        checkValidity(findEvent.getCalendar(), member, "해당 일정을 수정할 권한이 없습니다.");
 
         if (requestDto.startTime() != null || requestDto.endTime() != null) {
             LocalDateTime newStartAt = requestDto.startTime() != null ? requestDto.startTime() : findEvent.getStartAt();
@@ -114,5 +110,11 @@ public class EventService {
         findEvent.modifyEvent(requestDto);
         
         return new EventGetResponseDto(findEvent);
+    }
+
+    private static void checkValidity(Calendar findEvent, Member member, String msg) {
+        if (!Objects.equals(findEvent.getOwner().getMemberId(), member.getMemberId())) {
+            throw new AccessDeniedException(msg);
+        }
     }
 }

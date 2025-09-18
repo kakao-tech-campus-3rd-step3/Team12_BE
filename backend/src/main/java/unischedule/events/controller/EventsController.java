@@ -31,7 +31,7 @@ public class EventsController {
     private final EventService eventsService;
 
     @PostMapping("/add")
-    public ResponseEntity<EventCreateResponseDto> makeEvent(
+    public ResponseEntity<EventCreateResponseDto> makeMyEvent(
             @AuthenticationPrincipal
             UserDetails userDetails,
             @RequestBody
@@ -65,7 +65,7 @@ public class EventsController {
     //추후 태그 필요 시 태그를 포함하는 Dto 형태로 다시 작성할 필요 있음
     
     @PatchMapping("/modify")
-    public ResponseEntity<EventGetResponseDto> modifyEvent(
+    public ResponseEntity<EventGetResponseDto> modifyMyEvent(
             @AuthenticationPrincipal
             UserDetails userDetails,
             @RequestBody
