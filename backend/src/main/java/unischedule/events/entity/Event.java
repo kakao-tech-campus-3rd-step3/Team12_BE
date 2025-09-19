@@ -2,6 +2,8 @@ package unischedule.events.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -16,6 +18,7 @@ import lombok.NoArgsConstructor;
 import unischedule.common.entity.BaseEntity;
 import unischedule.events.dto.EventModifyRequestDto;
 import unischedule.calendar.entity.Calendar;
+import unischedule.member.entity.Member;
 
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -37,9 +40,10 @@ public class Event extends BaseEntity {
     
     @Column(nullable = false)
     private LocalDateTime endAt;
-    
+
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String state;
+    private EventState state;
     
     @Column(nullable = false)
     private Boolean isPrivate;
@@ -58,7 +62,7 @@ public class Event extends BaseEntity {
             String content,
             LocalDateTime startAt,
             LocalDateTime endAt,
-            String state,
+            EventState state,
             Boolean isPrivate
     ) {
         this.title = title;
@@ -99,5 +103,9 @@ public class Event extends BaseEntity {
 
     public void connectCalendar(Calendar calendar) {
         this.calendar = calendar;
+    }
+
+    public void validateEventOwner(Member member) {
+        this.calendar.validateOwner(member);
     }
 }

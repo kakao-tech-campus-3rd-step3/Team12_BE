@@ -14,11 +14,12 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import unischedule.common.entity.BaseEntity;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 @Entity
 @Getter
 @Table(name = "members")
-public class Member extends BaseEntity {
+public class Member {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long memberId;
@@ -38,5 +39,9 @@ public class Member extends BaseEntity {
         this.email = email;
         this.nickname = nickname;
         this.password = password;
+    }
+
+    public boolean isEqualMember(Member other) {
+        return Objects.equals(this.memberId, other.memberId);
     }
 }
