@@ -6,12 +6,15 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import unischedule.common.entity.BaseEntity;
 
 @Entity
 @Getter
 @Table(name = "teams")
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Team extends BaseEntity {
 
     @Id
@@ -20,10 +23,6 @@ public class Team extends BaseEntity {
     @Column(nullable = false)
     private String name;
     private String inviteCode;
-
-    protected Team() {
-
-    }
 
     public Team(String name, String inviteCode) {
         this.name = name;
