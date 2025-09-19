@@ -14,6 +14,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import unischedule.common.entity.BaseEntity;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 @Entity
 @Getter
@@ -38,5 +39,9 @@ public class Member {
         this.email = email;
         this.nickname = nickname;
         this.password = password;
+    }
+
+    public boolean isEqualMember(Member other) {
+        return Objects.equals(this.memberId, other.memberId);
     }
 }

@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import lombok.Getter;
+import org.springframework.security.access.AccessDeniedException;
 import unischedule.common.entity.BaseEntity;
 import unischedule.events.entity.Event;
 import unischedule.member.entity.Member;
@@ -64,5 +65,11 @@ public class Calendar extends BaseEntity {
 
     public Calendar(Member owner, String title, String description) {
         this(owner, null, title, description);
+    }
+
+    public void validateOwner(Member member) {
+        if(!this.owner.isEqualMember(member)) {
+            throw new AccessDeniedException("해당 캘린더에 대한 접근 권한이 없습니다.");
+        }
     }
 }

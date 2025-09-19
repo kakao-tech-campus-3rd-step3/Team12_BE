@@ -18,6 +18,7 @@ import lombok.NoArgsConstructor;
 import unischedule.common.entity.BaseEntity;
 import unischedule.events.dto.EventModifyRequestDto;
 import unischedule.calendar.entity.Calendar;
+import unischedule.member.entity.Member;
 
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -102,5 +103,9 @@ public class Event extends BaseEntity {
 
     public void connectCalendar(Calendar calendar) {
         this.calendar = calendar;
+    }
+
+    public void validateEventOwner(Member member) {
+        this.calendar.validateOwner(member);
     }
 }
