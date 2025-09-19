@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
@@ -91,7 +92,6 @@ class EventServiceTest {
         given(eventRepository.existsPersonalScheduleInPeriod(eq(memberId), any(), any())).willReturn(false);
         given(eventRepository.save(any(Event.class))).willReturn(event);
 
-        given(calendar.getOwner()).willReturn(owner);
         given(owner.getMemberId()).willReturn(memberId);
         
         // when
@@ -199,9 +199,7 @@ class EventServiceTest {
         // given
         Long eventId = 10L;
         Member anotherMember = spy(new Member("another@example.com", "another", "pw"));
-        given(anotherMember.getMemberId()).willReturn(2L);
         calendar.getOwner();
-        given(calendar.getOwner()).willReturn(anotherMember);
 
         Event existingEvent = new Event(
                 "기존 제목",
@@ -212,6 +210,9 @@ class EventServiceTest {
                 false
         );
         existingEvent.connectCalendar(calendar);
+
+        doThrow(new AccessDeniedException("해당 캘린더에 대한 접근 권한이 없습니다."))
+                .when(calendar).validateOwner(any(Member.class));
         EventModifyRequestDto requestDto = new EventModifyRequestDto(10L, "새 제목", null, null, null, null);
 
         given(memberRepository.findByEmail(userEmail)).willReturn(Optional.of(owner));
