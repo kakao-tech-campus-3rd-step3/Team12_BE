@@ -1,5 +1,6 @@
 package unischedule.team.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,7 +25,7 @@ public class TeamController {
     
     @PostMapping
     ResponseEntity<TeamCreateResponseDto> createTeam(
-        @RequestBody TeamCreateRequestDto requestDto,
+        @RequestBody @Valid TeamCreateRequestDto requestDto,
         @AuthenticationPrincipal UserDetails userDetails
     ) {
         TeamCreateResponseDto responseDto = teamService.createTeam(userDetails.getUsername(), requestDto);
@@ -33,7 +34,7 @@ public class TeamController {
     
     @PostMapping("/join")
     ResponseEntity<TeamJoinResponseDto> joinTeam(
-        @RequestBody TeamJoinRequestDto requestDto,
+        @RequestBody @Valid TeamJoinRequestDto requestDto,
         @AuthenticationPrincipal UserDetails userDetails
     ) {
         TeamJoinResponseDto responseDto = teamService.joinTeam(userDetails.getUsername(), requestDto);
