@@ -7,6 +7,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import unischedule.calendar.repository.CalendarRepository;
 import unischedule.exception.dto.EntityAlreadyExistsException;
 import unischedule.member.dto.MemberRegistrationDto;
 import unischedule.member.entity.Member;
@@ -27,7 +28,8 @@ public class MemberServiceTest {
 
     @Mock
     private MemberRepository memberRepository;
-
+    @Mock
+    private CalendarRepository calendarRepository;
     @Mock
     private PasswordEncoder passwordEncoder;
 

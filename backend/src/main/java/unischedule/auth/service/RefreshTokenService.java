@@ -20,6 +20,11 @@ public class RefreshTokenService {
     private final MemberRepository memberRepository;
     private final RefreshTokenRepository refreshTokenRepository;
 
+    /**
+     * 리프레시 토큰 발급 메서드
+     * @param authentication
+     * @return
+     */
     @Transactional
     public String issueRefreshToken(Authentication authentication) {
         String newRefreshToken = jwtTokenProvider.createRefreshToken(authentication);
@@ -27,6 +32,7 @@ public class RefreshTokenService {
         Member member = memberRepository.findByEmail(authentication.getName())
                 .orElseThrow(() -> new EntityNotFoundException("유효하지 않은 계정입니다"));
 
+        // 기존에 저장된 리프레시 토큰 있으면 갱신, 없으면 새로 저장
         refreshTokenRepository.findByMember(member)
                 .ifPresentOrElse(
                         refreshToken -> refreshToken.updateToken(newRefreshToken),
@@ -36,6 +42,11 @@ public class RefreshTokenService {
         return newRefreshToken;
     }
 
+    /**
+     * 액세스 토큰 재발급 메서드
+     * @param refreshToken
+     * @return
+     */
     @Transactional(readOnly = true)
     public String reissueAccessToken(String refreshToken) {
         if (!jwtTokenProvider.validateToken(refreshToken)) {

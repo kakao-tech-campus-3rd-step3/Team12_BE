@@ -92,7 +92,7 @@ class MemberApiControllerTest {
         //AuthenticationManager mockAuthenticationManager = mock(AuthenticationManager.class);
         given(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).willReturn(authentication);
         given(jwtTokenProvider.createAccessToken(any(Authentication.class))).willReturn("test-access-token");
-        given(jwtTokenProvider.createRefreshToken(any(Authentication.class))).willReturn("test-refresh-token");
+        given(refreshTokenService.issueRefreshToken(any(Authentication.class))).willReturn("test-refresh-token");
 
 
         // when & then
