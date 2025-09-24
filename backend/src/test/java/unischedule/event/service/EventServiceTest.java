@@ -53,11 +53,14 @@ class EventServiceTest {
     private Member owner;
     private Calendar calendar;
     private String userEmail = "test@example.com";
-    private Long memberId = 1L;
-    private Long calendarId = 1L;
+    private Long memberId;
+    private Long calendarId;
 
     @BeforeEach
     void setUp() {
+        memberId = 1L;
+        calendarId = 1L;
+
         Member realOwner = new Member(userEmail, "testtest", "1q2w3e4r!");
         owner = spy(realOwner);
 
