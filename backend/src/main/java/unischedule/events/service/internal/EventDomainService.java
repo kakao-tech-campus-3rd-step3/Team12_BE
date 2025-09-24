@@ -46,7 +46,7 @@ public class EventDomainService {
     }
 
     @Transactional(readOnly = true)
-    public void canUpdateEvent(Member member, LocalDateTime startTime, LocalDateTime endTime, Event event) {
+    public void canUpdateEvent(Member member, Event event, LocalDateTime startTime, LocalDateTime endTime) {
         if (eventRepository.existsPersonalScheduleInPeriodExcludingEvent(member.getMemberId(), startTime, endTime, event.getEventId())) {
             throw new InvalidInputException("해당 시간에 겹치는 일정이 있어 수정할 수 없습니다.");
         }

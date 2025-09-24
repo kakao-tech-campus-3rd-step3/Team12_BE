@@ -10,11 +10,12 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,7 +26,6 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.access.AccessDeniedException;
 import unischedule.calendar.entity.Calendar;
-import unischedule.calendar.repository.CalendarRepository;
 import unischedule.calendar.service.internal.CalendarDomainService;
 import unischedule.events.dto.EventCreateRequestDto;
 import unischedule.events.dto.EventCreateResponseDto;
@@ -33,13 +33,11 @@ import unischedule.events.dto.EventGetResponseDto;
 import unischedule.events.dto.EventModifyRequestDto;
 import unischedule.events.entity.Event;
 import unischedule.events.entity.EventState;
-import unischedule.events.repository.EventRepository;
 import unischedule.events.service.EventService;
 import unischedule.events.service.internal.EventDomainService;
 import unischedule.exception.EntityNotFoundException;
 import unischedule.exception.InvalidInputException;
 import unischedule.member.entity.Member;
-import unischedule.member.repository.MemberRepository;
 import unischedule.member.service.internal.MemberDomainService;
 import unischedule.util.TestUtil;
 
@@ -57,17 +55,20 @@ class EventServiceTest {
     private Member owner;
     private Calendar calendar;
     private String memberEmail;
-    private Long memberId;
     private Long calendarId;
 
     @BeforeEach
     void setUp() {
         memberEmail = "test@example.com";
-        memberId = 1L;
         calendarId = 1L;
 
         owner = spy(TestUtil.makeMember());
         calendar = spy(TestUtil.makeCalendar(owner));
+    }
+
+    @AfterEach
+    void tearDown() {
+        verifyNoMoreInteractions(memberDomainService, eventDomainService, calendarDomainService);
     }
     
     @Test

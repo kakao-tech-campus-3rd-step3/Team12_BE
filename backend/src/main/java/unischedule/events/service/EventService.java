@@ -1,29 +1,22 @@
 package unischedule.events.service;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import unischedule.calendar.entity.Calendar;
-import unischedule.calendar.repository.CalendarRepository;
 import unischedule.calendar.service.internal.CalendarDomainService;
 import unischedule.events.dto.EventCreateRequestDto;
 import unischedule.events.dto.EventCreateResponseDto;
 import unischedule.events.dto.EventModifyRequestDto;
 import unischedule.events.entity.EventState;
 import unischedule.events.service.internal.EventDomainService;
-import unischedule.exception.EntityNotFoundException;
-import unischedule.exception.InvalidInputException;
 import unischedule.events.dto.EventGetResponseDto;
 import unischedule.events.entity.Event;
-import unischedule.events.repository.EventRepository;
 import unischedule.member.entity.Member;
-import unischedule.member.repository.MemberRepository;
 import unischedule.member.service.internal.MemberDomainService;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -80,16 +73,17 @@ public class EventService {
 
         findEvent.validateEventOwner(member);
 
-        if (requestDto.startTime() != null || requestDto.endTime() != null) {
-            LocalDateTime newStartAt = requestDto.startTime() != null ? requestDto.startTime() : findEvent.getStartAt();
-            LocalDateTime newEndAt = requestDto.endTime() != null ? requestDto.endTime() : findEvent.getEndAt();
+        validateUpdateTime(member, findEvent, requestDto.startTime(), requestDto.endTime());
 
-            eventDomainService.canUpdateEvent(member, newStartAt, newEndAt, findEvent);
-        }
-        
         findEvent.modifyEvent(requestDto);
         
         return EventGetResponseDto.from(findEvent);
+    }
+
+    private void validateUpdateTime(Member member, Event event, LocalDateTime startTime, LocalDateTime endTime) {
+        if (startTime != null && endTime != null) {
+            eventDomainService.canUpdateEvent(member, event, startTime, endTime);
+        }
     }
 
     @Transactional
