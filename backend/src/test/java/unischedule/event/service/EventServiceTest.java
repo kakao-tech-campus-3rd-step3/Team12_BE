@@ -26,6 +26,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.access.AccessDeniedException;
 import unischedule.calendar.entity.Calendar;
 import unischedule.calendar.repository.CalendarRepository;
+import unischedule.calendar.service.internal.CalendarDomainService;
 import unischedule.events.dto.EventCreateRequestDto;
 import unischedule.events.dto.EventCreateResponseDto;
 import unischedule.events.dto.EventGetResponseDto;
@@ -34,38 +35,39 @@ import unischedule.events.entity.Event;
 import unischedule.events.entity.EventState;
 import unischedule.events.repository.EventRepository;
 import unischedule.events.service.EventService;
+import unischedule.events.service.internal.EventDomainService;
 import unischedule.exception.EntityNotFoundException;
 import unischedule.exception.InvalidInputException;
 import unischedule.member.entity.Member;
 import unischedule.member.repository.MemberRepository;
+import unischedule.member.service.internal.MemberDomainService;
+import unischedule.util.TestUtil;
 
 @ExtendWith(MockitoExtension.class)
 class EventServiceTest {
     @Mock
-    private EventRepository eventRepository;
+    private EventDomainService eventDomainService;
     @Mock
-    private MemberRepository memberRepository;
+    private MemberDomainService memberDomainService;
     @Mock
-    private CalendarRepository calendarRepository;
+    private CalendarDomainService calendarDomainService;
     @InjectMocks
     private EventService eventService;
 
     private Member owner;
     private Calendar calendar;
-    private String userEmail = "test@example.com";
+    private String memberEmail;
     private Long memberId;
     private Long calendarId;
 
     @BeforeEach
     void setUp() {
+        memberEmail = "test@example.com";
         memberId = 1L;
         calendarId = 1L;
 
-        Member realOwner = new Member(userEmail, "testtest", "1q2w3e4r!");
-        owner = spy(realOwner);
-
-        Calendar realCalendar = new Calendar(owner, "My Calendar", "Personal calendar");
-        calendar = spy(realCalendar);
+        owner = spy(TestUtil.makeMember());
+        calendar = spy(TestUtil.makeCalendar(owner));
     }
     
     @Test
@@ -90,21 +92,22 @@ class EventServiceTest {
                 true
         );
 
-        given(memberRepository.findByEmail(userEmail)).willReturn(Optional.of(owner));
-        given(calendarRepository.findById(calendarId)).willReturn(Optional.of(calendar));
-        given(eventRepository.existsPersonalScheduleInPeriod(eq(memberId), any(), any())).willReturn(false);
-        given(eventRepository.save(any(Event.class))).willReturn(event);
+        given(memberDomainService.findMemberByEmail(memberEmail)).willReturn(owner);
+        given(calendarDomainService.findCalendarById(calendarId)).willReturn(calendar);
 
-        given(owner.getMemberId()).willReturn(memberId);
+        doNothing().when(calendar).validateOwner(owner);
+        doNothing().when(eventDomainService).validateNoSchedule(eq(owner), any(LocalDateTime.class), any(LocalDateTime.class));
+
+        given(eventDomainService.saveEvent(any(Event.class))).willReturn(event);
         
         // when
-        EventCreateResponseDto result = eventService.makePersonalEvent(userEmail, requestDto);
+        EventCreateResponseDto result = eventService.makePersonalEvent(memberEmail, requestDto);
         
         // then
         assertThat(result).isNotNull();
         assertThat(result.title()).isEqualTo("새 회의");
         assertThat(result.description()).isEqualTo("주간 회의");
-        verify(eventRepository).save(any(Event.class));
+        verify(eventDomainService).saveEvent(any(Event.class));
     }
 
     @Test
@@ -120,13 +123,14 @@ class EventServiceTest {
                 true
         );
 
-        given(owner.getMemberId()).willReturn(memberId);
-        given(memberRepository.findByEmail(userEmail)).willReturn(Optional.of(owner));
-        given(calendarRepository.findById(calendarId)).willReturn(Optional.of(calendar));
-        given(eventRepository.existsPersonalScheduleInPeriod(eq(memberId), any(), any())).willReturn(true);
+        given(memberDomainService.findMemberByEmail(memberEmail)).willReturn(owner);
+        given(calendarDomainService.findCalendarById(calendarId)).willReturn(calendar);
+
+        doThrow(new InvalidInputException("겹치는 일정이 있어 등록할 수 없습니다."))
+                .when(eventDomainService).validateNoSchedule(eq(owner), any(LocalDateTime.class), any(LocalDateTime.class));
 
         // when & then
-        assertThatThrownBy(() -> eventService.makePersonalEvent(userEmail, requestDto))
+        assertThatThrownBy(() -> eventService.makePersonalEvent(memberEmail, requestDto))
                 .isInstanceOf(InvalidInputException.class)
                 .hasMessage("겹치는 일정이 있어 등록할 수 없습니다.");
     }
@@ -151,49 +155,43 @@ class EventServiceTest {
                 EventState.CONFIRMED, false
         );
 
-        given(owner.getMemberId()).willReturn(memberId);
 
-
-        given(memberRepository.findByEmail(userEmail)).willReturn(Optional.of(owner));
-        given(eventRepository.findPersonalScheduleInPeriod(eq(memberId), any(), any()))
+        given(memberDomainService.findMemberByEmail(memberEmail)).willReturn(owner);
+        given(eventDomainService.findSchedule(owner, start, end))
                 .willReturn(List.of(event1, event2));
         
         // when
-        List<EventGetResponseDto> result = eventService.getPersonalEvents(userEmail, start, end);
+        List<EventGetResponseDto> result = eventService.getPersonalEvents(memberEmail, start, end);
         
         // then
         assertThat(result).hasSize(2);
-        assertThat(result.get(0).title()).isEqualTo(event1.getTitle());
+        assertThat(result.getFirst().title()).isEqualTo(event1.getTitle());
     }
 
     @Test
-    @DisplayName("일정 수정 성공")
+    @DisplayName("일정 수정 성공 - 시간 변경 없음")
     void modifyEvent() {
         // given
         Long eventId = 10L;
-        Event existingEvent = new Event(
-                "기존 제목",
-                "기존 내용",
-                LocalDateTime.now(),
-                LocalDateTime.now().plusHours(1),
-                EventState.CONFIRMED,
-                false
-        );
+        Event existingEvent = spy(TestUtil.makeEvent("일정", "내용"));
 
         existingEvent.connectCalendar(calendar);
 
-        EventModifyRequestDto requestDto = new EventModifyRequestDto(10L, "새 제목", "새 내용", null, null, true);
+        EventModifyRequestDto requestDto = new EventModifyRequestDto(eventId, "새 제목", "새 내용", null, null, true);
 
-        given(memberRepository.findByEmail(userEmail)).willReturn(Optional.of(owner));
-        given(eventRepository.findById(eventId)).willReturn(Optional.of(existingEvent));
+        given(memberDomainService.findMemberByEmail(memberEmail)).willReturn(owner);
+        given(eventDomainService.findEventById(eventId)).willReturn(existingEvent);
+        doNothing().when(existingEvent).validateEventOwner(owner);
 
         // when
-        EventGetResponseDto responseDto = eventService.modifyPersonalEvent(userEmail, requestDto);
+        EventGetResponseDto responseDto = eventService.modifyPersonalEvent(memberEmail, requestDto);
 
         // then
         assertThat(responseDto.title()).isEqualTo("새 제목");
         assertThat(responseDto.description()).isEqualTo("새 내용");
         assertThat(responseDto.isPrivate()).isTrue();
+
+        verify(eventDomainService, never()).canUpdateEvent(any(), any(), any(), any());
     }
 
     @Test
@@ -201,28 +199,22 @@ class EventServiceTest {
     void modifyEventFailAccessDenied() {
         // given
         Long eventId = 10L;
-        Member anotherMember = spy(new Member("another@example.com", "another", "pw"));
-        calendar.getOwner();
 
-        Event existingEvent = new Event(
-                "기존 제목",
-                "기존 내용",
-                LocalDateTime.now(),
-                LocalDateTime.now().plusHours(1),
-                EventState.CONFIRMED,
-                false
-        );
+        Event existingEvent = spy(TestUtil.makeEvent("다른 사람 일정", "내용"));
+
         existingEvent.connectCalendar(calendar);
 
-        doThrow(new AccessDeniedException("해당 캘린더에 대한 접근 권한이 없습니다."))
-                .when(calendar).validateOwner(any(Member.class));
+        given(memberDomainService.findMemberByEmail(memberEmail)).willReturn(owner);
+        given(eventDomainService.findEventById(eventId)).willReturn(existingEvent);
+
         EventModifyRequestDto requestDto = new EventModifyRequestDto(10L, "새 제목", null, null, null, null);
 
-        given(memberRepository.findByEmail(userEmail)).willReturn(Optional.of(owner));
-        given(eventRepository.findById(eventId)).willReturn(Optional.of(existingEvent));
+        doThrow(new AccessDeniedException("해당 캘린더에 대한 접근 권한이 없습니다."))
+                .when(existingEvent).validateEventOwner(any(Member.class));
+
 
         // when & then
-        assertThatThrownBy(() -> eventService.modifyPersonalEvent(userEmail, requestDto))
+        assertThatThrownBy(() -> eventService.modifyPersonalEvent(memberEmail, requestDto))
                 .isInstanceOf(AccessDeniedException.class)
                 .hasMessage("해당 캘린더에 대한 접근 권한이 없습니다.");
     }
@@ -232,25 +224,20 @@ class EventServiceTest {
     void deleteEvent() {
         // given
         Long eventId = 10L;
-        Event eventToDelete = new Event(
-                "기존 제목",
-                "기존 내용",
-                LocalDateTime.now(),
-                LocalDateTime.now().plusHours(1),
-                EventState.CONFIRMED,
-                false
-        );
+        Event eventToDelete = spy(TestUtil.makeEvent("일정", "내용"));
         eventToDelete.connectCalendar(calendar);
 
-        given(memberRepository.findByEmail(userEmail)).willReturn(Optional.of(owner));
-        given(eventRepository.findById(eventId)).willReturn(Optional.of(eventToDelete));
-        doNothing().when(eventRepository).delete(eventToDelete);
+        given(memberDomainService.findMemberByEmail(memberEmail)).willReturn(owner);
+        given(eventDomainService.findEventById(eventId)).willReturn(eventToDelete);
+
+        doNothing().when(eventToDelete).validateEventOwner(owner);
+        doNothing().when(eventDomainService).deleteEvent(eventToDelete);
 
         // when
-        eventService.deletePersonalEvent(userEmail, eventId);
+        eventService.deletePersonalEvent(memberEmail, eventId);
 
         // then
-        verify(eventRepository).delete(eventToDelete);
+        verify(eventDomainService).deleteEvent(eventToDelete);
     }
 
     @Test
@@ -258,13 +245,14 @@ class EventServiceTest {
     void deleteEventFailNotFound() {
         // given
         Long eventId = 99L;
-        given(memberRepository.findByEmail(userEmail)).willReturn(Optional.of(owner));
-        given(eventRepository.findById(eventId)).willReturn(Optional.empty());
+        given(memberDomainService.findMemberByEmail(memberEmail)).willReturn(owner);
+        given(eventDomainService.findEventById(eventId))
+                .willThrow(new EntityNotFoundException("해당 일정을 찾을 수 없습니다."));
 
         // when & then
-        assertThatThrownBy(() -> eventService.deletePersonalEvent(userEmail, eventId))
+        assertThatThrownBy(() -> eventService.deletePersonalEvent(memberEmail, eventId))
                 .isInstanceOf(EntityNotFoundException.class)
                 .hasMessage("해당 일정을 찾을 수 없습니다.");
-        verify(eventRepository, never()).delete(any());
+        verify(eventDomainService, never()).deleteEvent(any());
     }
 }

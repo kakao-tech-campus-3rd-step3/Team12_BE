@@ -100,6 +100,6 @@ public class EventService {
 
         event.validateEventOwner(member);
 
-        eventDomainService.deleteEvent(member, event);
+        eventDomainService.deleteEvent(event);
     }
 }
