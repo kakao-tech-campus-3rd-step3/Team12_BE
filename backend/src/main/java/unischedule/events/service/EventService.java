@@ -17,6 +17,7 @@ import unischedule.member.service.internal.MemberDomainService;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -81,9 +82,12 @@ public class EventService {
     }
 
     private void validateUpdateTime(Member member, Event event, LocalDateTime startTime, LocalDateTime endTime) {
-        if (startTime != null && endTime != null) {
-            eventDomainService.canUpdateEvent(member, event, startTime, endTime);
-        }
+        if (startTime == null && endTime == null) return;
+
+        LocalDateTime newStartTime = Objects.requireNonNullElse(startTime, event.getStartAt());
+        LocalDateTime newEndTime = Objects.requireNonNullElse(endTime, event.getEndAt());
+
+        eventDomainService.canUpdateEvent(member, event, newStartTime, newEndTime);
     }
 
     @Transactional
