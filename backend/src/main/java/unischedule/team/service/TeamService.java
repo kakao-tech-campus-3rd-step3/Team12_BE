@@ -13,12 +13,13 @@ import unischedule.team.dto.TeamCreateResponseDto;
 import unischedule.team.dto.TeamJoinRequestDto;
 import unischedule.team.dto.TeamJoinResponseDto;
 import unischedule.team.entity.Team;
+import unischedule.team.entity.TeamMember;
+import unischedule.team.repository.TeamMemberRepository;
 import unischedule.team.repository.TeamRepository;
 
 /**
  * 팀과 관련한 서비스 메서드들의 클래스
  */
-// 차후 개인과 팀의 연관관계 구현 후 완성 필요 (세환 씨 저랑 이야기 좀 해요)
 @Service
 @RequiredArgsConstructor
 public class TeamService {
@@ -26,6 +27,7 @@ public class TeamService {
     private final TeamRepository teamRepository;
     private final CalendarRepository calendarRepository;
     private final MemberRepository memberRepository;
+    private final TeamMemberRepository teamMemberRepository;
     
     /**
      * 팀 생성을 위한 메서드
@@ -50,11 +52,8 @@ public class TeamService {
         
         Team saved = teamRepository.save(newTeam);
         
-        /*
-        팀과 개인의 연관관계 구현해서 저장하는 코드 추가 필요 (중계 테이블 필요 때문에 반드시 소통 필요)
-        나 - 생성된 팀 연관관계를 테이블에 저장
-        멘토링 내용에 대해 의논 후 구현할 필요가 있을 듯
-         */
+        TeamMember relation = new TeamMember(saved, findMember, "LEADER");
+        teamMemberRepository.save(relation);
         
         Calendar teamCalendar = new Calendar(
             findMember, saved, "팀 캘린더", "팀 캘린더입니다."
@@ -83,11 +82,8 @@ public class TeamService {
         Member findMember = memberRepository.findByEmail(email)
             .orElseThrow(() -> new EntityNotFoundException("해당 멤버가 없습니다."));
         
-        /*
-        팀과 개인의 연관관계 구현해서 저장하는 코드 추가 필요
-        나 - 검색한 팀 연관관계를 테이블에 저장
-        멘토링 내용에 대해 의논 후 구현할 필요가 있을 듯
-         */
+        TeamMember relation = new TeamMember(findTeam, findMember, "MEMBER");
+        teamMemberRepository.save(relation);
         
         return new TeamJoinResponseDto(
             findTeam.getTeamId(),
