@@ -21,7 +21,8 @@ public class EverytimeService {
     private final EverytimeClient everytimeClient;
     private final EverytimeTimetableMapper everytimeTimetableMapper;
 
-    public List<TimetableDto> getTimetables(String identifier) {
+    public List<TimetableDto> getTimetables(String url) {
+        String identifier = extractIdentifierFromEverytimeUrl(url);
         EverytimeTimetableRawResponseDto rawResponse = getTimetableData(identifier);
         return everytimeTimetableMapper.toTimetableDtos(rawResponse);
     }
@@ -46,5 +47,9 @@ public class EverytimeService {
         }
 
         return response;
+    }
+
+    private String extractIdentifierFromEverytimeUrl(String urlString) {
+        return urlString.substring(urlString.lastIndexOf("@") + 1);
     }
 }
