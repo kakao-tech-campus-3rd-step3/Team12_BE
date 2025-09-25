@@ -42,8 +42,7 @@ public class TeamService {
         TeamCodeGenerator teamCodeGenerator = new TeamCodeGenerator();
         String code;
         
-        Member findMember = memberRepository.findByEmail(email)
-            .orElseThrow(() -> new EntityNotFoundException("해당 멤버가 없습니다."));
+        Member findMember = memberRepository.findByEmail(email).get();
         
         do {
             code = teamCodeGenerator.generate();
@@ -80,8 +79,7 @@ public class TeamService {
         Team findTeam = teamRepository.findByInviteCode(requestDto.visitCode())
             .orElseThrow(() -> new EntityNotFoundException("요청한 정보의 팀이 없습니다."));
         
-        Member findMember = memberRepository.findByEmail(email)
-            .orElseThrow(() -> new EntityNotFoundException("해당 멤버가 없습니다."));
+        Member findMember = memberRepository.findByEmail(email).get();
         
         TeamMember relation = new TeamMember(findTeam, findMember, "MEMBER");
         teamMemberRepository.save(relation);
@@ -98,8 +96,7 @@ public class TeamService {
         Team findTeam = teamRepository.findById(teamId)
             .orElseThrow(() -> new EntityNotFoundException("요청한 정보의 팀이 없습니다."));
         
-        Member findMember = memberRepository.findByEmail(email)
-            .orElseThrow(() -> new EntityNotFoundException("해당 멤버가 없습니다."));
+        Member findMember = memberRepository.findByEmail(email).get();
         
         TeamMember findRelation = teamMemberRepository.findByTeamAndMember(findTeam, findMember)
             .orElseThrow(() -> new EntityNotFoundException("해당 팀 소속이 아닙니다."));
@@ -115,8 +112,7 @@ public class TeamService {
         Team findTeam = teamRepository.findById(teamId)
             .orElseThrow(() -> new EntityNotFoundException("요청한 정보의 팀이 없습니다."));
         
-        Member findMember = memberRepository.findByEmail(email)
-            .orElseThrow(() -> new EntityNotFoundException("해당 멤버가 없습니다."));
+        Member findMember = memberRepository.findByEmail(email).get();
         
         TeamMember findRelation = teamMemberRepository.findByTeamAndMember(findTeam, findMember)
             .orElseThrow(() -> new EntityNotFoundException("해당 팀 소속이 아닙니다."));
