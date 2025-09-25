@@ -14,6 +14,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
+import unischedule.exception.NoPermissionException;
 import unischedule.member.entity.Member;
 
 @Entity
@@ -44,5 +45,11 @@ public class TeamMember {
         this.team = team;
         this.member = member;
         this.role = role;
+    }
+    
+    public void checkLeader() {
+        if(!this.role.equals("LEADER")) {
+            throw new NoPermissionException("리더가 아닙니다.");
+        }
     }
 }

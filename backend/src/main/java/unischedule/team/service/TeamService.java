@@ -1,5 +1,6 @@
 package unischedule.team.service;
 
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -90,5 +91,45 @@ public class TeamService {
             findTeam.getName(),
             findTeam.getInviteCode()
         );
+    }
+    
+    @Transactional
+    public void withdrawTeam(String email, Long teamId) {
+        Team findTeam = teamRepository.findById(teamId)
+            .orElseThrow(() -> new EntityNotFoundException("요청한 정보의 팀이 없습니다."));
+        
+        Member findMember = memberRepository.findByEmail(email)
+            .orElseThrow(() -> new EntityNotFoundException("해당 멤버가 없습니다."));
+        
+        TeamMember findRelation = teamMemberRepository.findByTeamAndMember(findTeam, findMember)
+            .orElseThrow(() -> new EntityNotFoundException("해당 팀 소속이 아닙니다."));
+        
+        /*
+        팀 탈퇴 전 해야할 일이 생긴다면 여기 추가
+         */
+        
+        teamMemberRepository.delete(findRelation);
+    }
+    
+    public void closeTeam(String email, Long teamId) {
+        Team findTeam = teamRepository.findById(teamId)
+            .orElseThrow(() -> new EntityNotFoundException("요청한 정보의 팀이 없습니다."));
+        
+        Member findMember = memberRepository.findByEmail(email)
+            .orElseThrow(() -> new EntityNotFoundException("해당 멤버가 없습니다."));
+        
+        TeamMember findRelation = teamMemberRepository.findByTeamAndMember(findTeam, findMember)
+            .orElseThrow(() -> new EntityNotFoundException("해당 팀 소속이 아닙니다."));
+        
+        findRelation.checkLeader();
+        
+        /*
+        팀 삭제 전 해야할 일이 생긴다면 여기 추가
+         */
+        
+        List<TeamMember> findTeamMember = teamMemberRepository.findByTeam(findTeam);
+        teamMemberRepository.deleteAll(findTeamMember);
+        
+        teamRepository.delete(findTeam);
     }
 }

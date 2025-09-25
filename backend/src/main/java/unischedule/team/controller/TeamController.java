@@ -6,6 +6,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -39,5 +41,23 @@ public class TeamController {
     ) {
         TeamJoinResponseDto responseDto = teamService.joinTeam(userDetails.getUsername(), requestDto);
         return ResponseEntity.ok(responseDto);
+    }
+    
+    @DeleteMapping("/{teamId}/member") //임시 주소 매핑
+    ResponseEntity<Void> withdrawTeam(
+        @AuthenticationPrincipal UserDetails userDetails,
+        @PathVariable Long teamId
+    ) {
+        teamService.withdrawTeam(userDetails.getUsername(), teamId);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+    
+    @DeleteMapping("/{teamId}/team") //임시 주소 매핑
+    ResponseEntity<Void> closeTeam(
+        @AuthenticationPrincipal UserDetails userDetails,
+        @PathVariable Long teamId
+    ) {
+        teamService.closeTeam(userDetails.getUsername(), teamId);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }

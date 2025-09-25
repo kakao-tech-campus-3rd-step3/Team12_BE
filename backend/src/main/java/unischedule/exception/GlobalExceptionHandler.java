@@ -32,6 +32,11 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponseDto> handleEntityAlreadyExists(EntityAlreadyExistsException ex) {
         return ResponseEntity.badRequest().body(ErrorResponseDto.of(ex.getMessage()));
     }
+    
+    @ExceptionHandler(NoPermissionException.class)
+    public ResponseEntity<ErrorResponseDto> handleNoPermission(NoPermissionException ex) {
+        return ResponseEntity.badRequest().body(ErrorResponseDto.of(ex.getMessage()));
+    }
 
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<ErrorResponseDto> constraintValidationException(ConstraintViolationException ex) {
