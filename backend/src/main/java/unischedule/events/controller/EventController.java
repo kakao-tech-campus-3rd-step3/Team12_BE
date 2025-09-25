@@ -87,9 +87,4 @@ public class EventController {
         eventService.deletePersonalEvent(userDetails.getUsername(), eventId);
         return ResponseEntity.noContent().build();
     }
-
-//    @GetMapping("/{userId}/today")
-//    public ResponseEntity<List<EventGetResponseDto>> todayEvent() {
-//
-//    }
 }
