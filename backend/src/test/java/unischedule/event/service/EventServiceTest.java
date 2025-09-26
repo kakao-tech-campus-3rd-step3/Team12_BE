@@ -22,12 +22,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.access.AccessDeniedException;
 import unischedule.calendar.entity.Calendar;
 import unischedule.calendar.service.internal.CalendarDomainService;
-import unischedule.events.dto.EventCreateRequestDto;
+import unischedule.events.dto.PersonalEventCreateRequestDto;
 import unischedule.events.dto.EventCreateResponseDto;
 import unischedule.events.dto.EventGetResponseDto;
 import unischedule.events.dto.EventModifyRequestDto;
@@ -75,7 +74,7 @@ class EventServiceTest {
     @DisplayName("특정 캘린더에 새 일정 등록")
     void makeEvent() {
         // given
-        EventCreateRequestDto requestDto = new EventCreateRequestDto(
+        PersonalEventCreateRequestDto requestDto = new PersonalEventCreateRequestDto(
                 calendarId,
                 "새 회의",
                 "주간 회의",
@@ -115,7 +114,7 @@ class EventServiceTest {
     @DisplayName("일정 등록 실패 - 시간이 겹칠 경우")
     void makeEventFailOnConflict() {
         // given
-        EventCreateRequestDto requestDto = new EventCreateRequestDto(
+        PersonalEventCreateRequestDto requestDto = new PersonalEventCreateRequestDto(
                 calendarId,
                 "겹치는 회의",
                 "주간 회의",

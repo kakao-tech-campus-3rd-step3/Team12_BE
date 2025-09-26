@@ -12,8 +12,8 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import unischedule.auth.jwt.JwtTokenProvider;
 import unischedule.common.config.SecurityConfig;
-import unischedule.events.controller.EventController;
-import unischedule.events.dto.EventCreateRequestDto;
+import unischedule.events.controller.PersonalEventController;
+import unischedule.events.dto.PersonalEventCreateRequestDto;
 import unischedule.events.dto.EventCreateResponseDto;
 import unischedule.events.dto.EventGetResponseDto;
 import unischedule.events.dto.EventModifyRequestDto;
@@ -36,7 +36,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(EventController.class)
+@WebMvcTest(PersonalEventController.class)
 @Import(SecurityConfig.class)
 public class EventControllerTest {
     @Autowired
@@ -53,7 +53,7 @@ public class EventControllerTest {
     @DisplayName("개인 일정 추가")
     void makeMyEvent() throws Exception {
         // given
-        EventCreateRequestDto requestDto = new EventCreateRequestDto(
+        PersonalEventCreateRequestDto requestDto = new PersonalEventCreateRequestDto(
                 1L,
                 "Test Event",
                 "Description",
@@ -70,7 +70,7 @@ public class EventControllerTest {
                 false
         );
 
-        given(eventService.makePersonalEvent(anyString(), any(EventCreateRequestDto.class))).willReturn(responseDto);
+        given(eventService.makePersonalEvent(anyString(), any(PersonalEventCreateRequestDto.class))).willReturn(responseDto);
 
         // when & then
         mockMvc.perform(post("/api/events/add")

@@ -5,7 +5,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import unischedule.calendar.entity.Calendar;
 import unischedule.calendar.service.internal.CalendarDomainService;
-import unischedule.events.dto.EventCreateRequestDto;
+import unischedule.events.dto.PersonalEventCreateRequestDto;
 import unischedule.events.dto.EventCreateResponseDto;
 import unischedule.events.dto.EventModifyRequestDto;
 import unischedule.events.entity.EventState;
@@ -27,10 +27,10 @@ public class EventService {
     private final CalendarDomainService calendarDomainService;
 
     @Transactional
-    public EventCreateResponseDto makePersonalEvent(String email, EventCreateRequestDto requestDto) {
+    public EventCreateResponseDto makePersonalEvent(String email, PersonalEventCreateRequestDto requestDto) {
         Member member = memberDomainService.findMemberByEmail(email);
 
-        Calendar targetCalendar = calendarDomainService.findCalendarById(requestDto.calendarId());
+        Calendar targetCalendar = calendarDomainService.getMyPersonalCalendar(member);
 
         targetCalendar.validateOwner(member);
 
