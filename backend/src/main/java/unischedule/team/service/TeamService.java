@@ -29,7 +29,7 @@ public class TeamService {
     private final CalendarRepository calendarRepository;
     private final MemberRepository memberRepository;
     private final TeamMemberRepository teamMemberRepository;
-    private static final TeamCodeGenerator TEAM_CODE_GENERATOR = new TeamCodeGenerator();
+    private final TeamCodeGenerator teamCodeGenerator = new TeamCodeGenerator();
     
     /**
      * 팀 생성을 위한 메서드
@@ -45,7 +45,7 @@ public class TeamService {
         Member findMember = memberRepository.findByEmail(email).get();
         
         do {
-            code = TEAM_CODE_GENERATOR.generate();
+            code = teamCodeGenerator.generate();
         } while (teamRepository.existsByInviteCode(code));
         
         Team newTeam = new Team(requestDto.name(), code);
