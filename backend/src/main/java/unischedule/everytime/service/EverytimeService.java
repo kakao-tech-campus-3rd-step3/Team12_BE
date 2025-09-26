@@ -29,7 +29,7 @@ public class EverytimeService {
 
     public TimetableDetailDto getTimetableDetail(String identifier) {
         EverytimeTimetableRawResponseDto rawResponse = getTimetableData(identifier);
-        return TimetableDetailDto.from(rawResponse.table());
+        return everytimeTimetableMapper.toTimetableDetailDto(rawResponse);
     }
 
     public TimetableDetailDto getTimetableDetailFromImage(MultipartFile image) {
