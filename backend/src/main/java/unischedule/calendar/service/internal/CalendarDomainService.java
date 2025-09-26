@@ -6,6 +6,7 @@ import org.springframework.transaction.annotation.Transactional;
 import unischedule.calendar.entity.Calendar;
 import unischedule.calendar.repository.CalendarRepository;
 import unischedule.exception.EntityNotFoundException;
+import unischedule.member.entity.Member;
 
 @Service
 @RequiredArgsConstructor
@@ -18,5 +19,9 @@ public class CalendarDomainService {
                 .orElseThrow(() -> new EntityNotFoundException("해당 캘린더를 찾을 수 없습니다."));
     }
 
-
+    @Transactional(readOnly = true)
+    public Calendar getMyPersonalCalendar(Member member) {
+        return calendarRepository.findByOwnerAndTeamIsNull(member)
+                .orElseThrow(() -> new EntityNotFoundException("개인 캘린더를 찾을 수 없습니다."));
+    }
 }
