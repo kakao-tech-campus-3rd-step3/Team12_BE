@@ -21,7 +21,7 @@ import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
-public class EventService {
+public class PersonalEventService {
     private final MemberDomainService memberDomainService;
     private final EventDomainService eventDomainService;
     private final CalendarDomainService calendarDomainService;

@@ -32,7 +32,7 @@ import unischedule.events.dto.EventGetResponseDto;
 import unischedule.events.dto.EventModifyRequestDto;
 import unischedule.events.entity.Event;
 import unischedule.events.entity.EventState;
-import unischedule.events.service.EventService;
+import unischedule.events.service.PersonalEventService;
 import unischedule.events.service.internal.EventDomainService;
 import unischedule.exception.EntityNotFoundException;
 import unischedule.exception.InvalidInputException;
@@ -41,7 +41,7 @@ import unischedule.member.service.internal.MemberDomainService;
 import unischedule.util.TestUtil;
 
 @ExtendWith(MockitoExtension.class)
-class EventServiceTest {
+class PersonalEventServiceTest {
     @Mock
     private EventDomainService eventDomainService;
     @Mock
@@ -49,7 +49,7 @@ class EventServiceTest {
     @Mock
     private CalendarDomainService calendarDomainService;
     @InjectMocks
-    private EventService eventService;
+    private PersonalEventService eventService;
 
     private Member owner;
     private Calendar calendar;
@@ -71,11 +71,10 @@ class EventServiceTest {
     }
     
     @Test
-    @DisplayName("특정 캘린더에 새 일정 등록")
+    @DisplayName("개인 캘린더에 새 일정 등록")
     void makeEvent() {
         // given
         PersonalEventCreateRequestDto requestDto = new PersonalEventCreateRequestDto(
-                calendarId,
                 "새 회의",
                 "주간 회의",
                 LocalDateTime.now(),
@@ -93,7 +92,7 @@ class EventServiceTest {
         );
 
         given(memberDomainService.findMemberByEmail(memberEmail)).willReturn(owner);
-        given(calendarDomainService.findCalendarById(calendarId)).willReturn(calendar);
+        given(calendarDomainService.getMyPersonalCalendar(owner)).willReturn(calendar);
 
         doNothing().when(calendar).validateOwner(owner);
         doNothing().when(eventDomainService).validateNoSchedule(eq(owner), any(LocalDateTime.class), any(LocalDateTime.class));
@@ -115,7 +114,6 @@ class EventServiceTest {
     void makeEventFailOnConflict() {
         // given
         PersonalEventCreateRequestDto requestDto = new PersonalEventCreateRequestDto(
-                calendarId,
                 "겹치는 회의",
                 "주간 회의",
                 LocalDateTime.now(),
@@ -124,7 +122,7 @@ class EventServiceTest {
         );
 
         given(memberDomainService.findMemberByEmail(memberEmail)).willReturn(owner);
-        given(calendarDomainService.findCalendarById(calendarId)).willReturn(calendar);
+        given(calendarDomainService.getMyPersonalCalendar(owner)).willReturn(calendar);
 
         doThrow(new InvalidInputException("겹치는 일정이 있어 등록할 수 없습니다."))
                 .when(eventDomainService).validateNoSchedule(eq(owner), any(LocalDateTime.class), any(LocalDateTime.class));

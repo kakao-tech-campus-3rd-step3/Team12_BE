@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import unischedule.events.dto.PersonalEventCreateRequestDto;
 import unischedule.events.dto.EventCreateResponseDto;
 import unischedule.events.dto.EventModifyRequestDto;
-import unischedule.events.service.EventService;
+import unischedule.events.service.PersonalEventService;
 import unischedule.events.dto.EventGetResponseDto;
 
 import java.time.LocalDateTime;
@@ -28,7 +28,7 @@ import java.util.List;
 @RequestMapping("/api/events")
 @RequiredArgsConstructor
 public class PersonalEventController {
-    private final EventService eventService;
+    private final PersonalEventService eventService;
 
     @PostMapping("/add")
     public ResponseEntity<EventCreateResponseDto> makeMyEvent(

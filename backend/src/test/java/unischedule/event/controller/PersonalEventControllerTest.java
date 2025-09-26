@@ -17,7 +17,7 @@ import unischedule.events.dto.PersonalEventCreateRequestDto;
 import unischedule.events.dto.EventCreateResponseDto;
 import unischedule.events.dto.EventGetResponseDto;
 import unischedule.events.dto.EventModifyRequestDto;
-import unischedule.events.service.EventService;
+import unischedule.events.service.PersonalEventService;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
@@ -38,13 +38,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(PersonalEventController.class)
 @Import(SecurityConfig.class)
-public class EventControllerTest {
+public class PersonalEventControllerTest {
     @Autowired
     private MockMvc mockMvc;
     @Autowired
     private ObjectMapper objectMapper;
     @MockitoBean
-    private EventService eventService;
+    private PersonalEventService eventService;
     @MockitoBean
     private JwtTokenProvider jwtTokenProvider;
 
@@ -54,7 +54,6 @@ public class EventControllerTest {
     void makeMyEvent() throws Exception {
         // given
         PersonalEventCreateRequestDto requestDto = new PersonalEventCreateRequestDto(
-                1L,
                 "Test Event",
                 "Description",
                 LocalDateTime.of(2025, 9, 18, 10, 0),
