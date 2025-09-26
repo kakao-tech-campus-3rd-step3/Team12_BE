@@ -4,7 +4,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import unischedule.everytime.dto.TimetableDto;
-import unischedule.everytime.dto.external.EverytimeTimetableRawResponseDto;
+import unischedule.external.dto.EverytimeTimetableRawResponseDto;
 
 @Component
 @RequiredArgsConstructor

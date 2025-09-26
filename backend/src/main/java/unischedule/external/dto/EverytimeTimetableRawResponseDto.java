@@ -1,4 +1,4 @@
-package unischedule.everytime.dto.external;
+package unischedule.external.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;

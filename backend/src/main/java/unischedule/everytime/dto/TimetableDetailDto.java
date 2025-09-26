@@ -2,8 +2,8 @@ package unischedule.everytime.dto;
 
 import java.time.LocalTime;
 import java.util.List;
-import unischedule.everytime.dto.external.EverytimeTimetableRawResponseDto;
-import unischedule.everytime.dto.external.EverytimeTimetableRawResponseDto.Attr;
+import unischedule.external.dto.EverytimeTimetableRawResponseDto;
+import unischedule.external.dto.EverytimeTimetableRawResponseDto.Attr;
 
 public record TimetableDetailDto(
         String year,

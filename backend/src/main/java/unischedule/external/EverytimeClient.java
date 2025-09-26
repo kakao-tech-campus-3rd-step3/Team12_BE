@@ -1,4 +1,4 @@
-package unischedule.everytime.client;
+package unischedule.external;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
-import unischedule.everytime.dto.external.EverytimeTimetableRawResponseDto;
+import unischedule.external.dto.EverytimeTimetableRawResponseDto;
 
 @Component
 @RequiredArgsConstructor
