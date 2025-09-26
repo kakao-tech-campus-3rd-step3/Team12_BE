@@ -5,10 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 
-public record EventCreateRequestDto(
-        @JsonProperty("calendar_id")
-        @NotNull
-        Long calendarId,
+public record PersonalEventCreateRequestDto(
         @NotBlank
         String title,
         @NotBlank
