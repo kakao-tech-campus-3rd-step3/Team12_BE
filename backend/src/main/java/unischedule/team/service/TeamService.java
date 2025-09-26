@@ -108,6 +108,7 @@ public class TeamService {
         teamMemberRepository.delete(findRelation);
     }
     
+    @Transactional
     public void closeTeam(String email, Long teamId) {
         Team findTeam = teamRepository.findById(teamId)
             .orElseThrow(() -> new EntityNotFoundException("요청한 정보의 팀이 없습니다."));
