@@ -6,7 +6,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import unischedule.calendar.entity.Calendar;
 import unischedule.calendar.repository.CalendarRepository;
+import unischedule.exception.ConflictException;
 import unischedule.exception.EntityNotFoundException;
+import unischedule.exception.NoPermissionException;
 import unischedule.member.entity.Member;
 import unischedule.member.repository.MemberRepository;
 import unischedule.team.dto.TeamCreateRequestDto;
@@ -80,6 +82,9 @@ public class TeamService {
             .orElseThrow(() -> new EntityNotFoundException("요청한 정보의 팀이 없습니다."));
         
         Member findMember = memberRepository.findByEmail(email).get();
+        
+        TeamMember findRelation = teamMemberRepository.findByTeamAndMember(findTeam, findMember)
+            .orElseThrow(() -> new ConflictException("이미 가입된 팀입니다."));
         
         TeamMember relation = new TeamMember(findTeam, findMember, "MEMBER");
         teamMemberRepository.save(relation);

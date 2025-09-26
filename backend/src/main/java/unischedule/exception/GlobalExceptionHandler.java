@@ -3,6 +3,7 @@ package unischedule.exception;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import java.util.stream.Collectors;
+import org.springframework.boot.autoconfigure.graphql.GraphQlProperties.Http;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -36,6 +37,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(NoPermissionException.class)
     public ResponseEntity<ErrorResponseDto> handleNoPermission(NoPermissionException ex) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ErrorResponseDto.of(ex.getMessage()));
+    }
+    
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<ErrorResponseDto> handleConflict(ConflictException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(ErrorResponseDto.of(ex.getMessage()));
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
