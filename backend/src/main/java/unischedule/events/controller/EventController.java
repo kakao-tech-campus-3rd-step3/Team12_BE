@@ -42,29 +42,21 @@ public class EventController {
         EventCreateResponseDto responseDto = eventService.makePersonalEvent(userDetails.getUsername(), requestDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(responseDto);
     }
-    //추후 실제 테스트 때 들어오는 일정의 형식에 따라
-    //Dto 내부의 데이터를 일부 파싱해야할 가능성 있음
 
     @GetMapping
     public ResponseEntity<List<EventGetResponseDto>> getMyEvents(
             @AuthenticationPrincipal
             UserDetails userDetails,
             @RequestParam
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-            LocalDate startAt,
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+            LocalDateTime startAt,
             @RequestParam
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-            LocalDate endAt
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+            LocalDateTime endAt
     ) {
-        // 날짜 → LocalDateTime 변환
-        LocalDateTime startDateTime = startAt.atStartOfDay();           // 00:00
-        LocalDateTime endDateTime = endAt.atTime(LocalTime.MAX);        // 23:59:59.999999999
-
-        List<EventGetResponseDto> responseDto = eventService.getPersonalEvents(userDetails.getUsername(), startDateTime, endDateTime);
+        List<EventGetResponseDto> responseDto = eventService.getPersonalEvents(userDetails.getUsername(), startAt, endAt);
         return ResponseEntity.ok(responseDto);
     }
-    //현재는 태그 없이 바로 리스트형태 반환
-    //추후 태그 필요 시 태그를 포함하는 Dto 형태로 다시 작성할 필요 있음
     
     @PatchMapping("/modify")
     public ResponseEntity<EventGetResponseDto> modifyMyEvent(

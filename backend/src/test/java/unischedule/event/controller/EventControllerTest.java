@@ -101,8 +101,8 @@ public class EventControllerTest {
 
         // when & then
         mockMvc.perform(get("/api/events")
-                .param("startAt", "2025-09-01")
-                .param("endAt", "2025-09-30"))
+                .param("startAt", "2025-09-01T00:00:00")
+                .param("endAt", "2025-09-30T23:59:59"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].event_id").value(1L))
                 .andExpect(jsonPath("$[0].title").value("Test Event"));
