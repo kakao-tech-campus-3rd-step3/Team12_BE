@@ -100,4 +100,20 @@ public class PersonalEventService {
 
         eventDomainService.deleteEvent(event);
     }
+    
+    public List<EventGetResponseDto> getUpcomingMyEvent(String email) {
+        Member member = memberDomainService.findMemberByEmail(email);
+        
+        List<Event> upcomingEvents = eventDomainService.findUpcomingEventsByMember(member);
+        
+        return upcomingEvents.stream().map(EventGetResponseDto::from).toList();
+    }
+    
+    public List<EventGetResponseDto> getTodayMyEvent(String email) {
+        Member member = memberDomainService.findMemberByEmail(email);
+        
+        List<Event> todayEvents = eventDomainService.findTodayEventsByMember(member);
+        
+        return todayEvents.stream().map(EventGetResponseDto::from).toList();
+    }
 }

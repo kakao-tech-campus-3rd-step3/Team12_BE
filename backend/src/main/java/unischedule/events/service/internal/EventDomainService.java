@@ -51,4 +51,13 @@ public class EventDomainService {
             throw new InvalidInputException("해당 시간에 겹치는 일정이 있어 수정할 수 없습니다.");
         }
     }
+    
+    @Transactional(readOnly = true)
+    public List<Event> findUpcomingEventsByMember(Member member) {
+        return null;
+    }
+    
+    public List<Event> findTodayEventsByMember(Member member) {
+        return null;
+    }
 }
