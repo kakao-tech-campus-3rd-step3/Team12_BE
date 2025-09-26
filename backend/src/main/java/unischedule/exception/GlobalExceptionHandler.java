@@ -35,7 +35,7 @@ public class GlobalExceptionHandler {
     
     @ExceptionHandler(NoPermissionException.class)
     public ResponseEntity<ErrorResponseDto> handleNoPermission(NoPermissionException ex) {
-        return ResponseEntity.badRequest().body(ErrorResponseDto.of(ex.getMessage()));
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ErrorResponseDto.of(ex.getMessage()));
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
