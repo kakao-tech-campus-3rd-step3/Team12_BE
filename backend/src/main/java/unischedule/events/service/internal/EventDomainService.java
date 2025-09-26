@@ -57,6 +57,7 @@ public class EventDomainService {
         return null;
     }
     
+    @Transactional(readOnly = true)
     public List<Event> findTodayEventsByMember(Member member) {
         return null;
     }
