@@ -4,6 +4,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import unischedule.exception.EntityNotFoundException;
 import unischedule.external.OpenAiClient;
 import unischedule.everytime.dto.TimetableDetailDto;
 import unischedule.everytime.dto.TimetableDto;
@@ -11,7 +12,6 @@ import unischedule.external.dto.EverytimeTimetableRawResponseDto;
 import unischedule.external.EverytimeClient;
 import unischedule.everytime.mapper.EverytimeTimetableMapper;
 import unischedule.exception.ExternalApiException;
-import unischedule.exception.InvalidInputException;
 
 @Service
 @RequiredArgsConstructor
@@ -43,7 +43,7 @@ public class EverytimeService {
 
         if (response.primaryTables() == null || response.primaryTables().primaryTable().isEmpty() ||
                 response.table() == null) {
-            throw new InvalidInputException("해당 시간표를 찾을 수 없습니다.");
+            throw new EntityNotFoundException("해당 시간표를 찾을 수 없습니다.");
         }
 
         return response;
