@@ -82,8 +82,9 @@ public class TeamService {
         
         Member findMember = memberRepository.findByEmail(email).get();
         
-        teamMemberRepository.findByTeamAndMember(findTeam, findMember)
-            .orElseThrow(() -> new ConflictException("이미 가입된 팀입니다."));
+        if(teamMemberRepository.existsByTeamAndMember(findTeam, findMember)) {
+            throw new ConflictException("이미 가입된 멤버입니다.");
+        }
         
         TeamMember relation = new TeamMember(findTeam, findMember, "MEMBER");
         teamMemberRepository.save(relation);
