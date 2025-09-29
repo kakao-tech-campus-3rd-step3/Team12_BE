@@ -1,6 +1,7 @@
 package unischedule.events.controller;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,6 +25,7 @@ import unischedule.events.dto.EventGetResponseDto;
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/events")
 @RequiredArgsConstructor
@@ -63,6 +65,7 @@ public class PersonalEventController {
             @RequestBody
             EventModifyRequestDto requestDto
     ) {
+        log.error(userDetails.getUsername());
         EventGetResponseDto responseDto = eventService.modifyPersonalEvent(userDetails.getUsername(), requestDto);
         return ResponseEntity.ok(responseDto);
     }

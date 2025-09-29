@@ -82,4 +82,13 @@ public interface EventRepository extends JpaRepository<Event, Long> {
             @Param("eventId")
             Long eventId
     );
+
+
+    /*@Query("""
+""")
+    List<Event> findEventsInCalendarInPeriod(
+
+    )
+
+     */
 }
