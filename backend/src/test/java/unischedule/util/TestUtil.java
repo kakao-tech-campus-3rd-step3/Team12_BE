@@ -1,9 +1,9 @@
 package unischedule.util;
 
 import unischedule.calendar.entity.Calendar;
-import unischedule.events.entity.Event;
-import unischedule.events.entity.EventState;
-import unischedule.member.entity.Member;
+import unischedule.events.domain.Event;
+import unischedule.events.domain.EventState;
+import unischedule.member.domain.Member;
 
 import java.time.LocalDateTime;
 

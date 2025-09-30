@@ -6,8 +6,8 @@ import org.springframework.transaction.annotation.Transactional;
 import unischedule.calendar.entity.Calendar;
 import unischedule.calendar.repository.CalendarRepository;
 import unischedule.exception.EntityNotFoundException;
-import unischedule.member.entity.Member;
-import unischedule.team.entity.Team;
+import unischedule.member.domain.Member;
+import unischedule.team.domain.Team;
 
 @Service
 @RequiredArgsConstructor

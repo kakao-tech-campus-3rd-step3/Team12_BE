@@ -9,11 +9,11 @@ import unischedule.calendar.service.internal.CalendarDomainService;
 import unischedule.events.dto.PersonalEventCreateRequestDto;
 import unischedule.events.dto.EventCreateResponseDto;
 import unischedule.events.dto.EventModifyRequestDto;
-import unischedule.events.entity.EventState;
+import unischedule.events.domain.EventState;
 import unischedule.events.service.internal.EventDomainService;
 import unischedule.events.dto.EventGetResponseDto;
-import unischedule.events.entity.Event;
-import unischedule.member.entity.Member;
+import unischedule.events.domain.Event;
+import unischedule.member.domain.Member;
 import unischedule.member.service.internal.MemberDomainService;
 
 import java.time.LocalDateTime;

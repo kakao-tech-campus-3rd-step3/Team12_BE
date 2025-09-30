@@ -30,13 +30,13 @@ import unischedule.events.dto.PersonalEventCreateRequestDto;
 import unischedule.events.dto.EventCreateResponseDto;
 import unischedule.events.dto.EventGetResponseDto;
 import unischedule.events.dto.EventModifyRequestDto;
-import unischedule.events.entity.Event;
-import unischedule.events.entity.EventState;
+import unischedule.events.domain.Event;
+import unischedule.events.domain.EventState;
 import unischedule.events.service.PersonalEventService;
 import unischedule.events.service.internal.EventDomainService;
 import unischedule.exception.EntityNotFoundException;
 import unischedule.exception.InvalidInputException;
-import unischedule.member.entity.Member;
+import unischedule.member.domain.Member;
 import unischedule.member.service.internal.MemberDomainService;
 import unischedule.util.TestUtil;
 

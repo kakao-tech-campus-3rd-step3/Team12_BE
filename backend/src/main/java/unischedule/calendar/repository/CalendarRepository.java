@@ -3,8 +3,8 @@ package unischedule.calendar.repository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import unischedule.calendar.entity.Calendar;
-import unischedule.member.entity.Member;
-import unischedule.team.entity.Team;
+import unischedule.member.domain.Member;
+import unischedule.team.domain.Team;
 
 import java.util.List;
 import java.util.Optional;
