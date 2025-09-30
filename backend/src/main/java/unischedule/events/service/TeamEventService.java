@@ -55,6 +55,7 @@ public class TeamEventService {
         return EventCreateResponseDto.from(eventDomainService.saveEvent(event));
     }
 
+    /*
     @Transactional(readOnly = true)
     public List<EventGetResponseDto> getTeamEvents(String email, Long teamId, LocalDateTime startAt, LocalDateTime endAt) {
         Member member = memberDomainService.findMemberByEmail(email);
@@ -65,6 +66,8 @@ public class TeamEventService {
 
         return List.of(null);
     }
+
+     */
 
     private Team findTeamById(Long teamId) {
         return teamRepository.findById(teamId)

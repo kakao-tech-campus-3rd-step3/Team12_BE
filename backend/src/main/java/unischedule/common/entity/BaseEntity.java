@@ -28,12 +28,10 @@ public class BaseEntity {
     protected LocalDateTime updatedAt;
 
     @CreatedBy
-    @ManyToOne(fetch = FetchType.LAZY)
-    protected Member createdBy;
+    protected String createdBy;
 
     @LastModifiedBy
-    @ManyToOne(fetch = FetchType.LAZY)
-    protected Member updatedBy;
+    protected String updatedBy;
 
     protected BaseEntity() {
 

@@ -12,7 +12,7 @@ import unischedule.member.repository.MemberRepository;
 public class JpaAuditingConfig {
 
     @Bean
-    public AuditorAware<Member> auditorProvider(MemberRepository memberRepository) {
-        return new AuditorAwareImpl(memberRepository);
+    public AuditorAware<String> auditorProvider() {
+        return new AuditorAwareImpl();
     }
 }
