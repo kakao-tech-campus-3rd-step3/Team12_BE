@@ -77,4 +77,22 @@ public class PersonalEventController {
         eventService.deletePersonalEvent(userDetails.getUsername(), eventId);
         return ResponseEntity.noContent().build();
     }
+    
+    @GetMapping("/upcomming")
+    public ResponseEntity<List<EventGetResponseDto>> upcomingMyEvent(
+        @AuthenticationPrincipal
+        UserDetails userDetails
+    ) {
+        List<EventGetResponseDto> upcomingList = eventService.getUpcomingMyEvent(userDetails.getUsername());
+        return ResponseEntity.ok(upcomingList);
+    }
+    
+    @GetMapping("/today")
+    public ResponseEntity<List<EventGetResponseDto>> todayMyEvent(
+        @AuthenticationPrincipal
+        UserDetails userDetails
+    ) {
+        List<EventGetResponseDto> upcomingList = eventService.getTodayMyEvent(userDetails.getUsername());
+        return ResponseEntity.ok(upcomingList);
+    }
 }
