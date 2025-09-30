@@ -14,7 +14,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class EventDomainService {
+public class EventRawService {
     private final EventRepository eventRepository;
 
     @Transactional

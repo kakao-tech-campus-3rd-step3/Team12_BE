@@ -11,7 +11,7 @@ import unischedule.team.domain.Team;
 
 @Service
 @RequiredArgsConstructor
-public class CalendarDomainService {
+public class CalendarRawService {
     private final CalendarRepository calendarRepository;
 
     @Transactional(readOnly = true)

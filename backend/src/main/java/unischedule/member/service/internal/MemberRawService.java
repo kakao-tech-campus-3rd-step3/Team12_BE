@@ -9,7 +9,7 @@ import unischedule.member.repository.MemberRepository;
 
 @Service
 @RequiredArgsConstructor
-public class MemberDomainService {
+public class MemberRawService {
     private final MemberRepository memberRepository;
 
     @Transactional(readOnly = true)

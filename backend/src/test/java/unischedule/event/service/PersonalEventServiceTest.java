@@ -25,7 +25,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.access.AccessDeniedException;
 import unischedule.calendar.entity.Calendar;
-import unischedule.calendar.service.internal.CalendarDomainService;
+import unischedule.calendar.service.internal.CalendarRawService;
 import unischedule.events.dto.PersonalEventCreateRequestDto;
 import unischedule.events.dto.EventCreateResponseDto;
 import unischedule.events.dto.EventGetResponseDto;
@@ -33,21 +33,21 @@ import unischedule.events.dto.EventModifyRequestDto;
 import unischedule.events.domain.Event;
 import unischedule.events.domain.EventState;
 import unischedule.events.service.PersonalEventService;
-import unischedule.events.service.internal.EventDomainService;
+import unischedule.events.service.internal.EventRawService;
 import unischedule.exception.EntityNotFoundException;
 import unischedule.exception.InvalidInputException;
 import unischedule.member.domain.Member;
-import unischedule.member.service.internal.MemberDomainService;
+import unischedule.member.service.internal.MemberRawService;
 import unischedule.util.TestUtil;
 
 @ExtendWith(MockitoExtension.class)
 class PersonalEventServiceTest {
     @Mock
-    private EventDomainService eventDomainService;
+    private EventRawService eventDomainService;
     @Mock
-    private MemberDomainService memberDomainService;
+    private MemberRawService memberDomainService;
     @Mock
-    private CalendarDomainService calendarDomainService;
+    private CalendarRawService calendarDomainService;
     @InjectMocks
     private PersonalEventService eventService;
 
