@@ -1,21 +1,19 @@
 package unischedule.everytime.controller;
 
-import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import jakarta.validation.constraints.Pattern;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import unischedule.everytime.dto.TimetableDetailDto;
-import unischedule.everytime.dto.TimetableDetailRequestDto;
 import unischedule.everytime.dto.TimetableDto;
-import unischedule.everytime.dto.TimetablesRequestDto;
 import unischedule.everytime.service.EverytimeService;
 
 @RestController
@@ -28,19 +26,28 @@ public class EverytimeController {
 
     @GetMapping("/timetables")
     public ResponseEntity<List<TimetableDto>> getTimetables(
-            @ModelAttribute @Valid TimetablesRequestDto timetablesRequestDto) {
-        return ResponseEntity.ok(everytimeService.getTimetables(timetablesRequestDto.url()));
+            @RequestParam
+            @Pattern(regexp = "^https://everytime\\.kr/@[A-Za-z0-9]{20}$", message = "유효하지 않은 에브리타임 URL입니다.")
+            String url) {
+        String identifier = getIdentifierFromEverytimeUrl(url);
+        return ResponseEntity.ok(everytimeService.getTimetables(identifier));
     }
 
     @GetMapping("/timetable")
     public ResponseEntity<TimetableDetailDto> getTimetableDetail(
-            @ModelAttribute @Valid TimetableDetailRequestDto timetableDetailRequestDto) {
-        return ResponseEntity.ok(everytimeService.getTimetableDetail(timetableDetailRequestDto.identifier()));
+            @RequestParam
+            @Pattern(regexp = "^[A-Za-z0-9]{20}$", message = "유효하지 않은 에브리타임 식별자입니다.")
+            String identifier) {
+        return ResponseEntity.ok(everytimeService.getTimetableDetail(identifier));
     }
 
     @PostMapping("/timetable")
     public ResponseEntity<TimetableDetailDto> getTimetableDetailFromImage(
             @RequestPart("image") MultipartFile image) {
         return ResponseEntity.ok(everytimeService.getTimetableDetailFromImage(image));
+    }
+
+    private String getIdentifierFromEverytimeUrl(String urlString) {
+        return urlString.substring(urlString.lastIndexOf("@") + 1);
     }
 }

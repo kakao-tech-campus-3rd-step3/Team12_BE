@@ -12,12 +12,12 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import unischedule.auth.jwt.JwtTokenProvider;
 import unischedule.common.config.SecurityConfig;
-import unischedule.events.controller.PersonalEventController;
-import unischedule.events.dto.PersonalEventCreateRequestDto;
+import unischedule.events.controller.EventController;
+import unischedule.events.dto.EventCreateRequestDto;
 import unischedule.events.dto.EventCreateResponseDto;
 import unischedule.events.dto.EventGetResponseDto;
 import unischedule.events.dto.EventModifyRequestDto;
-import unischedule.events.service.PersonalEventService;
+import unischedule.events.service.EventService;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
@@ -36,15 +36,15 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(PersonalEventController.class)
+@WebMvcTest(EventController.class)
 @Import(SecurityConfig.class)
-public class PersonalEventControllerTest {
+public class EventControllerTest {
     @Autowired
     private MockMvc mockMvc;
     @Autowired
     private ObjectMapper objectMapper;
     @MockitoBean
-    private PersonalEventService eventService;
+    private EventService eventService;
     @MockitoBean
     private JwtTokenProvider jwtTokenProvider;
 
@@ -53,7 +53,8 @@ public class PersonalEventControllerTest {
     @DisplayName("개인 일정 추가")
     void makeMyEvent() throws Exception {
         // given
-        PersonalEventCreateRequestDto requestDto = new PersonalEventCreateRequestDto(
+        EventCreateRequestDto requestDto = new EventCreateRequestDto(
+                1L,
                 "Test Event",
                 "Description",
                 LocalDateTime.of(2025, 9, 18, 10, 0),
@@ -69,7 +70,7 @@ public class PersonalEventControllerTest {
                 false
         );
 
-        given(eventService.makePersonalEvent(anyString(), any(PersonalEventCreateRequestDto.class))).willReturn(responseDto);
+        given(eventService.makePersonalEvent(anyString(), any(EventCreateRequestDto.class))).willReturn(responseDto);
 
         // when & then
         mockMvc.perform(post("/api/events/add")
@@ -100,8 +101,8 @@ public class PersonalEventControllerTest {
 
         // when & then
         mockMvc.perform(get("/api/events")
-                .param("startAt", "2025-09-01T00:00:00")
-                .param("endAt", "2025-09-30T23:59:59"))
+                .param("startAt", "2025-09-01")
+                .param("endAt", "2025-09-30"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].event_id").value(1L))
                 .andExpect(jsonPath("$[0].title").value("Test Event"));

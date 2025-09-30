@@ -1,12 +1,10 @@
 package unischedule.team.service;
 
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import unischedule.calendar.entity.Calendar;
 import unischedule.calendar.repository.CalendarRepository;
-import unischedule.exception.ConflictException;
 import unischedule.exception.EntityNotFoundException;
 import unischedule.member.entity.Member;
 import unischedule.member.repository.MemberRepository;
@@ -15,13 +13,12 @@ import unischedule.team.dto.TeamCreateResponseDto;
 import unischedule.team.dto.TeamJoinRequestDto;
 import unischedule.team.dto.TeamJoinResponseDto;
 import unischedule.team.entity.Team;
-import unischedule.team.entity.TeamMember;
-import unischedule.team.repository.TeamMemberRepository;
 import unischedule.team.repository.TeamRepository;
 
 /**
  * 팀과 관련한 서비스 메서드들의 클래스
  */
+// 차후 개인과 팀의 연관관계 구현 후 완성 필요 (세환 씨 저랑 이야기 좀 해요)
 @Service
 @RequiredArgsConstructor
 public class TeamService {
@@ -29,8 +26,6 @@ public class TeamService {
     private final TeamRepository teamRepository;
     private final CalendarRepository calendarRepository;
     private final MemberRepository memberRepository;
-    private final TeamMemberRepository teamMemberRepository;
-    private final TeamCodeGenerator teamCodeGenerator = new TeamCodeGenerator();
     
     /**
      * 팀 생성을 위한 메서드
@@ -41,20 +36,25 @@ public class TeamService {
     @Transactional
     public TeamCreateResponseDto createTeam(String email, TeamCreateRequestDto requestDto) {
         
+        TeamCodeGenerator teamCodeGenerator = new TeamCodeGenerator();
         String code;
         
-        Member findMember = memberRepository.findByEmail(email).get();
+        Member findMember = memberRepository.findByEmail(email)
+            .orElseThrow(() -> new EntityNotFoundException("해당 멤버가 없습니다."));
         
         do {
             code = teamCodeGenerator.generate();
         } while (teamRepository.existsByInviteCode(code));
         
-        Team newTeam = new Team(requestDto.teamName(), requestDto.teamDescription(), code);
+        Team newTeam = new Team(requestDto.name(), code);
         
         Team saved = teamRepository.save(newTeam);
         
-        TeamMember relation = new TeamMember(saved, findMember, "LEADER");
-        teamMemberRepository.save(relation);
+        /*
+        팀과 개인의 연관관계 구현해서 저장하는 코드 추가 필요 (중계 테이블 필요 때문에 반드시 소통 필요)
+        나 - 생성된 팀 연관관계를 테이블에 저장
+        멘토링 내용에 대해 의논 후 구현할 필요가 있을 듯
+         */
         
         Calendar teamCalendar = new Calendar(
             findMember, saved, "팀 캘린더", "팀 캘린더입니다."
@@ -65,7 +65,6 @@ public class TeamService {
         return new TeamCreateResponseDto(
             saved.getTeamId(),
             saved.getName(),
-            saved.getDescription(),
             saved.getInviteCode()
         );
     }
@@ -78,61 +77,22 @@ public class TeamService {
      */
     public TeamJoinResponseDto joinTeam(String email, TeamJoinRequestDto requestDto) {
         
-        Team findTeam = teamRepository.findByInviteCode(requestDto.inviteCode())
+        Team findTeam = teamRepository.findByInviteCode(requestDto.visitCode())
             .orElseThrow(() -> new EntityNotFoundException("요청한 정보의 팀이 없습니다."));
         
-        Member findMember = memberRepository.findByEmail(email).get();
+        Member findMember = memberRepository.findByEmail(email)
+            .orElseThrow(() -> new EntityNotFoundException("해당 멤버가 없습니다."));
         
-        if(teamMemberRepository.existsByTeamAndMember(findTeam, findMember)) {
-            throw new ConflictException("이미 가입된 멤버입니다.");
-        }
-        
-        TeamMember relation = new TeamMember(findTeam, findMember, "MEMBER");
-        teamMemberRepository.save(relation);
+        /*
+        팀과 개인의 연관관계 구현해서 저장하는 코드 추가 필요
+        나 - 검색한 팀 연관관계를 테이블에 저장
+        멘토링 내용에 대해 의논 후 구현할 필요가 있을 듯
+         */
         
         return new TeamJoinResponseDto(
             findTeam.getTeamId(),
             findTeam.getName(),
-            findTeam.getDescription()
+            findTeam.getInviteCode()
         );
-    }
-    
-    @Transactional
-    public void withdrawTeam(String email, Long teamId) {
-        Team findTeam = teamRepository.findById(teamId)
-            .orElseThrow(() -> new EntityNotFoundException("요청한 정보의 팀이 없습니다."));
-        
-        Member findMember = memberRepository.findByEmail(email).get();
-        
-        TeamMember findRelation = teamMemberRepository.findByTeamAndMember(findTeam, findMember)
-            .orElseThrow(() -> new EntityNotFoundException("해당 팀 소속이 아닙니다."));
-        
-        /*
-        팀 탈퇴 전 해야할 일이 생긴다면 여기 추가
-         */
-        
-        teamMemberRepository.delete(findRelation);
-    }
-    
-    @Transactional
-    public void closeTeam(String email, Long teamId) {
-        Team findTeam = teamRepository.findById(teamId)
-            .orElseThrow(() -> new EntityNotFoundException("요청한 정보의 팀이 없습니다."));
-        
-        Member findMember = memberRepository.findByEmail(email).get();
-        
-        TeamMember findRelation = teamMemberRepository.findByTeamAndMember(findTeam, findMember)
-            .orElseThrow(() -> new EntityNotFoundException("해당 팀 소속이 아닙니다."));
-        
-        findRelation.checkLeader();
-        
-        /*
-        팀 삭제 전 해야할 일이 생긴다면 여기 추가
-         */
-        
-        List<TeamMember> findTeamMember = teamMemberRepository.findByTeam(findTeam);
-        teamMemberRepository.deleteAll(findTeamMember);
-        
-        teamRepository.delete(findTeam);
     }
 }

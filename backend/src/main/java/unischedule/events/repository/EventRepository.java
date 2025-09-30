@@ -2,7 +2,6 @@ package unischedule.events.repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -83,14 +82,4 @@ public interface EventRepository extends JpaRepository<Event, Long> {
             @Param("eventId")
             Long eventId
     );
-    
-    @Query("""
-            SELECT e FROM Event e
-            WHERE e.calendar.owner.memberId = :memberId
-            AND e.startAt >= :now
-            ORDER BY e.startAt ASC
-    """)
-    List<Event> findUpcomingEvents(@Param("memberId") Long memberId,
-        @Param("now") LocalDateTime now,
-        Pageable pageable);
 }

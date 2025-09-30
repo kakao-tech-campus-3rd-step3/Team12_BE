@@ -22,12 +22,10 @@ public class Team extends BaseEntity {
     private Long teamId;
     @Column(nullable = false)
     private String name;
-    private String description;
     private String inviteCode;
 
-    public Team(String name, String description, String inviteCode) {
+    public Team(String name, String inviteCode) {
         this.name = name;
-        this.description = description;
         this.inviteCode = inviteCode;
     }
 }

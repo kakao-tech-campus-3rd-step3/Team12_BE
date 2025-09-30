@@ -5,7 +5,6 @@ import jakarta.validation.ConstraintViolationException;
 import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import unischedule.exception.dto.EntityAlreadyExistsException;
@@ -33,16 +32,6 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponseDto> handleEntityAlreadyExists(EntityAlreadyExistsException ex) {
         return ResponseEntity.badRequest().body(ErrorResponseDto.of(ex.getMessage()));
     }
-    
-    @ExceptionHandler(NoPermissionException.class)
-    public ResponseEntity<ErrorResponseDto> handleNoPermission(NoPermissionException ex) {
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ErrorResponseDto.of(ex.getMessage()));
-    }
-    
-    @ExceptionHandler(ConflictException.class)
-    public ResponseEntity<ErrorResponseDto> handleConflict(ConflictException ex) {
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(ErrorResponseDto.of(ex.getMessage()));
-    }
 
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<ErrorResponseDto> constraintValidationException(ConstraintViolationException ex) {
@@ -51,20 +40,6 @@ public class GlobalExceptionHandler {
                 .collect(Collectors.joining(", "));
 
         return ResponseEntity.badRequest().body(ErrorResponseDto.of(message));
-    }
-
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponseDto> handleMethodArgumentNotValid(MethodArgumentNotValidException ex) {
-        String message = ex.getBindingResult().getFieldErrors().stream()
-                .map(error -> error.getField() + ": " + error.getDefaultMessage())
-                .collect(Collectors.joining(", "));
-
-        return ResponseEntity.badRequest().body(ErrorResponseDto.of(message));
-    }
-
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponseDto> handleGeneralException(Exception ex) {
-        return ResponseEntity.internalServerError().body(ErrorResponseDto.of(ex.getMessage())); //TODO: 실 배포 시 메시지 변경
     }
 }
 

@@ -1,4 +1,4 @@
-package unischedule.external;
+package unischedule.everytime.client;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -11,7 +11,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 import unischedule.everytime.dto.TimetableDetailDto;
-import unischedule.external.dto.OpenAiChatCompletionResponseDto;
+import unischedule.everytime.dto.external.OpenAiChatCompletionResponseDto;
 import unischedule.exception.ExternalApiException;
 
 @Component

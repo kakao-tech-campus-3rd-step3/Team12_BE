@@ -1,4 +1,4 @@
-package unischedule.external.dto;
+package unischedule.everytime.dto.external;
 
 import java.util.List;
 

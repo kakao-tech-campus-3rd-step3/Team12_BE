@@ -1,6 +1,6 @@
 package unischedule.everytime.dto;
 
-import unischedule.external.dto.EverytimeTimetableRawResponseDto.PrimaryTable;
+import unischedule.everytime.dto.external.EverytimeTimetableRawResponseDto.PrimaryTable;
 
 public record TimetableDto(
         String year,

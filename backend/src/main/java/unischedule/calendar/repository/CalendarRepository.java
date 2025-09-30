@@ -11,6 +11,4 @@ import java.util.Optional;
 @Repository
 public interface CalendarRepository extends JpaRepository<Calendar, Long> {
     List<Calendar> findByOwner(Member owner);
-
-    Optional<Calendar> findByOwnerAndTeamIsNull(Member owner);
 }
