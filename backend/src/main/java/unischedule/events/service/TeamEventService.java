@@ -77,7 +77,7 @@ public class TeamEventService {
                 .toList();
         eventRawService.canUpdateEventForMembers(teamMembers, event, requestDto.startTime(), requestDto.endTime());
 
-        event.modifyEvent(requestDto);
+        eventRawService.updateEvent(event, EventModifyRequestDto.toDto(requestDto));
 
         return EventGetResponseDto.from(event);
     }

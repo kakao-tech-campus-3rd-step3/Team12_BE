@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import unischedule.events.domain.Event;
+import unischedule.events.dto.EventUpdateDto;
 import unischedule.events.repository.EventRepository;
 import unischedule.exception.EntityNotFoundException;
 import unischedule.exception.InvalidInputException;
@@ -34,6 +35,17 @@ public class EventRawService {
     @Transactional
     public void deleteEvent(Event event) {
         eventRepository.delete(event);
+    }
+
+    @Transactional
+    public void updateEvent(Event event, EventUpdateDto updateDto) {
+        event.modifyEvent(
+                updateDto.title(),
+                updateDto.content(),
+                updateDto.startTime(),
+                updateDto.endTime(),
+                updateDto.isPrivate()
+        );
     }
 
     @Transactional(readOnly = true)

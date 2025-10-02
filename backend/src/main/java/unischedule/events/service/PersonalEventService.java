@@ -99,7 +99,7 @@ public class PersonalEventService {
 
         validateUpdateTime(member, findEvent, requestDto.startTime(), requestDto.endTime());
 
-        findEvent.modifyEvent(requestDto);
+        eventRawService.updateEvent(findEvent, EventModifyRequestDto.toDto(requestDto));
         
         return EventGetResponseDto.from(findEvent);
     }

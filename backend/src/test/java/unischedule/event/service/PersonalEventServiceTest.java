@@ -1,10 +1,12 @@
 package unischedule.event.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.in;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -28,6 +30,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.access.AccessDeniedException;
 import unischedule.calendar.entity.Calendar;
 import unischedule.calendar.service.internal.CalendarRawService;
+import unischedule.events.dto.EventUpdateDto;
 import unischedule.events.dto.PersonalEventCreateRequestDto;
 import unischedule.events.dto.EventCreateResponseDto;
 import unischedule.events.dto.EventGetResponseDto;
@@ -196,7 +199,7 @@ class PersonalEventServiceTest {
     void modifyEvent() {
         // given
         Long eventId = 10L;
-        Event existingEvent = spy(TestUtil.makeEvent("일정", "내용"));
+        Event existingEvent = TestUtil.makeEvent("일정", "내용");
 
         existingEvent.connectCalendar(personalCalendar);
 
@@ -204,7 +207,13 @@ class PersonalEventServiceTest {
 
         given(memberRawService.findMemberByEmail(memberEmail)).willReturn(owner);
         given(eventRawService.findEventById(eventId)).willReturn(existingEvent);
-        doNothing().when(existingEvent).validateEventOwner(owner);
+
+        doAnswer(invocation -> {
+            Event event = invocation.getArgument(0);
+            EventUpdateDto dto = invocation.getArgument(1);
+            event.modifyEvent(dto.title(), dto.content(), dto.startTime(), dto.endTime(), dto.isPrivate());
+            return null;
+        }).when(eventRawService).updateEvent(any(Event.class), any(EventUpdateDto.class));
 
         // when
         EventGetResponseDto responseDto = eventService.modifyPersonalEvent(memberEmail, requestDto);
@@ -230,7 +239,7 @@ class PersonalEventServiceTest {
         given(memberRawService.findMemberByEmail(memberEmail)).willReturn(owner);
         given(eventRawService.findEventById(eventId)).willReturn(existingEvent);
 
-        EventModifyRequestDto requestDto = new EventModifyRequestDto(10L, "새 제목", null, null, null, null);
+        EventModifyRequestDto requestDto = new EventModifyRequestDto(eventId, "새 제목", null, null, null, null);
 
         doThrow(new AccessDeniedException("해당 캘린더에 대한 접근 권한이 없습니다."))
                 .when(existingEvent).validateEventOwner(any(Member.class));

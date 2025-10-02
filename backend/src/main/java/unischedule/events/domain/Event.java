@@ -75,12 +75,12 @@ public class Event extends BaseEntity {
         this.isPrivate = isPrivate;
     }
     
-    public void modifyEvent(EventModifyRequestDto requestDto) {
-        if(requestDto.title() != null) modifyTitle(requestDto.title());
-        if(requestDto.description() != null) modifyContent(requestDto.description());
-        if(requestDto.startTime() != null) modifyStartAt(requestDto.startTime());
-        if(requestDto.endTime() != null) modifyEndAt(requestDto.endTime());
-        if(requestDto.isPrivate() != null) modifyPrivate(requestDto.isPrivate());
+    public void modifyEvent(String title, String content, LocalDateTime startAt, LocalDateTime endAt, Boolean isPrivate) {
+        if(title != null) modifyTitle(title);
+        if(content != null) modifyContent(content);
+        if(startAt != null) modifyStartAt(startAt);
+        if(endAt != null) modifyEndAt(endAt);
+        if(isPrivate != null) modifyPrivate(isPrivate);
     }
     
     private void modifyTitle(String title) {
