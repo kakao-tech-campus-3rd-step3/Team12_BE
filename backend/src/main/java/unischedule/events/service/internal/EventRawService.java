@@ -13,7 +13,6 @@ import unischedule.exception.InvalidInputException;
 import unischedule.member.domain.Member;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 @Service

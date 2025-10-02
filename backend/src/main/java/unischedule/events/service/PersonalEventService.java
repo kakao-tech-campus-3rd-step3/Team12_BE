@@ -15,6 +15,7 @@ import unischedule.events.domain.Event;
 import unischedule.member.domain.Member;
 import unischedule.member.service.internal.MemberRawService;
 import unischedule.team.domain.Team;
+import unischedule.team.service.internal.TeamMemberRawService;
 import unischedule.team.service.internal.TeamRawService;
 
 import java.time.LocalDateTime;
@@ -28,6 +29,7 @@ public class PersonalEventService {
     private final MemberRawService memberRawService;
     private final EventRawService eventRawService;
     private final TeamRawService teamRawService;
+    private final TeamMemberRawService teamMemberRawService;
     private final CalendarRawService calendarRawService;
 
     @Transactional
@@ -59,7 +61,7 @@ public class PersonalEventService {
     public List<EventGetResponseDto> getPersonalEvents(String email, LocalDateTime startAt, LocalDateTime endAt) {
         Member member = memberRawService.findMemberByEmail(email);
 
-        List<Team> teamList = teamRawService.findTeamByMember(member);
+        List<Team> teamList = teamMemberRawService.findTeamByMember(member);
 
         List<Long> calendarIds = new ArrayList<>();
 
