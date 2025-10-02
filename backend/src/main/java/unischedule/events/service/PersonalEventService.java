@@ -15,6 +15,7 @@ import unischedule.events.domain.Event;
 import unischedule.member.domain.Member;
 import unischedule.member.service.internal.MemberRawService;
 import unischedule.team.domain.Team;
+import unischedule.team.domain.TeamMember;
 import unischedule.team.service.internal.TeamMemberRawService;
 import unischedule.team.service.internal.TeamRawService;
 
@@ -60,7 +61,10 @@ public class PersonalEventService {
     public List<EventGetResponseDto> getPersonalEvents(String email, LocalDateTime startAt, LocalDateTime endAt) {
         Member member = memberRawService.findMemberByEmail(email);
 
-        List<Team> teamList = teamMemberRawService.findTeamByMember(member);
+        List<Team> teamList = teamMemberRawService.findByMember(member)
+                .stream()
+                .map(TeamMember::getTeam)
+                .toList();
 
         List<Long> calendarIds = new ArrayList<>();
 

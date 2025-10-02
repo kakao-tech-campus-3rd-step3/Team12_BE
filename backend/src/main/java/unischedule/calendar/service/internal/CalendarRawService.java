@@ -14,6 +14,11 @@ import unischedule.team.domain.Team;
 public class CalendarRawService {
     private final CalendarRepository calendarRepository;
 
+    @Transactional
+    public Calendar saveCalendar(Calendar calendar) {
+        return calendarRepository.save(calendar);
+    }
+
     @Transactional(readOnly = true)
     public Calendar findCalendarById(Long calendarId) {
         return calendarRepository.findById(calendarId)

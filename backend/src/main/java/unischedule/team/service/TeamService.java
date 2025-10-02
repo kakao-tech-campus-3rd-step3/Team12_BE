@@ -6,10 +6,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import unischedule.calendar.entity.Calendar;
 import unischedule.calendar.repository.CalendarRepository;
+import unischedule.calendar.service.internal.CalendarRawService;
 import unischedule.exception.ConflictException;
 import unischedule.exception.EntityNotFoundException;
 import unischedule.member.domain.Member;
 import unischedule.member.repository.MemberRepository;
+import unischedule.member.service.internal.MemberRawService;
 import unischedule.team.domain.TeamRole;
 import unischedule.team.dto.TeamCreateRequestDto;
 import unischedule.team.dto.TeamCreateResponseDto;
@@ -19,6 +21,8 @@ import unischedule.team.domain.Team;
 import unischedule.team.domain.TeamMember;
 import unischedule.team.repository.TeamMemberRepository;
 import unischedule.team.repository.TeamRepository;
+import unischedule.team.service.internal.TeamMemberRawService;
+import unischedule.team.service.internal.TeamRawService;
 
 /**
  * 팀과 관련한 서비스 메서드들의 클래스
@@ -27,10 +31,10 @@ import unischedule.team.repository.TeamRepository;
 @RequiredArgsConstructor
 public class TeamService {
     
-    private final TeamRepository teamRepository;
-    private final CalendarRepository calendarRepository;
-    private final MemberRepository memberRepository;
-    private final TeamMemberRepository teamMemberRepository;
+    private final TeamRawService teamRawService;
+    private final CalendarRawService calendarRawService;
+    private final MemberRawService memberRawService;
+    private final TeamMemberRawService teamMemberRawService;
     private final TeamCodeGenerator teamCodeGenerator = new TeamCodeGenerator();
     
     /**
@@ -42,26 +46,22 @@ public class TeamService {
     @Transactional
     public TeamCreateResponseDto createTeam(String email, TeamCreateRequestDto requestDto) {
         
-        String code;
-        
-        Member findMember = memberRepository.findByEmail(email).get();
-        
-        do {
-            code = teamCodeGenerator.generate();
-        } while (teamRepository.existsByInviteCode(code));
-        
+        Member findMember = memberRawService.findMemberByEmail(email);
+
+        String code = generateTeamCode();
+
         Team newTeam = new Team(requestDto.teamName(), requestDto.teamDescription(), code);
         
-        Team saved = teamRepository.save(newTeam);
+        Team saved = teamRawService.saveTeam(newTeam);
         
         TeamMember relation = new TeamMember(saved, findMember, TeamRole.LEADER);
-        teamMemberRepository.save(relation);
+        teamMemberRawService.saveTeamMember(relation);
         
         Calendar teamCalendar = new Calendar(
             findMember, saved, "팀 캘린더", "팀 캘린더입니다."
         );
         
-        calendarRepository.save(teamCalendar);
+        calendarRawService.saveCalendar(teamCalendar);
         
         return new TeamCreateResponseDto(
             saved.getTeamId(),
@@ -70,7 +70,15 @@ public class TeamService {
             saved.getInviteCode()
         );
     }
-    
+
+    private String generateTeamCode() {
+        String code;
+        do {
+            code = teamCodeGenerator.generate();
+        } while (teamRawService.existsByInviteCode(code));
+        return code;
+    }
+
     /**
      *
      * @param email 헤더에서 넘어온 유저 이메일
@@ -79,17 +87,14 @@ public class TeamService {
      */
     public TeamJoinResponseDto joinTeam(String email, TeamJoinRequestDto requestDto) {
         
-        Team findTeam = teamRepository.findByInviteCode(requestDto.inviteCode())
-            .orElseThrow(() -> new EntityNotFoundException("요청한 정보의 팀이 없습니다."));
+        Team findTeam = teamRawService.findTeamByInviteCode(requestDto.inviteCode());
         
-        Member findMember = memberRepository.findByEmail(email).get();
+        Member findMember = memberRawService.findMemberByEmail(email);
         
-        if(teamMemberRepository.existsByTeamAndMember(findTeam, findMember)) {
-            throw new ConflictException("이미 가입된 멤버입니다.");
-        }
+        teamMemberRawService.validateDuplication(findTeam, findMember);
         
         TeamMember relation = new TeamMember(findTeam, findMember, TeamRole.MEMBER);
-        teamMemberRepository.save(relation);
+        teamMemberRawService.saveTeamMember(relation);
         
         return new TeamJoinResponseDto(
             findTeam.getTeamId(),
@@ -100,30 +105,26 @@ public class TeamService {
     
     @Transactional
     public void withdrawTeam(String email, Long teamId) {
-        Team findTeam = teamRepository.findById(teamId)
-            .orElseThrow(() -> new EntityNotFoundException("요청한 정보의 팀이 없습니다."));
+        Team findTeam = teamRawService.findTeamById(teamId);
         
-        Member findMember = memberRepository.findByEmail(email).get();
+        Member findMember = memberRawService.findMemberByEmail(email);
         
-        TeamMember findRelation = teamMemberRepository.findByTeamAndMember(findTeam, findMember)
-            .orElseThrow(() -> new EntityNotFoundException("해당 팀 소속이 아닙니다."));
+        TeamMember findRelation = teamMemberRawService.findByTeamAndMember(findTeam, findMember);
         
         /*
         팀 탈퇴 전 해야할 일이 생긴다면 여기 추가
          */
         
-        teamMemberRepository.delete(findRelation);
+        teamMemberRawService.deleteTeamMember(findRelation);
     }
     
     @Transactional
     public void closeTeam(String email, Long teamId) {
-        Team findTeam = teamRepository.findById(teamId)
-            .orElseThrow(() -> new EntityNotFoundException("요청한 정보의 팀이 없습니다."));
+        Team findTeam = teamRawService.findTeamById(teamId);
         
-        Member findMember = memberRepository.findByEmail(email).get();
+        Member findMember = memberRawService.findMemberByEmail(email);
         
-        TeamMember findRelation = teamMemberRepository.findByTeamAndMember(findTeam, findMember)
-            .orElseThrow(() -> new EntityNotFoundException("해당 팀 소속이 아닙니다."));
+        TeamMember findRelation = teamMemberRawService.findByTeamAndMember(findTeam, findMember);
         
         findRelation.checkLeader();
         
@@ -131,9 +132,9 @@ public class TeamService {
         팀 삭제 전 해야할 일이 생긴다면 여기 추가
          */
         
-        List<TeamMember> findTeamMember = teamMemberRepository.findByTeam(findTeam);
-        teamMemberRepository.deleteAll(findTeamMember);
+        List<TeamMember> findTeamMember = teamMemberRawService.findByTeam(findTeam);
+        teamMemberRawService.deleteTeamMemberAll(findTeamMember);
         
-        teamRepository.delete(findTeam);
+        teamRawService.deleteTeam(findTeam);
     }
 }

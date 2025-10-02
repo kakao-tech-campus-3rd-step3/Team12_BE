@@ -149,6 +149,7 @@ class PersonalEventServiceTest {
         LocalDateTime end   = LocalDateTime.of(2025, 9, 30, 23, 59);
 
         Team team = TestUtil.makeTeam();
+        TeamMember teamMember = TestUtil.makeTeamMember(team, owner);
         Calendar teamCalendar = mock(Calendar.class);
         given(teamCalendar.getCalendarId()).willReturn(2L);
         given(personalCalendar.getCalendarId()).willReturn(1L);
@@ -169,7 +170,7 @@ class PersonalEventServiceTest {
 
         given(memberRawService.findMemberByEmail(memberEmail)).willReturn(owner);
         given(calendarRawService.getMyPersonalCalendar(owner)).willReturn(personalCalendar);
-        given(teamMemberRawService.findTeamByMember(owner)).willReturn(List.of(team));
+        given(teamMemberRawService.findByMember(owner)).willReturn(List.of(teamMember));
         given(calendarRawService.getTeamCalendar(team)).willReturn(teamCalendar);
         given(eventRawService.findSchedule(List.of(1L, 2L), start, end))
                 .willReturn(List.of(event1, event2));
@@ -185,7 +186,7 @@ class PersonalEventServiceTest {
 
         verify(memberRawService).findMemberByEmail(memberEmail);
         verify(calendarRawService).getMyPersonalCalendar(owner);
-        verify(teamMemberRawService).findTeamByMember(owner);
+        verify(teamMemberRawService).findByMember(owner);
         verify(calendarRawService).getTeamCalendar(team);
         verify(eventRawService).findSchedule(List.of(1L, 2L), start, end);
     }
