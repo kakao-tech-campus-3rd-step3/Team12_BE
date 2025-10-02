@@ -40,25 +40,17 @@ public class Calendar extends BaseEntity {
     )
     private Team team;
 
-    @Column(nullable = false, length = 255)
-    private String title;
-
-    @Column(columnDefinition = "TEXT")
-    private String description;
-
     protected Calendar() {
 
     }
 
-    public Calendar(Member owner, Team team, String title, String description) {
+    public Calendar(Member owner, Team team) {
         this.owner = owner;
         this.team = team;
-        this.title = title;
-        this.description = description;
     }
 
     public Calendar(Member owner, String title, String description) {
-        this(owner, null, title, description);
+        this(owner, null);
     }
 
     public void validateOwner(Member member) {

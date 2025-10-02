@@ -5,12 +5,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import unischedule.calendar.entity.Calendar;
-import unischedule.calendar.repository.CalendarRepository;
 import unischedule.calendar.service.internal.CalendarRawService;
-import unischedule.exception.ConflictException;
-import unischedule.exception.EntityNotFoundException;
 import unischedule.member.domain.Member;
-import unischedule.member.repository.MemberRepository;
 import unischedule.member.service.internal.MemberRawService;
 import unischedule.team.domain.TeamRole;
 import unischedule.team.dto.TeamCreateRequestDto;
@@ -19,8 +15,6 @@ import unischedule.team.dto.TeamJoinRequestDto;
 import unischedule.team.dto.TeamJoinResponseDto;
 import unischedule.team.domain.Team;
 import unischedule.team.domain.TeamMember;
-import unischedule.team.repository.TeamMemberRepository;
-import unischedule.team.repository.TeamRepository;
 import unischedule.team.service.internal.TeamMemberRawService;
 import unischedule.team.service.internal.TeamRawService;
 
@@ -57,9 +51,7 @@ public class TeamService {
         TeamMember relation = new TeamMember(saved, findMember, TeamRole.LEADER);
         teamMemberRawService.saveTeamMember(relation);
         
-        Calendar teamCalendar = new Calendar(
-            findMember, saved, "팀 캘린더", "팀 캘린더입니다."
-        );
+        Calendar teamCalendar = new Calendar(findMember, saved);
         
         calendarRawService.saveCalendar(teamCalendar);
         
