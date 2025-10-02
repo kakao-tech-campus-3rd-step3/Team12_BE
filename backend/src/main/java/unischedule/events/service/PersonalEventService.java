@@ -17,7 +17,6 @@ import unischedule.member.service.internal.MemberRawService;
 import unischedule.team.domain.Team;
 import unischedule.team.domain.TeamMember;
 import unischedule.team.service.internal.TeamMemberRawService;
-import unischedule.team.service.internal.TeamRawService;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;

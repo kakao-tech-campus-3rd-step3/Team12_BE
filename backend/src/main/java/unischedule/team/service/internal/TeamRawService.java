@@ -4,10 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import unischedule.exception.EntityNotFoundException;
-import unischedule.member.domain.Member;
 import unischedule.team.domain.Team;
-import unischedule.team.domain.TeamMember;
-import unischedule.team.repository.TeamMemberRepository;
 import unischedule.team.repository.TeamRepository;
 
 import java.util.List;

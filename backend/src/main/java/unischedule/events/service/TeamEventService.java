@@ -12,13 +12,11 @@ import unischedule.events.dto.TeamEventCreateRequestDto;
 import unischedule.events.domain.Event;
 import unischedule.events.domain.EventState;
 import unischedule.events.service.internal.EventRawService;
-import unischedule.exception.EntityNotFoundException;
 import unischedule.exception.NoPermissionException;
 import unischedule.member.domain.Member;
 import unischedule.member.service.internal.MemberRawService;
 import unischedule.team.domain.Team;
 import unischedule.team.repository.TeamMemberRepository;
-import unischedule.team.repository.TeamRepository;
 import unischedule.team.service.internal.TeamRawService;
 
 @Service
