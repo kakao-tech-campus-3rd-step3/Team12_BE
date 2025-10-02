@@ -24,12 +24,6 @@ public class BaseEntity {
     @Column(nullable = false)
     protected LocalDateTime updatedAt;
 
-    @CreatedBy
-    protected String createdBy;
-
-    @LastModifiedBy
-    protected String updatedBy;
-
     protected BaseEntity() {
 
     }
