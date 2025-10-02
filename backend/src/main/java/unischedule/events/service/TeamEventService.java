@@ -51,20 +51,6 @@ public class TeamEventService {
         return EventCreateResponseDto.from(eventDomainService.saveEvent(event));
     }
 
-    /*
-    @Transactional(readOnly = true)
-    public List<EventGetResponseDto> getTeamEvents(String email, Long teamId, LocalDateTime startAt, LocalDateTime endAt) {
-        Member member = memberDomainService.findMemberByEmail(email);
-
-        Team team = findTeamById(teamId);
-
-        Calendar calendar = calendarDomainService.getTeamCalendar(team);
-
-        return List.of(null);
-    }
-
-     */
-
     private Team findTeamById(Long teamId) {
         return teamRepository.findById(teamId)
                 .orElseThrow(() -> new EntityNotFoundException("팀을 찾을 수 없습니다."));

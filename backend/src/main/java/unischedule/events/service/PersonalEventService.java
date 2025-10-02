@@ -20,7 +20,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PersonalEventService {
@@ -74,7 +73,6 @@ public class PersonalEventService {
 
         Event findEvent = eventDomainService.findEventById(requestDto.eventId());
 
-        log.error("asdf");
         findEvent.validateEventOwner(member);
 
         validateUpdateTime(member, findEvent, requestDto.startTime(), requestDto.endTime());
