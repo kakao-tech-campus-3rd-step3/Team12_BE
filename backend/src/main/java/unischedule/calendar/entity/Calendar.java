@@ -9,19 +9,13 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 import lombok.Getter;
 import org.springframework.security.access.AccessDeniedException;
 import unischedule.common.entity.BaseEntity;
-import unischedule.events.entity.Event;
-import unischedule.member.entity.Member;
-import unischedule.team.entity.Team;
+import unischedule.member.domain.Member;
+import unischedule.team.domain.Team;
 
 @Entity
 @Getter

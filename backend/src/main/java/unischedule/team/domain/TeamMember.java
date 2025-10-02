@@ -1,4 +1,4 @@
-package unischedule.team.entity;
+package unischedule.team.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -15,7 +15,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 import unischedule.exception.NoPermissionException;
-import unischedule.member.entity.Member;
+import unischedule.member.domain.Member;
 
 @Entity
 @Getter

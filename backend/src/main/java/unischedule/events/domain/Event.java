@@ -1,4 +1,4 @@
-package unischedule.events.entity;
+package unischedule.events.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -18,7 +18,7 @@ import lombok.NoArgsConstructor;
 import unischedule.common.entity.BaseEntity;
 import unischedule.events.dto.EventModifyRequestDto;
 import unischedule.calendar.entity.Calendar;
-import unischedule.member.entity.Member;
+import unischedule.member.domain.Member;
 
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)

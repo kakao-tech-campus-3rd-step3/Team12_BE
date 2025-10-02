@@ -6,18 +6,18 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import unischedule.events.entity.Event;
+import unischedule.events.domain.Event;
 import unischedule.events.repository.EventRepository;
 import unischedule.exception.EntityNotFoundException;
 import unischedule.exception.InvalidInputException;
-import unischedule.member.entity.Member;
+import unischedule.member.domain.Member;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class EventDomainService {
+public class EventRawService {
     private final EventRepository eventRepository;
 
     @Transactional

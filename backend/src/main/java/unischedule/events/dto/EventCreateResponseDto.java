@@ -3,7 +3,7 @@ package unischedule.events.dto;
 import java.time.LocalDateTime;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import unischedule.events.entity.Event;
+import unischedule.events.domain.Event;
 
 public record EventCreateResponseDto(
         @JsonProperty("event_id")

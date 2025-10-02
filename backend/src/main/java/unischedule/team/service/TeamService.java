@@ -8,14 +8,14 @@ import unischedule.calendar.entity.Calendar;
 import unischedule.calendar.repository.CalendarRepository;
 import unischedule.exception.ConflictException;
 import unischedule.exception.EntityNotFoundException;
-import unischedule.member.entity.Member;
+import unischedule.member.domain.Member;
 import unischedule.member.repository.MemberRepository;
 import unischedule.team.dto.TeamCreateRequestDto;
 import unischedule.team.dto.TeamCreateResponseDto;
 import unischedule.team.dto.TeamJoinRequestDto;
 import unischedule.team.dto.TeamJoinResponseDto;
-import unischedule.team.entity.Team;
-import unischedule.team.entity.TeamMember;
+import unischedule.team.domain.Team;
+import unischedule.team.domain.TeamMember;
 import unischedule.team.repository.TeamMemberRepository;
 import unischedule.team.repository.TeamRepository;
 

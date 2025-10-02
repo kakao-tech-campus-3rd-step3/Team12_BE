@@ -1,19 +1,20 @@
 package unischedule.events.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import unischedule.calendar.entity.Calendar;
-import unischedule.calendar.service.internal.CalendarDomainService;
+import unischedule.calendar.service.internal.CalendarRawService;
 import unischedule.events.dto.PersonalEventCreateRequestDto;
 import unischedule.events.dto.EventCreateResponseDto;
 import unischedule.events.dto.EventModifyRequestDto;
-import unischedule.events.entity.EventState;
-import unischedule.events.service.internal.EventDomainService;
+import unischedule.events.domain.EventState;
+import unischedule.events.service.internal.EventRawService;
 import unischedule.events.dto.EventGetResponseDto;
-import unischedule.events.entity.Event;
-import unischedule.member.entity.Member;
-import unischedule.member.service.internal.MemberDomainService;
+import unischedule.events.domain.Event;
+import unischedule.member.domain.Member;
+import unischedule.member.service.internal.MemberRawService;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -22,9 +23,9 @@ import java.util.Objects;
 @Service
 @RequiredArgsConstructor
 public class PersonalEventService {
-    private final MemberDomainService memberDomainService;
-    private final EventDomainService eventDomainService;
-    private final CalendarDomainService calendarDomainService;
+    private final MemberRawService memberDomainService;
+    private final EventRawService eventDomainService;
+    private final CalendarRawService calendarDomainService;
 
     @Transactional
     public EventCreateResponseDto makePersonalEvent(String email, PersonalEventCreateRequestDto requestDto) {
