@@ -12,12 +12,14 @@ import unischedule.events.dto.TeamEventCreateRequestDto;
 import unischedule.events.domain.Event;
 import unischedule.events.domain.EventState;
 import unischedule.events.service.internal.EventRawService;
-import unischedule.exception.NoPermissionException;
 import unischedule.member.domain.Member;
 import unischedule.member.service.internal.MemberRawService;
 import unischedule.team.domain.Team;
-import unischedule.team.repository.TeamMemberRepository;
+import unischedule.team.domain.TeamMember;
+import unischedule.team.service.internal.TeamMemberRawService;
 import unischedule.team.service.internal.TeamRawService;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -26,7 +28,7 @@ public class TeamEventService {
     private final EventRawService eventRawService;
     private final CalendarRawService calendarRawService;
     private final TeamRawService teamRawService;
-    private final TeamMemberRepository teamMemberRepository;
+    private final TeamMemberRawService teamMemberRawService;
 
     @Transactional
     public EventCreateResponseDto createTeamEvent(String email, TeamEventCreateRequestDto requestDto) {
@@ -35,6 +37,12 @@ public class TeamEventService {
         Team team = teamRawService.findTeamById(requestDto.teamId());
 
         validateTeamMember(team, member);
+
+        List<Member> teamMembers = teamMemberRawService.findByTeam(team)
+                .stream()
+                .map(TeamMember::getMember)
+                .toList();
+        eventRawService.validateNoScheduleForMembers(teamMembers, requestDto.startTime(), requestDto.endTime());
 
         Calendar calendar = calendarRawService.getTeamCalendar(team);
 
@@ -63,7 +71,11 @@ public class TeamEventService {
 
         validateTeamMember(team, member);
 
-        // 팀 일정 수정 가능여부 체크 필요
+        List<Member> teamMembers = teamMemberRawService.findByTeam(team)
+                .stream()
+                .map(TeamMember::getMember)
+                .toList();
+        eventRawService.canUpdateEventForMembers(teamMembers, event, requestDto.startTime(), requestDto.endTime());
 
         event.modifyEvent(requestDto);
 
@@ -82,7 +94,6 @@ public class TeamEventService {
     }
 
     private void validateTeamMember(Team team, Member member) {
-        teamMemberRepository.findByTeamAndMember(team, member)
-                .orElseThrow(() -> new NoPermissionException("팀에 속해 있지 않습니다."));
+        teamMemberRawService.findByTeamAndMember(team, member);
     }
 }

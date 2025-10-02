@@ -44,6 +44,37 @@ public class EventRawService {
     }
 
     @Transactional(readOnly = true)
+    public void validateNoScheduleForMembers(List<Member> memberList, LocalDateTime startTime, LocalDateTime endTime) {
+        if (memberList.isEmpty()) return;
+        List<Long> memberIds = memberList
+                .stream()
+                .map(Member::getMemberId)
+                .toList();
+
+        if (eventRepository.existsScheduleForMembers(memberIds, startTime, endTime)) {
+            throw new InvalidInputException("일정이 겹치는 멤버가 있습니다.");
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public void canUpdateEventForMembers(List<Member> memberList, Event event, LocalDateTime startTime, LocalDateTime endTime) {
+        if (memberList.isEmpty()) return;
+        List<Long> memberIds = memberList
+                .stream()
+                .map(Member::getMemberId)
+                .toList();
+
+        if (eventRepository.existsScheduleForMembersExcludingEvent(
+                memberIds,
+                startTime,
+                endTime,
+                event.getEventId())
+        ) {
+            throw new InvalidInputException("일정이 겹치는 멤버가 있어서 일정을 수정할 수 없습니다.");
+        }
+    }
+
+    @Transactional(readOnly = true)
     public List<Event> findSchedule(List<Long> calendarIds, LocalDateTime startTime, LocalDateTime endTime) {
         return eventRepository.findEventsInCalendarsInPeriod(calendarIds, startTime, endTime);
     }

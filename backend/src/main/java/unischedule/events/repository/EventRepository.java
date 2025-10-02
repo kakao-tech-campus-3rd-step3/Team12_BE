@@ -6,6 +6,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Repository;
 import unischedule.events.domain.Event;
 
@@ -125,5 +126,50 @@ public interface EventRepository extends JpaRepository<Event, Long> {
             @Param("memberId") Long memberId,
             @Param("now") LocalDateTime now,
             Pageable pageable
+    );
+
+    /**
+     * 여러 멤버들의 모든 캘린더에서 특정 기간에 일정이 존재하는지 확인
+     * @param memberIds
+     * @param startAt
+     * @param endAt
+     * @return
+     */
+    @Query("""
+        SELECT count(e) > 0
+        FROM Event e
+        WHERE e.calendar.owner.memberId IN :memberIds
+        AND e.endAt > :startAt
+        AND e.startAt < :endAt
+    """)
+    boolean existsScheduleForMembers(
+            @Param("memberIds")
+            List<Long> memberIds,
+            @Param("startAt")
+            LocalDateTime startAt,
+            @Param("endAt")
+            LocalDateTime endAt
+    );
+
+    /**
+     * 여러 멤버의 모든 일정을 고려해서 공통 일정 수정 시 시간 중복 확인
+     */
+    @Query("""
+        SELECT count(e) > 0
+        FROM Event e
+        WHERE e.calendar.owner.memberId IN :memberIds
+        AND e.eventId != :eventId
+        AND e.endAt > :startAt
+        AND e.startAt < :endAt
+    """)
+    boolean existsScheduleForMembersExcludingEvent(
+            @Param("memberIds")
+            List<Long> memberIds,
+            @Param("startAt")
+            LocalDateTime startAt,
+            @Param("endAt")
+            LocalDateTime endAt,
+            @Param("eventId")
+            Long eventId
     );
 }
