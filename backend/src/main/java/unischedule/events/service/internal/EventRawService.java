@@ -13,6 +13,7 @@ import unischedule.exception.InvalidInputException;
 import unischedule.member.domain.Member;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -44,8 +45,8 @@ public class EventRawService {
     }
 
     @Transactional(readOnly = true)
-    public List<Event> findSchedule(Member member, LocalDateTime startTime, LocalDateTime endTime) {
-        return eventRepository.findPersonalScheduleInPeriod(member.getMemberId(), startTime, endTime);
+    public List<Event> findSchedule(List<Long> calendarIds, LocalDateTime startTime, LocalDateTime endTime) {
+        return eventRepository.findEventsInCalendarsInPeriod(calendarIds, startTime, endTime);
     }
 
     @Transactional(readOnly = true)

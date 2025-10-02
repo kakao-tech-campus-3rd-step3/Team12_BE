@@ -26,6 +26,7 @@ public class CalendarRawService {
                 .orElseThrow(() -> new EntityNotFoundException("개인 캘린더를 찾을 수 없습니다."));
     }
 
+
     @Transactional(readOnly = true)
     public Calendar getTeamCalendar(Team team) {
         return calendarRepository.findByTeam(team)

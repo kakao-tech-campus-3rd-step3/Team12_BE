@@ -22,12 +22,36 @@ public interface EventRepository extends JpaRepository<Event, Long> {
             SELECT e
             FROM Event e
             WHERE e.calendar.owner.memberId = :memberId
-            AND e.endAt >= :startAt
-            AND e.startAt <= :endAt
+            AND e.endAt > :startAt
+            AND e.startAt < :endAt
     """)
     List<Event> findPersonalScheduleInPeriod(
             @Param("memberId")
             Long memberId,
+            @Param("startAt")
+            LocalDateTime startAt,
+            @Param("endAt")
+            LocalDateTime endAt
+    );
+
+    /**
+     * 여러 캘린더의 특정 기간동안의 모든 일정 조회
+     * @param calendarIds
+     * @param startAt
+     * @param endAt
+     * @return
+     */
+    @Query("""
+        SELECT e
+        FROM Event e
+        WHERE e.calendar.calendarId IN :calendarIds
+        AND e.endAt > :startAt
+        AND e.startAt < :endAt
+        
+    """)
+    List<Event> findEventsInCalendarsInPeriod(
+            @Param("calendarIds")
+            List<Long> calendarIds,
             @Param("startAt")
             LocalDateTime startAt,
             @Param("endAt")
@@ -83,14 +107,23 @@ public interface EventRepository extends JpaRepository<Event, Long> {
             @Param("eventId")
             Long eventId
     );
-    
+
+    /**
+     * 다가오는 일정 페이지 단위로 조회
+     * @param memberId
+     * @param now
+     * @param pageable
+     * @return
+     */
     @Query("""
             SELECT e FROM Event e
             WHERE e.calendar.owner.memberId = :memberId
             AND e.startAt >= :now
             ORDER BY e.startAt ASC
     """)
-    List<Event> findUpcomingEvents(@Param("memberId") Long memberId,
-        @Param("now") LocalDateTime now,
-        Pageable pageable);
+    List<Event> findUpcomingEvents(
+            @Param("memberId") Long memberId,
+            @Param("now") LocalDateTime now,
+            Pageable pageable
+    );
 }
