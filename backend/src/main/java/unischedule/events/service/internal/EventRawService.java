@@ -1,6 +1,9 @@
 package unischedule.events.service.internal;
 
+import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import unischedule.events.domain.Event;
@@ -50,5 +53,20 @@ public class EventRawService {
         if (eventRepository.existsPersonalScheduleInPeriodExcludingEvent(member.getMemberId(), startTime, endTime, event.getEventId())) {
             throw new InvalidInputException("해당 시간에 겹치는 일정이 있어 수정할 수 없습니다.");
         }
+    }
+    
+    @Transactional(readOnly = true)
+    public List<Event> findUpcomingEventsByMember(Member member) {
+        LocalDateTime now = LocalDateTime.now();
+        Pageable pageable = PageRequest.of(0, 3); // 개수 제한
+        return eventRepository.findUpcomingEvents(member.getMemberId(), now, pageable);
+    }
+    
+    @Transactional(readOnly = true)
+    public List<Event> findTodayEventsByMember(Member member) {
+        LocalDate today = LocalDate.now();
+        LocalDateTime startOfDay = today.atStartOfDay();              // 오늘 00:00
+        LocalDateTime endOfDay = today.plusDays(1).atStartOfDay();    // 내일 00:00
+        return eventRepository.findPersonalScheduleInPeriod(member.getMemberId(), startOfDay, endOfDay);
     }
 }

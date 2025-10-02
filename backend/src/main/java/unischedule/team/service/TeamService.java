@@ -49,7 +49,7 @@ public class TeamService {
             code = teamCodeGenerator.generate();
         } while (teamRepository.existsByInviteCode(code));
         
-        Team newTeam = new Team(requestDto.name(), code);
+        Team newTeam = new Team(requestDto.teamName(), requestDto.teamDescription(), code);
         
         Team saved = teamRepository.save(newTeam);
         
@@ -65,6 +65,7 @@ public class TeamService {
         return new TeamCreateResponseDto(
             saved.getTeamId(),
             saved.getName(),
+            saved.getDescription(),
             saved.getInviteCode()
         );
     }
@@ -77,13 +78,14 @@ public class TeamService {
      */
     public TeamJoinResponseDto joinTeam(String email, TeamJoinRequestDto requestDto) {
         
-        Team findTeam = teamRepository.findByInviteCode(requestDto.visitCode())
+        Team findTeam = teamRepository.findByInviteCode(requestDto.inviteCode())
             .orElseThrow(() -> new EntityNotFoundException("요청한 정보의 팀이 없습니다."));
         
         Member findMember = memberRepository.findByEmail(email).get();
         
-        teamMemberRepository.findByTeamAndMember(findTeam, findMember)
-            .orElseThrow(() -> new ConflictException("이미 가입된 팀입니다."));
+        if(teamMemberRepository.existsByTeamAndMember(findTeam, findMember)) {
+            throw new ConflictException("이미 가입된 멤버입니다.");
+        }
         
         TeamMember relation = new TeamMember(findTeam, findMember, "MEMBER");
         teamMemberRepository.save(relation);
@@ -91,7 +93,7 @@ public class TeamService {
         return new TeamJoinResponseDto(
             findTeam.getTeamId(),
             findTeam.getName(),
-            findTeam.getInviteCode()
+            findTeam.getDescription()
         );
     }
     
