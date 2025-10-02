@@ -10,6 +10,7 @@ import unischedule.exception.ConflictException;
 import unischedule.exception.EntityNotFoundException;
 import unischedule.member.domain.Member;
 import unischedule.member.repository.MemberRepository;
+import unischedule.team.domain.TeamRole;
 import unischedule.team.dto.TeamCreateRequestDto;
 import unischedule.team.dto.TeamCreateResponseDto;
 import unischedule.team.dto.TeamJoinRequestDto;
@@ -53,7 +54,7 @@ public class TeamService {
         
         Team saved = teamRepository.save(newTeam);
         
-        TeamMember relation = new TeamMember(saved, findMember, "LEADER");
+        TeamMember relation = new TeamMember(saved, findMember, TeamRole.LEADER);
         teamMemberRepository.save(relation);
         
         Calendar teamCalendar = new Calendar(
@@ -87,7 +88,7 @@ public class TeamService {
             throw new ConflictException("이미 가입된 멤버입니다.");
         }
         
-        TeamMember relation = new TeamMember(findTeam, findMember, "MEMBER");
+        TeamMember relation = new TeamMember(findTeam, findMember, TeamRole.MEMBER);
         teamMemberRepository.save(relation);
         
         return new TeamJoinResponseDto(

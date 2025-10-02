@@ -28,7 +28,6 @@ import java.util.Objects;
 public class PersonalEventService {
     private final MemberRawService memberRawService;
     private final EventRawService eventRawService;
-    private final TeamRawService teamRawService;
     private final TeamMemberRawService teamMemberRawService;
     private final CalendarRawService calendarRawService;
 
@@ -121,7 +120,8 @@ public class PersonalEventService {
 
         eventRawService.deleteEvent(event);
     }
-    
+
+    @Transactional(readOnly = true)
     public List<EventGetResponseDto> getUpcomingMyEvent(String email) {
         Member member = memberRawService.findMemberByEmail(email);
         
@@ -129,7 +129,8 @@ public class PersonalEventService {
         
         return upcomingEvents.stream().map(EventGetResponseDto::from).toList();
     }
-    
+
+    @Transactional(readOnly = true)
     public List<EventGetResponseDto> getTodayMyEvent(String email) {
         Member member = memberRawService.findMemberByEmail(email);
         

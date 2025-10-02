@@ -7,12 +7,14 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
@@ -38,21 +40,27 @@ import unischedule.exception.EntityNotFoundException;
 import unischedule.exception.InvalidInputException;
 import unischedule.member.domain.Member;
 import unischedule.member.service.internal.MemberRawService;
+import unischedule.team.domain.Team;
+import unischedule.team.domain.TeamMember;
+import unischedule.team.domain.TeamRole;
+import unischedule.team.service.internal.TeamMemberRawService;
 import unischedule.util.TestUtil;
 
 @ExtendWith(MockitoExtension.class)
 class PersonalEventServiceTest {
     @Mock
-    private EventRawService eventDomainService;
+    private EventRawService eventRawService;
     @Mock
-    private MemberRawService memberDomainService;
+    private MemberRawService memberRawService;
     @Mock
-    private CalendarRawService calendarDomainService;
+    private CalendarRawService calendarRawService;
+    @Mock
+    private TeamMemberRawService teamMemberRawService;
     @InjectMocks
     private PersonalEventService eventService;
 
     private Member owner;
-    private Calendar calendar;
+    private Calendar personalCalendar;
     private String memberEmail;
     private Long calendarId;
 
@@ -62,12 +70,12 @@ class PersonalEventServiceTest {
         calendarId = 1L;
 
         owner = spy(TestUtil.makeMember());
-        calendar = spy(TestUtil.makeCalendar(owner));
+        personalCalendar = spy(TestUtil.makePersonalCalendar(owner));
     }
 
     @AfterEach
     void tearDown() {
-        verifyNoMoreInteractions(memberDomainService, eventDomainService, calendarDomainService);
+        verifyNoMoreInteractions(memberRawService, eventRawService, calendarRawService, teamMemberRawService);
     }
     
     @Test
@@ -91,13 +99,13 @@ class PersonalEventServiceTest {
                 true
         );
 
-        given(memberDomainService.findMemberByEmail(memberEmail)).willReturn(owner);
-        given(calendarDomainService.getMyPersonalCalendar(owner)).willReturn(calendar);
+        given(memberRawService.findMemberByEmail(memberEmail)).willReturn(owner);
+        given(calendarRawService.getMyPersonalCalendar(owner)).willReturn(personalCalendar);
 
-        doNothing().when(calendar).validateOwner(owner);
-        doNothing().when(eventDomainService).validateNoSchedule(eq(owner), any(LocalDateTime.class), any(LocalDateTime.class));
+        doNothing().when(personalCalendar).validateOwner(owner);
+        doNothing().when(eventRawService).validateNoSchedule(eq(owner), any(LocalDateTime.class), any(LocalDateTime.class));
 
-        given(eventDomainService.saveEvent(any(Event.class))).willReturn(event);
+        given(eventRawService.saveEvent(any(Event.class))).willReturn(event);
         
         // when
         EventCreateResponseDto result = eventService.makePersonalEvent(memberEmail, requestDto);
@@ -106,7 +114,7 @@ class PersonalEventServiceTest {
         assertThat(result).isNotNull();
         assertThat(result.title()).isEqualTo("새 회의");
         assertThat(result.description()).isEqualTo("주간 회의");
-        verify(eventDomainService).saveEvent(any(Event.class));
+        verify(eventRawService).saveEvent(any(Event.class));
     }
 
     @Test
@@ -121,11 +129,11 @@ class PersonalEventServiceTest {
                 true
         );
 
-        given(memberDomainService.findMemberByEmail(memberEmail)).willReturn(owner);
-        given(calendarDomainService.getMyPersonalCalendar(owner)).willReturn(calendar);
+        given(memberRawService.findMemberByEmail(memberEmail)).willReturn(owner);
+        given(calendarRawService.getMyPersonalCalendar(owner)).willReturn(personalCalendar);
 
         doThrow(new InvalidInputException("겹치는 일정이 있어 등록할 수 없습니다."))
-                .when(eventDomainService).validateNoSchedule(eq(owner), any(LocalDateTime.class), any(LocalDateTime.class));
+                .when(eventRawService).validateNoSchedule(eq(owner), any(LocalDateTime.class), any(LocalDateTime.class));
 
         // when & then
         assertThatThrownBy(() -> eventService.makePersonalEvent(memberEmail, requestDto))
@@ -139,6 +147,11 @@ class PersonalEventServiceTest {
         // given
         LocalDateTime start = LocalDateTime.of(2025, 9, 1, 0, 0);
         LocalDateTime end   = LocalDateTime.of(2025, 9, 30, 23, 59);
+
+        Team team = TestUtil.makeTeam();
+        Calendar teamCalendar = mock(Calendar.class);
+        given(teamCalendar.getCalendarId()).willReturn(2L);
+        given(personalCalendar.getCalendarId()).willReturn(1L);
 
         Event event1 = new Event(
                 "회의", "주간 회의",
@@ -154,8 +167,11 @@ class PersonalEventServiceTest {
         );
 
 
-        given(memberDomainService.findMemberByEmail(memberEmail)).willReturn(owner);
-        given(eventDomainService.findSchedule(owner, start, end))
+        given(memberRawService.findMemberByEmail(memberEmail)).willReturn(owner);
+        given(calendarRawService.getMyPersonalCalendar(owner)).willReturn(personalCalendar);
+        given(teamMemberRawService.findTeamByMember(owner)).willReturn(List.of(team));
+        given(calendarRawService.getTeamCalendar(team)).willReturn(teamCalendar);
+        given(eventRawService.findSchedule(List.of(1L, 2L), start, end))
                 .willReturn(List.of(event1, event2));
         
         // when
@@ -164,6 +180,14 @@ class PersonalEventServiceTest {
         // then
         assertThat(result).hasSize(2);
         assertThat(result.getFirst().title()).isEqualTo(event1.getTitle());
+        assertThat(result.get(0).title()).isEqualTo(event1.getTitle());
+        assertThat(result.get(1).title()).isEqualTo(event2.getTitle());
+
+        verify(memberRawService).findMemberByEmail(memberEmail);
+        verify(calendarRawService).getMyPersonalCalendar(owner);
+        verify(teamMemberRawService).findTeamByMember(owner);
+        verify(calendarRawService).getTeamCalendar(team);
+        verify(eventRawService).findSchedule(List.of(1L, 2L), start, end);
     }
 
     @Test
@@ -173,12 +197,12 @@ class PersonalEventServiceTest {
         Long eventId = 10L;
         Event existingEvent = spy(TestUtil.makeEvent("일정", "내용"));
 
-        existingEvent.connectCalendar(calendar);
+        existingEvent.connectCalendar(personalCalendar);
 
         EventModifyRequestDto requestDto = new EventModifyRequestDto(eventId, "새 제목", "새 내용", null, null, true);
 
-        given(memberDomainService.findMemberByEmail(memberEmail)).willReturn(owner);
-        given(eventDomainService.findEventById(eventId)).willReturn(existingEvent);
+        given(memberRawService.findMemberByEmail(memberEmail)).willReturn(owner);
+        given(eventRawService.findEventById(eventId)).willReturn(existingEvent);
         doNothing().when(existingEvent).validateEventOwner(owner);
 
         // when
@@ -189,7 +213,7 @@ class PersonalEventServiceTest {
         assertThat(responseDto.description()).isEqualTo("새 내용");
         assertThat(responseDto.isPrivate()).isTrue();
 
-        verify(eventDomainService, never()).canUpdateEvent(any(), any(), any(), any());
+        verify(eventRawService, never()).canUpdateEvent(any(), any(), any(), any());
     }
 
     @Test
@@ -200,10 +224,10 @@ class PersonalEventServiceTest {
 
         Event existingEvent = spy(TestUtil.makeEvent("다른 사람 일정", "내용"));
 
-        existingEvent.connectCalendar(calendar);
+        existingEvent.connectCalendar(personalCalendar);
 
-        given(memberDomainService.findMemberByEmail(memberEmail)).willReturn(owner);
-        given(eventDomainService.findEventById(eventId)).willReturn(existingEvent);
+        given(memberRawService.findMemberByEmail(memberEmail)).willReturn(owner);
+        given(eventRawService.findEventById(eventId)).willReturn(existingEvent);
 
         EventModifyRequestDto requestDto = new EventModifyRequestDto(10L, "새 제목", null, null, null, null);
 
@@ -223,19 +247,19 @@ class PersonalEventServiceTest {
         // given
         Long eventId = 10L;
         Event eventToDelete = spy(TestUtil.makeEvent("일정", "내용"));
-        eventToDelete.connectCalendar(calendar);
+        eventToDelete.connectCalendar(personalCalendar);
 
-        given(memberDomainService.findMemberByEmail(memberEmail)).willReturn(owner);
-        given(eventDomainService.findEventById(eventId)).willReturn(eventToDelete);
+        given(memberRawService.findMemberByEmail(memberEmail)).willReturn(owner);
+        given(eventRawService.findEventById(eventId)).willReturn(eventToDelete);
 
         doNothing().when(eventToDelete).validateEventOwner(owner);
-        doNothing().when(eventDomainService).deleteEvent(eventToDelete);
+        doNothing().when(eventRawService).deleteEvent(eventToDelete);
 
         // when
         eventService.deletePersonalEvent(memberEmail, eventId);
 
         // then
-        verify(eventDomainService).deleteEvent(eventToDelete);
+        verify(eventRawService).deleteEvent(eventToDelete);
     }
 
     @Test
@@ -243,14 +267,14 @@ class PersonalEventServiceTest {
     void deleteEventFailNotFound() {
         // given
         Long eventId = 99L;
-        given(memberDomainService.findMemberByEmail(memberEmail)).willReturn(owner);
-        given(eventDomainService.findEventById(eventId))
+        given(memberRawService.findMemberByEmail(memberEmail)).willReturn(owner);
+        given(eventRawService.findEventById(eventId))
                 .willThrow(new EntityNotFoundException("해당 일정을 찾을 수 없습니다."));
 
         // when & then
         assertThatThrownBy(() -> eventService.deletePersonalEvent(memberEmail, eventId))
                 .isInstanceOf(EntityNotFoundException.class)
                 .hasMessage("해당 일정을 찾을 수 없습니다.");
-        verify(eventDomainService, never()).deleteEvent(any());
+        verify(eventRawService, never()).deleteEvent(any());
     }
 }
