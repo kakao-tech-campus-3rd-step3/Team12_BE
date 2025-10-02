@@ -21,6 +21,7 @@ public class MockDataInitializer implements CommandLineRunner {
     private final MemberRepository memberRepository;
 
     public void run(String... args) {
+        createTeam2();
     }
 
     public void createMockUsers() {
@@ -41,6 +42,12 @@ public class MockDataInitializer implements CommandLineRunner {
         TeamCreateRequestDto requestDto2 = new TeamCreateRequestDto("Test Team 2");
         teamService.createTeam(email1, requestDto);
         teamService.createTeam(email1, requestDto2);
+    }
+
+    public void createTeam2() {
+        String email2 = "testuser2@email.com";
+        TeamCreateRequestDto requestDto = new TeamCreateRequestDto("Test Team 3");
+        teamService.createTeam(email2, requestDto);
     }
 
     public void joinTeams() {
