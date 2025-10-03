@@ -14,6 +14,11 @@ import unischedule.team.domain.Team;
 public class CalendarRawService {
     private final CalendarRepository calendarRepository;
 
+    @Transactional
+    public Calendar saveCalendar(Calendar calendar) {
+        return calendarRepository.save(calendar);
+    }
+
     @Transactional(readOnly = true)
     public Calendar findCalendarById(Long calendarId) {
         return calendarRepository.findById(calendarId)
@@ -25,6 +30,7 @@ public class CalendarRawService {
         return calendarRepository.findByOwnerAndTeamIsNull(member)
                 .orElseThrow(() -> new EntityNotFoundException("개인 캘린더를 찾을 수 없습니다."));
     }
+
 
     @Transactional(readOnly = true)
     public Calendar getTeamCalendar(Team team) {

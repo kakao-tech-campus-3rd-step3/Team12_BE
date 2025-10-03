@@ -4,6 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -18,6 +19,7 @@ import lombok.NoArgsConstructor;
 import unischedule.common.entity.BaseEntity;
 import unischedule.events.dto.EventModifyRequestDto;
 import unischedule.calendar.entity.Calendar;
+import unischedule.exception.InvalidInputException;
 import unischedule.member.domain.Member;
 
 @Entity
@@ -52,7 +54,7 @@ public class Event extends BaseEntity {
     private Long recurrenceRuleId;
     
     //우선 개인에 맞춰 세팅, 추후 수정 필요
-    @ManyToOne(optional = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "calendar_id", nullable = false)
     private Calendar calendar;
     
@@ -73,31 +75,31 @@ public class Event extends BaseEntity {
         this.isPrivate = isPrivate;
     }
     
-    public void modifyEvent(EventModifyRequestDto requestDto) {
-        if(requestDto.title() != null) modifyTitle(requestDto.title());
-        if(requestDto.description() != null) modifyContent(requestDto.description());
-        if(requestDto.startTime() != null) modifyStartAt(requestDto.startTime());
-        if(requestDto.endTime() != null) modifyEndAt(requestDto.endTime());
-        if(requestDto.isPrivate() != null) modifyPrivate(requestDto.isPrivate());
+    public void modifyEvent(String title, String content, LocalDateTime startAt, LocalDateTime endAt, Boolean isPrivate) {
+        if(title != null) modifyTitle(title);
+        if(content != null) modifyContent(content);
+        if(startAt != null) modifyStartAt(startAt);
+        if(endAt != null) modifyEndAt(endAt);
+        if(isPrivate != null) modifyPrivate(isPrivate);
     }
     
-    public void modifyTitle(String title) {
+    private void modifyTitle(String title) {
         this.title = title;
     }
     
-    public void modifyContent(String content) {
+    private void modifyContent(String content) {
         this.content = content;
     }
     
-    public void modifyStartAt(LocalDateTime startAt) {
+    private void modifyStartAt(LocalDateTime startAt) {
         this.startAt = startAt;
     }
     
-    public void modifyEndAt(LocalDateTime endAt) {
+    private void modifyEndAt(LocalDateTime endAt) {
         this.endAt = endAt;
     }
     
-    public void modifyPrivate(Boolean isPrivate) {
+    private void modifyPrivate(Boolean isPrivate) {
         this.isPrivate = isPrivate;
     }
 
@@ -107,5 +109,11 @@ public class Event extends BaseEntity {
 
     public void validateEventOwner(Member member) {
         this.calendar.validateOwner(member);
+    }
+
+    public void validateIsTeamEvent() {
+        if (this.calendar.getTeam() == null) {
+            throw new InvalidInputException("팀 일정이 아닙니다.");
+        }
     }
 }
