@@ -19,6 +19,7 @@ import unischedule.team.domain.TeamMember;
 import unischedule.team.service.internal.TeamMemberRawService;
 import unischedule.team.service.internal.TeamRawService;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -59,6 +60,23 @@ public class TeamEventService {
 
         return EventCreateResponseDto.from(eventRawService.saveEvent(event));
     }
+
+    @Transactional(readOnly = true)
+    public List<EventGetResponseDto> getTeamEvents(String email, Long teamId, LocalDateTime startAt, LocalDateTime endAt) {
+        Member member = memberRawService.findMemberByEmail(email);
+        Team team = teamRawService.findTeamById(teamId);
+
+        validateTeamMember(team, member);
+
+        Calendar teamCalendar = calendarRawService.getTeamCalendar(team);
+
+        List<Event> events = eventRawService.findSchedule(List.of(teamCalendar.getCalendarId()), startAt, endAt);
+
+        return events.stream()
+                .map(EventGetResponseDto::from)
+                .toList();
+    }
+
 
     @Transactional
     public EventGetResponseDto modifyTeamEvent(String email, EventModifyRequestDto requestDto) {
