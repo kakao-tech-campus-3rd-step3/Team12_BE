@@ -8,7 +8,7 @@ import unischedule.calendar.entity.Calendar;
 import unischedule.calendar.repository.CalendarRepository;
 import unischedule.exception.dto.EntityAlreadyExistsException;
 import unischedule.member.dto.MemberRegistrationDto;
-import unischedule.member.entity.Member;
+import unischedule.member.domain.Member;
 import unischedule.member.repository.MemberRepository;
 
 @Service

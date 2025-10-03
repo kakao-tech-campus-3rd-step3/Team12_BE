@@ -12,7 +12,7 @@ import jakarta.persistence.OneToOne;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import unischedule.member.entity.Member;
+import unischedule.member.domain.Member;
 
 @Entity
 @Getter

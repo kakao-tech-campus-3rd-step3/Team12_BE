@@ -12,7 +12,7 @@ import unischedule.auth.entity.RefreshToken;
 import unischedule.auth.jwt.JwtTokenProvider;
 import unischedule.auth.repository.RefreshTokenRepository;
 import unischedule.exception.InvalidInputException;
-import unischedule.member.entity.Member;
+import unischedule.member.domain.Member;
 import unischedule.member.repository.MemberRepository;
 
 import java.util.Optional;

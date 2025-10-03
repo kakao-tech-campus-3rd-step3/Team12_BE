@@ -1,4 +1,4 @@
-package unischedule.team.entity;
+package unischedule.team.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

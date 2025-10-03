@@ -18,5 +18,14 @@ public record EventModifyRequestDto(
         @JsonProperty("is_private")
         Boolean isPrivate
 ) {
+        public static EventUpdateDto toDto(EventModifyRequestDto requestDto) {
+                return new EventUpdateDto(
+                        requestDto.title,
+                        requestDto.description,
+                        requestDto.startTime,
+                        requestDto.endTime,
+                        requestDto.isPrivate
+                );
+        }
     
 }

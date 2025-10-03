@@ -1,4 +1,4 @@
-package unischedule.events.entity;
+package unischedule.events.domain;
 
 public enum EventState {
     CONFIRMED,

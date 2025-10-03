@@ -42,7 +42,7 @@ out/
 .vscode/
 
 # Environment & Credentials
-.env
+src/main/resources/.env
 *.env
 *.key
 *.pem
