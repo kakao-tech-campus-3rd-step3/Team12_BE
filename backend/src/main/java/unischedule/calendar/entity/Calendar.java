@@ -8,7 +8,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
 import lombok.Getter;
@@ -25,7 +25,7 @@ public class Calendar extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long calendarId;
     
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @OneToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(
             name = "member_id",
             nullable = false,
@@ -33,32 +33,24 @@ public class Calendar extends BaseEntity {
     )
     private Member owner;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(
             name = "team_id",
             foreignKey = @ForeignKey(name = "fk_calendar_team_id_ref_team_id")
     )
     private Team team;
 
-    @Column(nullable = false, length = 255)
-    private String title;
-
-    @Column(columnDefinition = "TEXT")
-    private String description;
-
     protected Calendar() {
 
     }
 
-    public Calendar(Member owner, Team team, String title, String description) {
+    public Calendar(Member owner, Team team) {
         this.owner = owner;
         this.team = team;
-        this.title = title;
-        this.description = description;
     }
 
     public Calendar(Member owner, String title, String description) {
-        this(owner, null, title, description);
+        this(owner, null);
     }
 
     public void validateOwner(Member member) {
