@@ -1,7 +1,7 @@
 package unischedule.member.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import unischedule.member.entity.Member;
+import unischedule.member.domain.Member;
 
 public record CurrentMemberInfoResponseDto(
         @JsonProperty("user_id")
