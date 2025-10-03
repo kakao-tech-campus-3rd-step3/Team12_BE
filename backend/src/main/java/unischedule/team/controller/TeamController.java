@@ -1,12 +1,14 @@
 package unischedule.team.controller;
 
 import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -16,6 +18,7 @@ import unischedule.team.dto.TeamCreateRequestDto;
 import unischedule.team.dto.TeamCreateResponseDto;
 import unischedule.team.dto.TeamJoinRequestDto;
 import unischedule.team.dto.TeamJoinResponseDto;
+import unischedule.team.dto.WhenToMeetResponseDto;
 import unischedule.team.service.TeamService;
 
 @RestController
@@ -59,5 +62,13 @@ public class TeamController {
     ) {
         teamService.closeTeam(userDetails.getUsername(), teamId);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+    
+    @GetMapping("/{teamId}/when-to-meet")
+    ResponseEntity<List<WhenToMeetResponseDto>> getTeamMembersWhenToMeet(
+        @PathVariable Long teamId
+    ) {
+        List<WhenToMeetResponseDto> whenToMeetList = teamService.getTeamMembersWhenToMeet(teamId);
+        return ResponseEntity.ok(whenToMeetList);
     }
 }
