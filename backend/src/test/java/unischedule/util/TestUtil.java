@@ -42,8 +42,8 @@ public class TestUtil {
     public static Calendar makeTeamCalendar(Member owner, Team team) {
         return new Calendar(
                 owner,
-                "My Calendar",
-                "Personal calendar"
+                "Team Calendar",
+                "Team calendar"
         );
     }
 

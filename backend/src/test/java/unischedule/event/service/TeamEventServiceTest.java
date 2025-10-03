@@ -124,6 +124,7 @@ class TeamEventServiceTest {
         given(teamCalendar.getTeam()).willReturn(team);
         doNothing().when(event).validateIsTeamEvent();
         given(teamMemberRawService.findByTeamAndMember(team, member)).willReturn(new TeamMember(team, member, TeamRole.MEMBER));
+        given(teamMemberRawService.findByTeam(team)).willReturn(List.of(new TeamMember(team, member, TeamRole.MEMBER)));
 
         doAnswer(invocation -> {
             Event eventToModify = invocation.getArgument(0);
