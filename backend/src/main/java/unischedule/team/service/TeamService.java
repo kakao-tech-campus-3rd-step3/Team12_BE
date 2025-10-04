@@ -3,6 +3,7 @@ package unischedule.team.service;
 import java.util.List;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import unischedule.calendar.entity.Calendar;
@@ -132,10 +133,52 @@ public class TeamService {
         teamRawService.deleteTeam(findTeam);
     }
 
+    /**
+     * 팀 리스트 조회 메서드
+     *
+     * @param email          헤더에서 넘어온 유저 이메일
+     * @param paginationMeta 페이지네이션 정보
+     * @return 팀 리스트와 페이지네이션 메타데이터를 담은 Dto
+     */
     public TeamListResponseDto findAllTeams(String email, PaginationRequestDto paginationMeta) {
         Member findMember = memberRawService.findMemberByEmail(email);
+        Page<Team> findTeams = teamRawService.findTeamByMemberWithNullableKeyword(findMember, paginationMeta);
+        List<TeamResponseDto> teamResponseDtos = toTeamResponseDtos(findTeams.getContent());
+        PaginationMetadataDto metadataDto = PaginationMetadataDto.from(findTeams);
 
+        return new TeamListResponseDto(teamResponseDtos, metadataDto);
+    }
 
-        return null;
+    /**
+     * 팀 리스트를 팀 응답 Dto 리스트로 변환
+     *
+     * @param teams 팀 리스트
+     * @return 팀 응답 Dto 리스트
+     */
+    private List<TeamResponseDto> toTeamResponseDtos(List<Team> teams) {
+        return teams.stream()
+                .map(t -> {
+                    List<MemberNameResponseDto> nameResponseDtos = toMemberNameResponseDtos(teamMemberRawService.findByTeam(t));
+                    return new TeamResponseDto(
+                            t.getTeamId(),
+                            t.getName(),
+                            nameResponseDtos,
+                            nameResponseDtos.size(),
+                            t.getInviteCode()
+                    );
+                })
+                .toList();
+    }
+
+    /**
+     * 팀 멤버 리스트를 멤버 이름 응답 Dto 리스트로 변환
+     *
+     * @param teamMembers 팀 멤버 리스트
+     * @return 멤버 이름 응답 Dto 리스트
+     */
+    private List<MemberNameResponseDto> toMemberNameResponseDtos(List<TeamMember> teamMembers) {
+        return teamMembers.stream()
+                .map(MemberNameResponseDto::from)
+                .toList();
     }
 }

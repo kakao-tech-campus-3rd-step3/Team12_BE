@@ -10,9 +10,7 @@ public record TeamResponseDto(
         String teamName,
         List<MemberNameResponseDto> members,
         @JsonProperty("member_count")
-        Long memberCount,
-        @JsonProperty("event_count")
-        Long eventCount,
+        int memberCount,
         @JsonProperty("invite_code")
         String inviteCode
 ) {

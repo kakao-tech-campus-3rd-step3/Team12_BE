@@ -21,28 +21,28 @@ public class MockDataInitializer implements CommandLineRunner {
     private final MemberRepository memberRepository;
 
     public void run(String... args) {
-        joinTeams();
+
     }
 
-//    public void createMockUsers() {
-//        MemberRegistrationDto member1 = new MemberRegistrationDto("testuser1@email.com", "test-user1", "12345678");
-//        if (memberRepository.findByEmail(member1.email()).isEmpty()) {
-//            memberService.registerMember(member1);
-//        }
-//
-//        MemberRegistrationDto member2 = new MemberRegistrationDto("testuser2@email.com", "test-user2", "12345678");
-//        if (memberRepository.findByEmail(member2.email()).isEmpty()) {
-//            memberService.registerMember(member2);
-//        }
-//    }
+    public void createMockUsers() {
+        MemberRegistrationDto member1 = new MemberRegistrationDto("testuser1@email.com", "test-user1", "12345678");
+        if (memberRepository.findByEmail(member1.email()).isEmpty()) {
+            memberService.registerMember(member1);
+        }
 
-//    public void createTeams() {
-//        String email1 = "testuser1@email.com";
-//        TeamCreateRequestDto requestDto = new TeamCreateRequestDto("커피는생필품", "졸업과제 팀 입니다.");
-//        TeamCreateRequestDto requestDto2 = new TeamCreateRequestDto("카테캠 BE", "카테캠 팀 입니다.");
-//        teamService.createTeam(email1, requestDto);
-//        teamService.createTeam(email1, requestDto2);
-//    }
+        MemberRegistrationDto member2 = new MemberRegistrationDto("testuser2@email.com", "test-user2", "12345678");
+        if (memberRepository.findByEmail(member2.email()).isEmpty()) {
+            memberService.registerMember(member2);
+        }
+    }
+
+    public void createTeams() {
+        String email1 = "testuser1@email.com";
+        TeamCreateRequestDto requestDto = new TeamCreateRequestDto("커피는생필품", "졸업과제 팀 입니다.");
+        TeamCreateRequestDto requestDto2 = new TeamCreateRequestDto("카테캠 BE", "카테캠 팀 입니다.");
+        teamService.createTeam(email1, requestDto);
+        teamService.createTeam(email1, requestDto2);
+    }
 
 //    public void createTeam2() {
 //        String email2 = "testuser2@email.com";
