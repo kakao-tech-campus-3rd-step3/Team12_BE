@@ -7,17 +7,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.*;
 import unischedule.auth.jwt.JwtTokenProvider;
 import unischedule.auth.service.RefreshTokenService;
-import unischedule.member.dto.AccessTokenRefreshRequestDto;
-import unischedule.member.dto.LoginRequestDto;
-import unischedule.member.dto.MemberRegistrationDto;
-import unischedule.member.dto.MemberTokenResponseDto;
+import unischedule.member.dto.*;
 import unischedule.member.service.MemberService;
 
 @RestController
@@ -54,5 +50,12 @@ public class MemberApiController {
         String newAccessToken = refreshTokenService.reissueAccessToken(requestDto.refreshToken());
 
         return ResponseEntity.ok(new MemberTokenResponseDto(newAccessToken, requestDto.refreshToken()));
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<CurrentMemberInfoResponseDto> getCurrentMemberInfo(@AuthenticationPrincipal UserDetails userDetails) {
+        CurrentMemberInfoResponseDto responseDto = memberService.getCurrentMemberInfo(userDetails.getUsername());
+
+        return ResponseEntity.ok(responseDto);
     }
 }

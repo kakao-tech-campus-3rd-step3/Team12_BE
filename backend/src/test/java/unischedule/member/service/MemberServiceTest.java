@@ -8,14 +8,16 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import unischedule.calendar.repository.CalendarRepository;
+import unischedule.exception.EntityNotFoundException;
 import unischedule.exception.dto.EntityAlreadyExistsException;
+import unischedule.member.dto.CurrentMemberInfoResponseDto;
 import unischedule.member.dto.MemberRegistrationDto;
 import unischedule.member.domain.Member;
 import unischedule.member.repository.MemberRepository;
 
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
@@ -58,6 +60,39 @@ public class MemberServiceTest {
         // when & then
         assertThrows(EntityAlreadyExistsException.class, () -> {
             memberService.registerMember(dto);
+        });
+    }
+
+    @Test
+    @DisplayName("회원 정보를 정상적으로 조회한다")
+    void 회원정보_정상조회() {
+        // given
+        String email = "testuser@email.com";
+        Member member = new Member(
+                "testuser@email.com",
+                "test-user",
+                "123456789"
+        );
+        given(memberRepository.findByEmail(member.getEmail())).willReturn(Optional.of(member));
+
+        // when
+        CurrentMemberInfoResponseDto responseDto = memberService.getCurrentMemberInfo(email);
+
+        // then
+        assertNotNull(responseDto);
+        assertEquals(email, responseDto.email());
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 회원이면 예외를 던진다")
+    void 존재하지않는회원_예외발생() {
+        // given
+        String email = "notfound@email.com";
+        given(memberRepository.findByEmail(email)).willReturn(Optional.empty());
+
+        // when & then
+        assertThrows(EntityNotFoundException.class, () -> {
+            memberService.getCurrentMemberInfo(email);
         });
     }
 }
