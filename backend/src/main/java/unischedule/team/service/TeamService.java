@@ -136,7 +136,7 @@ public class TeamService {
     /**
      * 팀 리스트 조회 메서드
      *
-     * @param email          헤더에서 넘어온 유저 이메일
+     * @param email          유저 이메일
      * @param paginationMeta 페이지네이션 정보
      * @return 팀 리스트와 페이지네이션 메타데이터를 담은 Dto
      */
