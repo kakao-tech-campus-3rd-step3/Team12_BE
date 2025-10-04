@@ -1,14 +1,28 @@
 package unischedule.team.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.persistence.GeneratedValue;
 import java.time.LocalDateTime;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
-public record WhenToMeetResponseDto(
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm")
-    LocalDateTime startTime,
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm")
-    LocalDateTime endTime,
-    Long availableMember) {
+@Getter
+@AllArgsConstructor
+public class WhenToMeetResponseDto {
     
+    @JsonProperty("start_time")
+    private final LocalDateTime startTime;
+    
+    @JsonProperty("end_time")
+    private final LocalDateTime endTime;
+    
+    @JsonProperty("available_member")
+    private Long availableMember;
+    
+    public void discountAvailable() {
+        this.availableMember--;
+    }
 }
 
