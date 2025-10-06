@@ -1,7 +1,7 @@
 package unischedule.member.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import unischedule.member.entity.Member;
+import unischedule.member.domain.Member;
 
 import java.util.Optional;
 

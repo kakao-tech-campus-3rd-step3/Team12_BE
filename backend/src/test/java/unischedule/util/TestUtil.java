@@ -1,9 +1,12 @@
 package unischedule.util;
 
 import unischedule.calendar.entity.Calendar;
-import unischedule.events.entity.Event;
-import unischedule.events.entity.EventState;
-import unischedule.member.entity.Member;
+import unischedule.events.domain.Event;
+import unischedule.events.domain.EventState;
+import unischedule.member.domain.Member;
+import unischedule.team.domain.Team;
+import unischedule.team.domain.TeamMember;
+import unischedule.team.domain.TeamRole;
 
 import java.time.LocalDateTime;
 
@@ -28,11 +31,32 @@ public class TestUtil {
         );
     }
 
-    public static Calendar makeCalendar(Member owner) {
+    public static Calendar makePersonalCalendar(Member owner) {
         return new Calendar(
                 owner,
                 "My Calendar",
                 "Personal calendar"
         );
     }
+
+    public static Calendar makeTeamCalendar(Member owner, Team team) {
+        return new Calendar(
+                owner,
+                "Team Calendar",
+                "Team calendar"
+        );
+    }
+
+    public static Team makeTeam() {
+        return new Team(
+                "test team",
+                "description",
+                "ABCDEF"
+        );
+    }
+
+    public static TeamMember makeTeamMember(Team team, Member member) {
+        return new TeamMember(team, member, TeamRole.MEMBER);
+    }
 }
+

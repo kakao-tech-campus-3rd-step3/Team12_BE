@@ -1,7 +1,9 @@
-package unischedule.team.entity;
+package unischedule.team.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -15,7 +17,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 import unischedule.exception.NoPermissionException;
-import unischedule.member.entity.Member;
+import unischedule.member.domain.Member;
 
 @Entity
 @Getter
@@ -34,21 +36,22 @@ public class TeamMember {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id", nullable = false)
     private Member member;
-    
+
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String role; // 예: LEADER, MEMBER 등
+    private TeamRole role; // 예: LEADER, MEMBER 등
     
     @CreatedDate
     private LocalDateTime createdAt;
     
-    public TeamMember(Team team, Member member, String role) {
+    public TeamMember(Team team, Member member, TeamRole role) {
         this.team = team;
         this.member = member;
         this.role = role;
     }
     
     public void checkLeader() {
-        if(!this.role.equals("LEADER")) {
+        if(!this.role.equals(TeamRole.LEADER)) {
             throw new NoPermissionException("리더가 아닙니다.");
         }
     }

@@ -6,18 +6,19 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import unischedule.events.entity.Event;
+import unischedule.events.domain.Event;
+import unischedule.events.dto.EventUpdateDto;
 import unischedule.events.repository.EventRepository;
 import unischedule.exception.EntityNotFoundException;
 import unischedule.exception.InvalidInputException;
-import unischedule.member.entity.Member;
+import unischedule.member.domain.Member;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class EventDomainService {
+public class EventRawService {
     private final EventRepository eventRepository;
 
     @Transactional
@@ -36,6 +37,17 @@ public class EventDomainService {
         eventRepository.delete(event);
     }
 
+    @Transactional
+    public void updateEvent(Event event, EventUpdateDto updateDto) {
+        event.modifyEvent(
+                updateDto.title(),
+                updateDto.content(),
+                updateDto.startTime(),
+                updateDto.endTime(),
+                updateDto.isPrivate()
+        );
+    }
+
     @Transactional(readOnly = true)
     public void validateNoSchedule(Member member, LocalDateTime startTime, LocalDateTime endTime) {
         if (eventRepository.existsPersonalScheduleInPeriod(member.getMemberId(), startTime, endTime)) {
@@ -44,8 +56,39 @@ public class EventDomainService {
     }
 
     @Transactional(readOnly = true)
-    public List<Event> findSchedule(Member member, LocalDateTime startTime, LocalDateTime endTime) {
-        return eventRepository.findPersonalScheduleInPeriod(member.getMemberId(), startTime, endTime);
+    public void validateNoScheduleForMembers(List<Member> memberList, LocalDateTime startTime, LocalDateTime endTime) {
+        if (memberList.isEmpty()) return;
+        List<Long> memberIds = memberList
+                .stream()
+                .map(Member::getMemberId)
+                .toList();
+
+        if (eventRepository.existsScheduleForMembers(memberIds, startTime, endTime)) {
+            throw new InvalidInputException("일정이 겹치는 멤버가 있습니다.");
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public void canUpdateEventForMembers(List<Member> memberList, Event event, LocalDateTime startTime, LocalDateTime endTime) {
+        if (memberList.isEmpty()) return;
+        List<Long> memberIds = memberList
+                .stream()
+                .map(Member::getMemberId)
+                .toList();
+
+        if (eventRepository.existsScheduleForMembersExcludingEvent(
+                memberIds,
+                startTime,
+                endTime,
+                event.getEventId())
+        ) {
+            throw new InvalidInputException("일정이 겹치는 멤버가 있어서 일정을 수정할 수 없습니다.");
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public List<Event> findSchedule(List<Long> calendarIds, LocalDateTime startTime, LocalDateTime endTime) {
+        return eventRepository.findEventsInCalendarsInPeriod(calendarIds, startTime, endTime);
     }
 
     @Transactional(readOnly = true)

@@ -1,4 +1,4 @@
-package unischedule.team.service;
+package unischedule.team.service.internal;
 
 import java.security.SecureRandom;
 

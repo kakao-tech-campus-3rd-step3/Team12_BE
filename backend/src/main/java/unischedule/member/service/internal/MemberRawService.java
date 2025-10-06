@@ -4,12 +4,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import unischedule.exception.EntityNotFoundException;
-import unischedule.member.entity.Member;
+import unischedule.member.domain.Member;
 import unischedule.member.repository.MemberRepository;
 
 @Service
 @RequiredArgsConstructor
-public class MemberDomainService {
+public class MemberRawService {
     private final MemberRepository memberRepository;
 
     @Transactional(readOnly = true)

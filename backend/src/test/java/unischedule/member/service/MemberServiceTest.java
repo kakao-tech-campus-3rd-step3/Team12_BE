@@ -10,7 +10,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import unischedule.calendar.repository.CalendarRepository;
 import unischedule.exception.dto.EntityAlreadyExistsException;
 import unischedule.member.dto.MemberRegistrationDto;
-import unischedule.member.entity.Member;
+import unischedule.member.domain.Member;
 import unischedule.member.repository.MemberRepository;
 
 import java.util.Optional;
