@@ -27,6 +27,8 @@ import unischedule.team.dto.WhenToMeetResponseDto;
 import unischedule.team.service.internal.TeamCodeGenerator;
 import unischedule.team.service.internal.TeamMemberRawService;
 import unischedule.team.service.internal.TeamRawService;
+import unischedule.team.service.internal.WhenToMeetLogicService;
+import unischedule.team.service.internal.WhenToMeetRawService;
 
 /**
  * 팀과 관련한 서비스 메서드들의 클래스
@@ -40,6 +42,8 @@ public class TeamService {
     private final MemberRawService memberRawService;
     private final TeamMemberRawService teamMemberRawService;
     private final PersonalEventService personalEventService;
+    private final WhenToMeetRawService whenToMeetRawService;
+    private final WhenToMeetLogicService whenToMeetLogicService;
     private final TeamCodeGenerator teamCodeGenerator = new TeamCodeGenerator();
     
     /**
@@ -162,78 +166,13 @@ public class TeamService {
      */
     //현재 "겹치는 일정"이 없다고 보고 만든 코드
     public List<WhenToMeetResponseDto> getTeamMembersWhenToMeet(Long teamId) {
-        //돌려줄 결과
-        List<WhenToMeet> result = new ArrayList<>();
+        List<Member> members = whenToMeetRawService.findTeamMembers(teamId);
+        List<LocalDateTime> starts = whenToMeetLogicService.generateIntervalStarts();
+        List<LocalDateTime> ends = whenToMeetLogicService.generateIntervalEnds();
         
-        //시작일과 끝일의 목록 저장
-        List<LocalDateTime> intervalStarts =
-            IntStream.rangeClosed(1, 7)
-                .mapToObj(i -> LocalDate.now().plusDays(i).atTime(9, 0))
-                .toList();
+        List<WhenToMeet> slots = whenToMeetLogicService.generateSlots(members, starts, ends);
+        whenToMeetLogicService.applyMemberEvents(slots, members, starts, ends, whenToMeetRawService);
         
-        List<LocalDateTime> intervalEnds =
-            IntStream.rangeClosed(1, 7)
-                .mapToObj(i -> LocalDate.now().plusDays(i + 1).atStartOfDay())
-                .toList();
-        
-        //멤버 조회
-        Team findTeam = teamRawService.findTeamById(teamId);
-        
-        List<Member> findMembers = teamMemberRawService.findByTeam(findTeam).stream()
-            .map(TeamMember::getMember)
-            .toList();
-        
-        //15분 간격 슬롯 생성
-        for (int i = 0; i < intervalStarts.size(); i++) {
-            LocalDateTime start = intervalStarts.get(i);
-            LocalDateTime end = intervalEnds.get(i);
-            
-            LocalDateTime cursor = start;
-            while (cursor.isBefore(end)) {
-                LocalDateTime slotStart = cursor;
-                LocalDateTime slotEnd = cursor.plusMinutes(15);
-                
-                if (slotEnd.isAfter(end)) {
-                    slotEnd = end;
-                }
-                
-                result.add(new WhenToMeet(slotStart, slotEnd, (long) findMembers.size()));
-                
-                cursor = slotEnd;
-            }
-        }
-        
-        //멤버들의 일정을 전부 돌면서 슬롯과 겹치는지 확인
-        for (Member member : findMembers) {
-            for(int i = 0; i < intervalStarts.size(); i++) {
-                List<EventGetResponseDto> personalEvents = personalEventService.getPersonalEvents(member.getEmail(), intervalStarts.get(i), intervalEnds.get(i));
-                
-                // 각 이벤트에 대해 15분 슬롯과 겹치는지 체크
-                for (EventGetResponseDto event : personalEvents) {
-                    LocalDateTime eventStart = event.startTime();
-                    LocalDateTime eventEnd = event.endTime();
-                    
-                    // result의 모든 슬롯을 돌면서 겹침 확인
-                    for (WhenToMeet slot : result) {
-                        // 슬롯이 이 날짜 범위에 속하지 않으면 건너뜀
-                        if (slot.getStartTime().isBefore(intervalStarts.get(i)) || slot.getEndTime().isAfter(intervalEnds.get(i))) {
-                            continue;
-                        }
-                        
-                        // 이벤트와 슬롯이 겹치면 availableMember 감소
-                        if (slot.getStartTime().isBefore(eventEnd) && slot.getEndTime().isAfter(eventStart)) {
-                            slot.discountAvailable();
-                        }
-                    }
-                }
-            }
-        }
-        
-        return result.stream()
-            .map( slot -> { return new WhenToMeetResponseDto(
-                slot.getStartTime(),
-                slot.getEndTime(),
-                slot.getAvailableMember());
-            }).toList();
+        return whenToMeetLogicService.toResponse(slots);
     }
 }
