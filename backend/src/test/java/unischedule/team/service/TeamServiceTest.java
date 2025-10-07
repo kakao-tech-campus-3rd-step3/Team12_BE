@@ -1,7 +1,6 @@
 package unischedule.team.service;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.times;
@@ -11,13 +10,11 @@ import static org.mockito.Mockito.when;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 import unischedule.calendar.entity.Calendar;
 import unischedule.calendar.service.internal.CalendarRawService;
@@ -142,7 +139,7 @@ class TeamServiceTest {
         
         // then
         assertThat(result).isNotNull();
-        assertThat(result.get(0).getAvailableMember()).isEqualTo(2);
+        assertThat(result.get(0).availableMember()).isEqualTo(2);
     }
     
     @Test
@@ -169,7 +166,7 @@ class TeamServiceTest {
         
         // then
         long affectedSlots = result.stream()
-            .filter(s -> s.getAvailableMember() < 1)
+            .filter(s -> s.availableMember() < 1)
             .count();
         
         assertThat(affectedSlots).isGreaterThan(0);

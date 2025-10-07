@@ -16,6 +16,7 @@ import unischedule.events.service.internal.EventRawService;
 import unischedule.member.domain.Member;
 import unischedule.member.service.internal.MemberRawService;
 import unischedule.team.domain.TeamRole;
+import unischedule.team.domain.WhenToMeet;
 import unischedule.team.dto.TeamCreateRequestDto;
 import unischedule.team.dto.TeamCreateResponseDto;
 import unischedule.team.dto.TeamJoinRequestDto;
@@ -154,11 +155,15 @@ public class TeamService {
         teamRawService.deleteTeam(findTeam);
     }
     
-    
+    /**
+     * 일정 겹치는 것 체크
+     * @param teamId
+     * @return 겹치는 일정 리스트
+     */
     //현재 "겹치는 일정"이 없다고 보고 만든 코드
     public List<WhenToMeetResponseDto> getTeamMembersWhenToMeet(Long teamId) {
         //돌려줄 결과
-        List<WhenToMeetResponseDto> result = new ArrayList<>();
+        List<WhenToMeet> result = new ArrayList<>();
         
         //시작일과 끝일의 목록 저장
         List<LocalDateTime> intervalStarts =
@@ -192,7 +197,7 @@ public class TeamService {
                     slotEnd = end;
                 }
                 
-                result.add(new WhenToMeetResponseDto(slotStart, slotEnd, (long) findMembers.size()));
+                result.add(new WhenToMeet(slotStart, slotEnd, (long) findMembers.size()));
                 
                 cursor = slotEnd;
             }
@@ -209,7 +214,7 @@ public class TeamService {
                     LocalDateTime eventEnd = event.endTime();
                     
                     // result의 모든 슬롯을 돌면서 겹침 확인
-                    for (WhenToMeetResponseDto slot : result) {
+                    for (WhenToMeet slot : result) {
                         // 슬롯이 이 날짜 범위에 속하지 않으면 건너뜀
                         if (slot.getStartTime().isBefore(intervalStarts.get(i)) || slot.getEndTime().isAfter(intervalEnds.get(i))) {
                             continue;
@@ -224,6 +229,11 @@ public class TeamService {
             }
         }
         
-        return result;
+        return result.stream()
+            .map( slot -> { return new WhenToMeetResponseDto(
+                slot.getStartTime(),
+                slot.getEndTime(),
+                slot.getAvailableMember());
+            }).toList();
     }
 }
