@@ -51,7 +51,6 @@ class TeamServiceTest {
     private TeamService teamService;
     
     
-    // ✅ 팀 생성 테스트
     @Test
     @DisplayName("팀 생성 시 팀, 팀멤버, 캘린더가 생성된다")
     void createTeam_success() {
@@ -78,7 +77,6 @@ class TeamServiceTest {
         assertThat(result.teamCode()).isNotNull();
     }
     
-    // ✅ 팀 가입 테스트
     @Test
     @DisplayName("팀 코드로 팀 가입 성공 시 팀멤버 생성")
     void joinTeam_success() {
@@ -100,7 +98,6 @@ class TeamServiceTest {
         assertThat(result.teamName()).isEqualTo("TeamA");
     }
     
-    // ✅ 팀 탈퇴 테스트
     @Test
     @DisplayName("팀 탈퇴 시 팀멤버가 삭제된다")
     void withdrawTeam_success() {
@@ -123,7 +120,6 @@ class TeamServiceTest {
         verify(teamMemberRawService, times(1)).deleteTeamMember(teamMember);
     }
     
-    // ✅ 회의 가능 시간 계산 테스트
     @Test
     @DisplayName("모든 팀원이 일정이 없으면 availableMember == 팀원 수 유지")
     void getTeamMembersWhenToMeet_noEvents() {
@@ -149,7 +145,6 @@ class TeamServiceTest {
         assertThat(result.get(0).getAvailableMember()).isEqualTo(2);
     }
     
-    // ✅ 일정이 겹칠 때 테스트
     @Test
     @DisplayName("팀원이 일정이 있으면 해당 슬롯의 availableMember 감소")
     void getTeamMembersWhenToMeet_withOverlap() {
