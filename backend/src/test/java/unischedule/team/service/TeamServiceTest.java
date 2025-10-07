@@ -1,8 +1,9 @@
 package unischedule.team.service;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -18,18 +19,20 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import unischedule.calendar.entity.Calendar;
 import unischedule.calendar.service.internal.CalendarRawService;
-import unischedule.events.dto.EventGetResponseDto;
 import unischedule.events.service.PersonalEventService;
 import unischedule.member.domain.Member;
 import unischedule.member.service.internal.MemberRawService;
 import unischedule.team.domain.Team;
 import unischedule.team.domain.TeamMember;
 import unischedule.team.domain.TeamRole;
+import unischedule.team.domain.WhenToMeet;
 import unischedule.team.dto.TeamCreateRequestDto;
 import unischedule.team.dto.TeamJoinRequestDto;
 import unischedule.team.dto.WhenToMeetResponseDto;
 import unischedule.team.service.internal.TeamMemberRawService;
 import unischedule.team.service.internal.TeamRawService;
+import unischedule.team.service.internal.WhenToMeetLogicService;
+import unischedule.team.service.internal.WhenToMeetRawService;
 
 @ExtendWith(MockitoExtension.class)
 class TeamServiceTest {
@@ -43,6 +46,11 @@ class TeamServiceTest {
     private TeamMemberRawService teamMemberRawService;
     @Mock
     private PersonalEventService personalEventService;
+    
+    @Mock
+    private WhenToMeetRawService whenToMeetRawService;
+    @Mock
+    private WhenToMeetLogicService whenToMeetLogicService;
     
     @InjectMocks
     private TeamService teamService;
@@ -147,28 +155,35 @@ class TeamServiceTest {
     void getTeamMembersWhenToMeet_withOverlap() {
         // given
         Long teamId = 1L;
-        Team team = new Team("TeamA", "설명", "CODE123");
         Member member = new Member("email@email.com", "test", "1q2w3e4r!");
+        List<Member> members = List.of(member);
         
-        when(teamRawService.findTeamById(teamId)).thenReturn(team);
-        when(teamMemberRawService.findByTeam(team))
-            .thenReturn(List.of(new TeamMember(team, member, TeamRole.MEMBER)));
+        List<LocalDateTime> starts = List.of(LocalDateTime.of(2025, 10, 10, 9, 0));
+        List<LocalDateTime> ends = List.of(starts.get(0).plusHours(1));
         
-        // 특정 시간대에 이벤트가 존재한다고 가정
-        LocalDateTime start = LocalDateTime.now().plusDays(1).withHour(9);
-        LocalDateTime end = start.plusHours(1);
+        List<WhenToMeet> slots = List.of(new WhenToMeet(starts.get(0), ends.get(0), 1L)); // availableMember=1
         
-        when(personalEventService.getPersonalEvents(anyString(), any(), any()))
-            .thenReturn(List.of(new EventGetResponseDto(1L, "회의", "", start, end, false)));
+        // mock
+        when(whenToMeetRawService.findTeamMembers(teamId)).thenReturn(members);
+        when(whenToMeetLogicService.generateIntervalStarts()).thenReturn(starts);
+        when(whenToMeetLogicService.generateIntervalEnds()).thenReturn(ends);
+        when(whenToMeetLogicService.generateSlots(members, starts, ends)).thenReturn(slots);
+        
+        // applyMemberEvents() 내부에서 RawService를 사용하지만, 외부에서 검증할 건 없음
+        doAnswer(invocation -> {
+            List<WhenToMeet> slotList = invocation.getArgument(0);
+            slotList.get(0).discountAvailable(); // 실제 로직 흉내
+            return null;
+        }).when(whenToMeetLogicService).applyMemberEvents(any(), any(), any(), any(), any());
+        
+        when(whenToMeetLogicService.toResponse(slots))
+            .thenReturn(List.of(new WhenToMeetResponseDto(starts.get(0), ends.get(0), 0L)));
         
         // when
         List<WhenToMeetResponseDto> result = teamService.getTeamMembersWhenToMeet(teamId);
         
         // then
-        long affectedSlots = result.stream()
-            .filter(s -> s.availableMember() < 1)
-            .count();
-        
-        assertThat(affectedSlots).isGreaterThan(0);
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).availableMember()).isEqualTo(0);
     }
 }

@@ -33,7 +33,6 @@ public class WhenToMeetRawService {
     }
     
     public List<EventGetResponseDto> findMemberEvents(Member member, LocalDateTime start, LocalDateTime end) {
-        // PersonalEventService.getPersonalEvents()의 내부 로직 이식
         
         // 멤버의 이메일로 전체 팀 캘린더 및 개인 캘린더 식별
         Member findMember = memberRawService.findMemberByEmail(member.getEmail());
