@@ -105,6 +105,11 @@ public class TeamService {
         );
     }
     
+    /**
+     * 팀 탈퇴
+     * @param email 이메일
+     * @param teamId 팀 아이디
+     */
     @Transactional
     public void withdrawTeam(String email, Long teamId) {
         Team findTeam = teamRawService.findTeamById(teamId);
@@ -120,11 +125,18 @@ public class TeamService {
         teamMemberRawService.deleteTeamMember(findRelation);
     }
     
+    /**
+     * 팀 삭제
+     * @param email 이메일
+     * @param teamId 팀 아이디
+     */
     @Transactional
     public void closeTeam(String email, Long teamId) {
         Team findTeam = teamRawService.findTeamById(teamId);
         
         Member findMember = memberRawService.findMemberByEmail(email);
+        
+        Calendar findCalendar = calendarRawService.getTeamCalendar(findTeam);
         
         TeamMember findRelation = teamMemberRawService.findByTeamAndMember(findTeam, findMember);
         
@@ -136,6 +148,8 @@ public class TeamService {
         
         List<TeamMember> findTeamMember = teamMemberRawService.findByTeam(findTeam);
         teamMemberRawService.deleteTeamMemberAll(findTeamMember);
+        
+        calendarRawService.deleteCalendar(findCalendar);
         
         teamRawService.deleteTeam(findTeam);
     }
