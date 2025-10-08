@@ -23,11 +23,16 @@ public interface TeamRepository extends JpaRepository<Team, Long> {
             FROM Team t
             JOIN TeamMember tm ON tm.team = t
             WHERE tm.member = :member
-            AND (:keyword IS NULL OR t.name LIKE %:keyword%)
             """)
-    Page<Team> findTeamByMemberWithNullableKeyword(
-            @Param("member") Member member,
-            @Param("keyword") String keyword,
-            Pageable pageable
-    );
+    Page<Team> findTeamsByMember(Member member, Pageable pageable);
+
+
+    @Query("""
+            SELECT DISTINCT t
+            FROM Team t
+            JOIN TeamMember tm ON tm.team = t
+            WHERE tm.member = :member
+            AND (t.name LIKE %:keyword% OR t.description LIKE %:keyword%)
+            """)
+    Page<Team> findTeamsByMemberAndKeyword(Member member, Pageable pageable, String keyword);
 }

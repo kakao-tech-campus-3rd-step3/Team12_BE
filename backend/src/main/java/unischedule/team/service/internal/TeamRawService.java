@@ -46,18 +46,20 @@ public class TeamRawService {
     }
 
     /**
-     * 멤버가 속한 팀을 페이징 처리하여 조회합니다.
-     * 키워드가 null이거나 빈 문자열인 경우, 모든 팀을 조회합니다.
-     * 그렇지 않으면 팀 이름이나 설명에 키워드가 포함된 팀을 조회합니다.
+     * 멤버가 속한 팀들을 페이징 처리하여 조회하는 메서드
      *
-     * @param member         조회할 멤버
-     * @param paginationInfo 페이징 및 검색 정보를 담은 DTO
-     * @return 조회된 팀의 페이지
+     * @param member         멤버 엔티티 (조회 대상)
+     * @param paginationInfo 페이징 및 검색 정보
+     * @return 멤버가 속한 팀들의 페이징된 결과
      */
-    public Page<Team> findTeamByMemberWithNullableKeyword(Member member, PaginationRequestDto paginationInfo) {
+    public Page<Team> findTeamsByMember(Member member, PaginationRequestDto paginationInfo) {
         Pageable pageable = PageRequest.of(paginationInfo.page() - 1, paginationInfo.limit(), Sort.by("teamId").ascending());
         String keyword = paginationInfo.search();
 
-        return teamRepository.findTeamByMemberWithNullableKeyword(member, keyword, pageable);
+        if (keyword == null || keyword.isBlank()) {
+            return teamRepository.findTeamsByMember(member, pageable);
+        }
+
+        return teamRepository.findTeamsByMemberAndKeyword(member, pageable, keyword);
     }
 }

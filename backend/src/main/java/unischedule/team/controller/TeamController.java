@@ -2,6 +2,7 @@ package unischedule.team.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -57,14 +58,14 @@ public class TeamController {
     }
 
     @GetMapping
-    public ResponseEntity<TeamListResponseDto> findAllTeams(
+    public ResponseEntity<Page<TeamResponseDto>> findMyTeamsWithMembers(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int limit,
             @RequestParam(required = false) String search
     ) {
         PaginationRequestDto paginationInfo = new PaginationRequestDto(page, limit, search);
-        TeamListResponseDto responseDto = teamService.findAllTeams(userDetails.getUsername(), paginationInfo);
+        Page<TeamResponseDto> responseDto = teamService.findMyTeamsWithMembers(userDetails.getUsername(), paginationInfo);
 
         return ResponseEntity.ok(responseDto);
     }

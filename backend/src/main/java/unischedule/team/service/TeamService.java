@@ -8,7 +8,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import unischedule.calendar.entity.Calendar;
 import unischedule.calendar.service.internal.CalendarRawService;
-import unischedule.common.dto.PaginationMetadataDto;
 import unischedule.common.dto.PaginationRequestDto;
 import unischedule.member.domain.Member;
 import unischedule.member.service.internal.MemberRawService;
@@ -134,46 +133,32 @@ public class TeamService {
     }
 
     /**
-     * 팀 리스트 조회 메서드
+     * 사용자가 속한 모든 팀을 조회하는 메서드
      *
      * @param email          유저 이메일
-     * @param paginationMeta 페이지네이션 정보
-     * @return 팀 리스트와 페이지네이션 메타데이터를 담은 Dto
+     * @param paginationMeta 페이지네이션 요청 Dto
+     * @return 사용자가 속한 팀들의 응답 Dto 리스트
      */
-    public TeamListResponseDto findAllTeams(String email, PaginationRequestDto paginationMeta) {
+    public Page<TeamResponseDto> findMyTeamsWithMembers(String email, PaginationRequestDto paginationMeta) {
         Member findMember = memberRawService.findMemberByEmail(email);
-        Page<Team> findTeams = teamRawService.findTeamByMemberWithNullableKeyword(findMember, paginationMeta);
-        List<TeamResponseDto> teamResponseDtos = toTeamResponseDtos(findTeams.getContent());
-        PaginationMetadataDto metadataDto = PaginationMetadataDto.from(findTeams);
+        Page<Team> findTeams = teamRawService.findTeamsByMember(findMember, paginationMeta);
 
-        return new TeamListResponseDto(teamResponseDtos, metadataDto);
+        return findTeams.map(team -> {
+            List<MemberNameResponseDto> memberDtos = toMemberNameResponseDtos(teamMemberRawService.findByTeam(team));
+            return new TeamResponseDto(
+                    team.getTeamId(),
+                    team.getName(),
+                    memberDtos,
+                    memberDtos.size(),
+                    team.getInviteCode()
+            );
+        });
     }
 
     /**
-     * 팀 리스트를 팀 응답 Dto 리스트로 변환
+     * TeamMember 리스트를 MemberNameResponseDto 리스트로 변환하는 메서드
      *
-     * @param teams 팀 리스트
-     * @return 팀 응답 Dto 리스트
-     */
-    private List<TeamResponseDto> toTeamResponseDtos(List<Team> teams) {
-        return teams.stream()
-                .map(t -> {
-                    List<MemberNameResponseDto> nameResponseDtos = toMemberNameResponseDtos(teamMemberRawService.findByTeam(t));
-                    return new TeamResponseDto(
-                            t.getTeamId(),
-                            t.getName(),
-                            nameResponseDtos,
-                            nameResponseDtos.size(),
-                            t.getInviteCode()
-                    );
-                })
-                .toList();
-    }
-
-    /**
-     * 팀 멤버 리스트를 멤버 이름 응답 Dto 리스트로 변환
-     *
-     * @param teamMembers 팀 멤버 리스트
+     * @param teamMembers 팀 멤버 엔티티 리스트
      * @return 멤버 이름 응답 Dto 리스트
      */
     private List<MemberNameResponseDto> toMemberNameResponseDtos(List<TeamMember> teamMembers) {
