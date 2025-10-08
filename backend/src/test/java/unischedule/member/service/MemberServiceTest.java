@@ -14,6 +14,7 @@ import unischedule.member.dto.CurrentMemberInfoResponseDto;
 import unischedule.member.dto.MemberRegistrationDto;
 import unischedule.member.domain.Member;
 import unischedule.member.repository.MemberRepository;
+import unischedule.member.service.internal.MemberRawService;
 
 import java.util.Optional;
 
@@ -27,6 +28,9 @@ public class MemberServiceTest {
 
     @InjectMocks
     private MemberService memberService;
+
+    @Mock
+    private MemberRawService memberRawService;
 
     @Mock
     private MemberRepository memberRepository;
@@ -73,8 +77,7 @@ public class MemberServiceTest {
                 "test-user",
                 "123456789"
         );
-        given(memberRepository.findByEmail(member.getEmail())).willReturn(Optional.of(member));
-
+        given(memberRawService.findMemberByEmail(member.getEmail())).willReturn(member);
         // when
         CurrentMemberInfoResponseDto responseDto = memberService.getCurrentMemberInfo(email);
 
@@ -88,7 +91,7 @@ public class MemberServiceTest {
     void 존재하지않는회원_예외발생() {
         // given
         String email = "notfound@email.com";
-        given(memberRepository.findByEmail(email)).willReturn(Optional.empty());
+        given(memberRawService.findMemberByEmail(email)).willThrow(new EntityNotFoundException("사용자를 찾을 수 없습니다."));
 
         // when & then
         assertThrows(EntityNotFoundException.class, () -> {
