@@ -144,7 +144,6 @@ public class TeamService {
     public PageResponseDto<TeamResponseDto> findMyTeamsWithMembers(String email, PaginationRequestDto paginationMeta) {
         Member findMember = memberRawService.findMemberByEmail(email);
         Page<Team> findTeams = teamRawService.findTeamsByMember(findMember, paginationMeta);
-
         Page<TeamResponseDto> responseDtos = findTeams.map(team -> {
             List<MemberNameResponseDto> memberDtos = toMemberNameResponseDtos(teamMemberRawService.findByTeam(team));
             return new TeamResponseDto(
@@ -166,6 +165,7 @@ public class TeamService {
      * @return 멤버 이름 응답 Dto 리스트
      */
     private List<MemberNameResponseDto> toMemberNameResponseDtos(List<TeamMember> teamMembers) {
+
         return teamMembers.stream()
                 .map(MemberNameResponseDto::from)
                 .toList();

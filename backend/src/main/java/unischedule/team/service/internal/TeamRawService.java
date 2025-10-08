@@ -56,8 +56,8 @@ public class TeamRawService {
     public Page<Team> findTeamsByMember(Member member, PaginationRequestDto paginationInfo) {
         Pageable pageable = PageRequest.of(paginationInfo.page() - 1, paginationInfo.limit(), Sort.by("teamId").ascending());
         String keyword = paginationInfo.search();
-
         if (keyword == null || keyword.isBlank()) {
+
             return teamRepository.findTeamsByMember(member, pageable);
         }
 
