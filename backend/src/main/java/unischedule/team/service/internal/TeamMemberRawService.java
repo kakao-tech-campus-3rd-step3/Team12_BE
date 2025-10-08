@@ -47,6 +47,18 @@ public class TeamMemberRawService {
     }
 
     /**
+     * 팀 멤버 검증
+     * @param team
+     * @param member
+     */
+    @Transactional(readOnly = true)
+    public void validateMembership(Team team, Member member) {
+        if(!teamMemberRepository.existsByTeamAndMember(team, member)) {
+            throw new EntityNotFoundException("사용자가 해당 팀 소속이 아닙니다.");
+        }
+    }
+
+    /**
      * 멤버가 속한 팀 조회
      * @param member
      * @return
