@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -130,24 +131,38 @@ class TeamServiceTest {
     void getTeamMembersWhenToMeet_noEvents() {
         // given
         Long teamId = 1L;
-        Team team = new Team("TeamA", "설명", "CODE123");
         Member member1 = new Member("email@email.com", "test", "1q2w3e4r!");
-        Member member2 = new Member("email2@email.com", "test", "1q2w3e4r!");
+        Member member2 = new Member("email2@email.com", "test2", "1q2w3e4r!");
+        List<Member> members = List.of(member1, member2);
         
-        when(teamRawService.findTeamById(teamId)).thenReturn(team);
-        when(teamMemberRawService.findByTeam(team))
-            .thenReturn(List.of(new TeamMember(team, member1, TeamRole.MEMBER),
-                new TeamMember(team, member2, TeamRole.MEMBER)));
+        // 1시간짜리 간단한 슬롯만 가정
+        LocalDateTime start = LocalDateTime.of(2025, 10, 10, 9, 0);
+        LocalDateTime end = start.plusHours(1);
+        List<LocalDateTime> starts = List.of(start);
+        List<LocalDateTime> ends = List.of(end);
+        List<WhenToMeet> slots = List.of(new WhenToMeet(start, end, (long) members.size()));
         
-        when(personalEventService.getPersonalEvents(anyString(), any(), any()))
-            .thenReturn(Collections.emptyList());
+        // mock 설정
+        when(whenToMeetRawService.findTeamMembers(teamId)).thenReturn(members);
+        when(whenToMeetLogicService.generateIntervalStarts()).thenReturn(starts);
+        when(whenToMeetLogicService.generateIntervalEnds()).thenReturn(ends);
+        when(whenToMeetLogicService.generateSlots(members, starts, ends)).thenReturn(slots);
+        
+        // 일정이 없으므로 applyMemberEvents는 아무 일도 하지 않음
+        doNothing().when(whenToMeetLogicService)
+            .applyMemberEvents(slots, members, starts, ends, whenToMeetRawService);
+        
+        // 반환 DTO mock
+        when(whenToMeetLogicService.toResponse(slots))
+            .thenReturn(List.of(new WhenToMeetResponseDto(start, end, (long) members.size())));
         
         // when
         List<WhenToMeetResponseDto> result = teamService.getTeamMembersWhenToMeet(teamId);
         
         // then
         assertThat(result).isNotNull();
-        assertThat(result.get(0).availableMember()).isEqualTo(2);
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).availableMember()).isEqualTo(2); // 팀원 2명 그대로 유지
     }
     
     @Test
