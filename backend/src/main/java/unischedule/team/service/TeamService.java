@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import unischedule.calendar.entity.Calendar;
 import unischedule.calendar.service.internal.CalendarRawService;
+import unischedule.common.dto.PageResponseDto;
 import unischedule.common.dto.PaginationRequestDto;
 import unischedule.member.domain.Member;
 import unischedule.member.service.internal.MemberRawService;
@@ -133,18 +134,18 @@ public class TeamService {
     }
 
     /**
-     * 사용자가 속한 모든 팀을 조회하는 메서드
+     * 사용자가 속한 팀들을 페이징 처리하여 조회하는 메서드
      *
-     * @param email          유저 이메일
-     * @param paginationMeta 페이지네이션 요청 Dto
-     * @return 사용자가 속한 팀들의 응답 Dto 리스트
+     * @param email          헤더에서 넘어온 유저 이메일
+     * @param paginationMeta 페이징 및 검색 정보
+     * @return 사용자가 속한 팀들의 페이징된 결과
      */
     @Transactional(readOnly = true)
-    public Page<TeamResponseDto> findMyTeamsWithMembers(String email, PaginationRequestDto paginationMeta) {
+    public PageResponseDto<TeamResponseDto> findMyTeamsWithMembers(String email, PaginationRequestDto paginationMeta) {
         Member findMember = memberRawService.findMemberByEmail(email);
         Page<Team> findTeams = teamRawService.findTeamsByMember(findMember, paginationMeta);
 
-        return findTeams.map(team -> {
+        Page<TeamResponseDto> responseDtos = findTeams.map(team -> {
             List<MemberNameResponseDto> memberDtos = toMemberNameResponseDtos(teamMemberRawService.findByTeam(team));
             return new TeamResponseDto(
                     team.getTeamId(),
@@ -154,6 +155,8 @@ public class TeamService {
                     team.getInviteCode()
             );
         });
+
+        return PageResponseDto.from(responseDtos);
     }
 
     /**

@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import unischedule.common.dto.PageResponseDto;
 import unischedule.common.dto.PaginationRequestDto;
 import unischedule.team.dto.*;
 import unischedule.team.service.TeamService;
@@ -58,14 +59,14 @@ public class TeamController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<TeamResponseDto>> findMyTeamsWithMembers(
+    public ResponseEntity<PageResponseDto<TeamResponseDto>> findMyTeamsWithMembers(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int limit,
             @RequestParam(required = false) String search
     ) {
         PaginationRequestDto paginationInfo = new PaginationRequestDto(page, limit, search);
-        Page<TeamResponseDto> responseDto = teamService.findMyTeamsWithMembers(userDetails.getUsername(), paginationInfo);
+        PageResponseDto<TeamResponseDto> responseDto = teamService.findMyTeamsWithMembers(userDetails.getUsername(), paginationInfo);
 
         return ResponseEntity.ok(responseDto);
     }
