@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.IntStream;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import unischedule.events.dto.EventGetResponseDto;
 import unischedule.member.domain.Member;
 import unischedule.team.domain.WhenToMeet;
@@ -47,6 +48,7 @@ public class WhenToMeetLogicService {
         return slots;
     }
     
+    @Transactional
     public void applyMemberEvents(List<WhenToMeet> slots,
         List<Member> members,
         List<LocalDateTime> intervalStarts,

@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import unischedule.calendar.entity.Calendar;
 import unischedule.calendar.service.internal.CalendarRawService;
 import unischedule.events.domain.Event;
@@ -25,6 +26,7 @@ public class WhenToMeetRawService {
     private final CalendarRawService calendarRawService;
     private final EventRawService eventRawService;
     
+    @Transactional(readOnly = true)
     public List<Member> findTeamMembers(Long teamId) {
         Team team = teamRawService.findTeamById(teamId);
         return teamMemberRawService.findByTeam(team).stream()
@@ -32,6 +34,7 @@ public class WhenToMeetRawService {
             .toList();
     }
     
+    @Transactional(readOnly = true)
     public List<EventGetResponseDto> findMemberEvents(Member member, LocalDateTime start, LocalDateTime end) {
         
         // 멤버의 이메일로 전체 팀 캘린더 및 개인 캘린더 식별
