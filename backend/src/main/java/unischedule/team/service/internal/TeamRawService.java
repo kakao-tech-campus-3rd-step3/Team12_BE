@@ -1,13 +1,17 @@
 package unischedule.team.service.internal;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import unischedule.common.dto.PaginationRequestDto;
 import unischedule.exception.EntityNotFoundException;
+import unischedule.member.domain.Member;
 import unischedule.team.domain.Team;
 import unischedule.team.repository.TeamRepository;
-
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -39,5 +43,24 @@ public class TeamRawService {
     @Transactional
     public void deleteTeam(Team team) {
         teamRepository.delete(team);
+    }
+
+    /**
+     * 멤버가 속한 팀들을 페이징 처리하여 조회하는 메서드
+     *
+     * @param member         멤버 엔티티 (조회 대상)
+     * @param paginationInfo 페이징 및 검색 정보
+     * @return 멤버가 속한 팀들의 페이징된 결과
+     */
+    @Transactional(readOnly = true)
+    public Page<Team> findTeamsByMember(Member member, PaginationRequestDto paginationInfo) {
+        Pageable pageable = PageRequest.of(paginationInfo.page() - 1, paginationInfo.limit(), Sort.by("teamId").ascending());
+        String keyword = paginationInfo.search();
+        if (keyword == null || keyword.isBlank()) {
+
+            return teamRepository.findTeamsByMember(member, pageable);
+        }
+
+        return teamRepository.findTeamsByMemberAndKeyword(member, pageable, keyword);
     }
 }
