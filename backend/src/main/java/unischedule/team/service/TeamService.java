@@ -139,6 +139,7 @@ public class TeamService {
      * @param paginationMeta 페이지네이션 요청 Dto
      * @return 사용자가 속한 팀들의 응답 Dto 리스트
      */
+    @Transactional(readOnly = true)
     public Page<TeamResponseDto> findMyTeamsWithMembers(String email, PaginationRequestDto paginationMeta) {
         Member findMember = memberRawService.findMemberByEmail(email);
         Page<Team> findTeams = teamRawService.findTeamsByMember(findMember, paginationMeta);

@@ -52,6 +52,7 @@ public class TeamRawService {
      * @param paginationInfo 페이징 및 검색 정보
      * @return 멤버가 속한 팀들의 페이징된 결과
      */
+    @Transactional(readOnly = true)
     public Page<Team> findTeamsByMember(Member member, PaginationRequestDto paginationInfo) {
         Pageable pageable = PageRequest.of(paginationInfo.page() - 1, paginationInfo.limit(), Sort.by("teamId").ascending());
         String keyword = paginationInfo.search();
