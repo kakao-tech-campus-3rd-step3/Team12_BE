@@ -1,7 +1,5 @@
 package unischedule.team.service;
 
-import java.util.List;
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
@@ -12,13 +10,20 @@ import unischedule.common.dto.PageResponseDto;
 import unischedule.common.dto.PaginationRequestDto;
 import unischedule.member.domain.Member;
 import unischedule.member.service.internal.MemberRawService;
-import unischedule.team.domain.TeamRole;
-import unischedule.team.dto.*;
 import unischedule.team.domain.Team;
 import unischedule.team.domain.TeamMember;
+import unischedule.team.domain.TeamRole;
+import unischedule.team.dto.MemberNameResponseDto;
+import unischedule.team.dto.TeamCreateRequestDto;
+import unischedule.team.dto.TeamCreateResponseDto;
+import unischedule.team.dto.TeamJoinRequestDto;
+import unischedule.team.dto.TeamJoinResponseDto;
+import unischedule.team.dto.TeamResponseDto;
 import unischedule.team.service.internal.TeamCodeGenerator;
 import unischedule.team.service.internal.TeamMemberRawService;
 import unischedule.team.service.internal.TeamRawService;
+
+import java.util.List;
 
 /**
  * 팀과 관련한 서비스 메서드들의 클래스

@@ -11,15 +11,16 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import unischedule.common.entity.BaseEntity;
 import unischedule.calendar.entity.Calendar;
+import unischedule.common.entity.BaseEntity;
 import unischedule.exception.InvalidInputException;
 import unischedule.member.domain.Member;
+
+import java.time.LocalDateTime;
 
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)

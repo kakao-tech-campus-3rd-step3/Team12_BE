@@ -5,13 +5,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import unischedule.calendar.entity.Calendar;
 import unischedule.calendar.service.internal.CalendarRawService;
-import unischedule.events.dto.PersonalEventCreateRequestDto;
-import unischedule.events.dto.EventCreateResponseDto;
-import unischedule.events.dto.EventModifyRequestDto;
-import unischedule.events.domain.EventState;
-import unischedule.events.service.internal.EventRawService;
-import unischedule.events.dto.EventGetResponseDto;
 import unischedule.events.domain.Event;
+import unischedule.events.domain.EventState;
+import unischedule.events.dto.EventCreateResponseDto;
+import unischedule.events.dto.EventGetResponseDto;
+import unischedule.events.dto.EventModifyRequestDto;
+import unischedule.events.dto.PersonalEventCreateRequestDto;
+import unischedule.events.service.internal.EventRawService;
 import unischedule.member.domain.Member;
 import unischedule.member.service.internal.MemberRawService;
 import unischedule.team.domain.Team;
@@ -21,7 +21,6 @@ import unischedule.team.service.internal.TeamMemberRawService;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor

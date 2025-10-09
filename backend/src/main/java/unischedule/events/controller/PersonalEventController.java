@@ -2,7 +2,6 @@ package unischedule.events.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,11 +16,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import unischedule.events.dto.PersonalEventCreateRequestDto;
 import unischedule.events.dto.EventCreateResponseDto;
-import unischedule.events.dto.EventModifyRequestDto;
-import unischedule.events.service.PersonalEventService;
 import unischedule.events.dto.EventGetResponseDto;
+import unischedule.events.dto.EventModifyRequestDto;
+import unischedule.events.dto.PersonalEventCreateRequestDto;
+import unischedule.events.service.PersonalEventService;
 
 import java.time.LocalDateTime;
 import java.util.List;

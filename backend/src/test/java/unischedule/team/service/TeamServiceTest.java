@@ -10,13 +10,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import unischedule.common.dto.PageResponseDto;
+import unischedule.common.dto.PaginationRequestDto;
 import unischedule.member.domain.Member;
 import unischedule.member.service.internal.MemberRawService;
 import unischedule.team.domain.Team;
 import unischedule.team.domain.TeamMember;
 import unischedule.team.domain.TeamRole;
 import unischedule.team.dto.TeamResponseDto;
-import unischedule.common.dto.PaginationRequestDto;
 import unischedule.team.service.internal.TeamMemberRawService;
 import unischedule.team.service.internal.TeamRawService;
 
