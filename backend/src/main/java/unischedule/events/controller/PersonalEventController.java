@@ -1,5 +1,6 @@
 package unischedule.events.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -35,7 +36,7 @@ public class PersonalEventController {
     public ResponseEntity<EventCreateResponseDto> makeMyEvent(
             @AuthenticationPrincipal
             UserDetails userDetails,
-            @RequestBody
+            @Valid @RequestBody
             PersonalEventCreateRequestDto requestDto
     ) {
         EventCreateResponseDto responseDto = eventService.makePersonalEvent(userDetails.getUsername(), requestDto);
@@ -61,7 +62,7 @@ public class PersonalEventController {
     public ResponseEntity<EventGetResponseDto> modifyMyEvent(
             @AuthenticationPrincipal
             UserDetails userDetails,
-            @RequestBody
+            @Valid @RequestBody
             EventModifyRequestDto requestDto
     ) {
         EventGetResponseDto responseDto = eventService.modifyPersonalEvent(userDetails.getUsername(), requestDto);

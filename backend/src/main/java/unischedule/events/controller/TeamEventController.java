@@ -1,5 +1,6 @@
 package unischedule.events.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -35,7 +36,7 @@ public class TeamEventController {
     public ResponseEntity<EventCreateResponseDto> createTeamEvent(
             @AuthenticationPrincipal
             UserDetails userDetails,
-            @RequestBody
+            @Valid @RequestBody
             TeamEventCreateRequestDto requestDto
     ) {
         EventCreateResponseDto responseDto = teamEventService.createTeamEvent(userDetails.getUsername(), requestDto);
@@ -63,7 +64,7 @@ public class TeamEventController {
     public ResponseEntity<EventGetResponseDto> modifyTeamEvent(
             @AuthenticationPrincipal
             UserDetails userDetails,
-            @RequestBody
+            @Valid @RequestBody
             EventModifyRequestDto requestDto
     ) {
         EventGetResponseDto responseDto = teamEventService.modifyTeamEvent(userDetails.getUsername(), requestDto);

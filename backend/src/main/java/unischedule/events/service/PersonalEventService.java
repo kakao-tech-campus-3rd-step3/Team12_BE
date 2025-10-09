@@ -97,20 +97,11 @@ public class PersonalEventService {
 
         findEvent.validateEventOwner(member);
 
-        validateUpdateTime(member, findEvent, requestDto.startTime(), requestDto.endTime());
+        eventRawService.canUpdateEvent(member, findEvent, requestDto.startTime(), requestDto.endTime());
 
         eventRawService.updateEvent(findEvent, EventModifyRequestDto.toDto(requestDto));
         
         return EventGetResponseDto.from(findEvent);
-    }
-
-    private void validateUpdateTime(Member member, Event event, LocalDateTime startTime, LocalDateTime endTime) {
-        if (startTime == null && endTime == null) return;
-
-        LocalDateTime newStartTime = Objects.requireNonNullElse(startTime, event.getStartAt());
-        LocalDateTime newEndTime = Objects.requireNonNullElse(endTime, event.getEndAt());
-
-        eventRawService.canUpdateEvent(member, event, newStartTime, newEndTime);
     }
 
     @Transactional
