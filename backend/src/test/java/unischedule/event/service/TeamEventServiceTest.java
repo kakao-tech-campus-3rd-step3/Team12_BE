@@ -70,7 +70,7 @@ class TeamEventServiceTest {
 
         given(memberRawService.findMemberByEmail(email)).willReturn(member);
         given(teamRawService.findTeamById(requestDto.teamId())).willReturn(team);
-        given(teamMemberRawService.findByTeamAndMember(team, member)).willReturn(new TeamMember(team, member, TeamRole.MEMBER));
+        doNothing().when(teamMemberRawService).checkTeamAndMember(team, member);
         given(teamMemberRawService.findByTeam(team)).willReturn(List.of(new TeamMember(team, member, null)));
         doNothing().when(eventRawService).validateNoScheduleForMembers(anyList(), any(), any());
         given(calendarRawService.getTeamCalendar(team)).willReturn(teamCalendar);
@@ -99,7 +99,7 @@ class TeamEventServiceTest {
 
         given(memberRawService.findMemberByEmail(email)).willReturn(member);
         given(teamRawService.findTeamById(requestDto.teamId())).willReturn(team);
-        given(teamMemberRawService.findByTeamAndMember(team, member)).willReturn(new TeamMember(team, member, TeamRole.MEMBER));
+        doNothing().when(teamMemberRawService).checkTeamAndMember(team, member);
         given(teamMemberRawService.findByTeam(team)).willReturn(List.of(new TeamMember(team, member, null)));
         doThrow(new InvalidInputException("일정이 겹치는 멤버가 있습니다."))
                 .when(eventRawService).validateNoScheduleForMembers(anyList(), any(), any());
@@ -128,7 +128,7 @@ class TeamEventServiceTest {
         given(eventRawService.findEventById(requestDto.eventId())).willReturn(event);
         given(teamCalendar.getTeam()).willReturn(team);
         doNothing().when(event).validateIsTeamEvent();
-        given(teamMemberRawService.findByTeamAndMember(team, member)).willReturn(new TeamMember(team, member, TeamRole.MEMBER));
+        doNothing().when(teamMemberRawService).checkTeamAndMember(team, member);
         given(teamMemberRawService.findByTeam(team)).willReturn(List.of(new TeamMember(team, member, TeamRole.MEMBER)));
 
         doAnswer(invocation -> {
@@ -170,7 +170,7 @@ class TeamEventServiceTest {
         given(eventRawService.findEventById(eventId)).willReturn(event);
         given(teamCalendar.getTeam()).willReturn(team);
         doNothing().when(event).validateIsTeamEvent();
-        given(teamMemberRawService.findByTeamAndMember(team, member)).willReturn(new TeamMember(team, member, TeamRole.MEMBER));
+        doNothing().when(teamMemberRawService).checkTeamAndMember(team, member);
 
         // when
         teamEventService.deleteTeamEvent(email, eventId);

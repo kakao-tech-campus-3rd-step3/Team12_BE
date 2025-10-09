@@ -35,7 +35,7 @@ public class PersonalEventController {
     public ResponseEntity<EventCreateResponseDto> makeMyEvent(
             @AuthenticationPrincipal
             UserDetails userDetails,
-            @Valid @RequestBody
+            @RequestBody @Valid
             PersonalEventCreateRequestDto requestDto
     ) {
         EventCreateResponseDto responseDto = eventService.makePersonalEvent(userDetails.getUsername(), requestDto);
@@ -61,7 +61,7 @@ public class PersonalEventController {
     public ResponseEntity<EventGetResponseDto> modifyMyEvent(
             @AuthenticationPrincipal
             UserDetails userDetails,
-            @Valid @RequestBody
+            @RequestBody @Valid
             EventModifyRequestDto requestDto
     ) {
         EventGetResponseDto responseDto = eventService.modifyPersonalEvent(userDetails.getUsername(), requestDto);

@@ -35,7 +35,7 @@ public class TeamEventController {
     public ResponseEntity<EventCreateResponseDto> createTeamEvent(
             @AuthenticationPrincipal
             UserDetails userDetails,
-            @Valid @RequestBody
+            @RequestBody @Valid
             TeamEventCreateRequestDto requestDto
     ) {
         EventCreateResponseDto responseDto = teamEventService.createTeamEvent(userDetails.getUsername(), requestDto);
@@ -63,7 +63,7 @@ public class TeamEventController {
     public ResponseEntity<EventGetResponseDto> modifyTeamEvent(
             @AuthenticationPrincipal
             UserDetails userDetails,
-            @Valid @RequestBody
+            @RequestBody @Valid
             EventModifyRequestDto requestDto
     ) {
         EventGetResponseDto responseDto = teamEventService.modifyTeamEvent(userDetails.getUsername(), requestDto);

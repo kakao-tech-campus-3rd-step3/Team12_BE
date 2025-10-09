@@ -42,6 +42,13 @@ public class TeamMemberRawService {
     }
 
     @Transactional(readOnly = true)
+    public void checkTeamAndMember(Team team, Member member) {
+        if (!teamMemberRepository.existsByTeamAndMember(team, member)) {
+            throw new EntityNotFoundException("사용자가 해당 팀 소속이 아닙니다.");
+        }
+    }
+
+    @Transactional(readOnly = true)
     public void validateDuplication(Team team, Member member) {
         if (teamMemberRepository.existsByTeamAndMember(team, member)) {
             throw new ConflictException("이미 가입된 멤버입니다.");
