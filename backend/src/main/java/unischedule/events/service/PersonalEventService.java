@@ -64,18 +64,7 @@ public class PersonalEventService {
                 .map(TeamMember::getTeam)
                 .toList();
 
-        List<Long> calendarIds = new ArrayList<>();
-
-        // 팀 캘린더
-        List<Long> teamCalendarIds = teamList.stream()
-                .map(calendarRawService::getTeamCalendar)
-                .map(Calendar::getCalendarId)
-                .toList();
-
-        // 개인 캘린더
-        calendarIds.add(calendarRawService.getMyPersonalCalendar(member).getCalendarId());
-
-        calendarIds.addAll(teamCalendarIds);
+        List<Long> calendarIds = getMemberCalendarIds(teamList, member);
 
         List<Event> findEvents = eventRawService.findSchedule(
                 calendarIds,
@@ -87,7 +76,7 @@ public class PersonalEventService {
                 .map(EventGetResponseDto::from)
                 .toList();
     }
-    
+
     @Transactional
     public EventGetResponseDto modifyPersonalEvent(String email, EventModifyRequestDto requestDto) {
         Member member = memberRawService.findMemberByEmail(email);
@@ -130,5 +119,21 @@ public class PersonalEventService {
         List<Event> todayEvents = eventRawService.findTodayEventsByMember(member);
         
         return todayEvents.stream().map(EventGetResponseDto::from).toList();
+    }
+
+    private List<Long> getMemberCalendarIds(List<Team> teamList, Member member) {
+        List<Long> calendarIds = new ArrayList<>();
+
+        // 팀 캘린더
+        List<Long> teamCalendarIds = teamList.stream()
+                .map(calendarRawService::getTeamCalendar)
+                .map(Calendar::getCalendarId)
+                .toList();
+
+        // 개인 캘린더
+        calendarIds.add(calendarRawService.getMyPersonalCalendar(member).getCalendarId());
+
+        calendarIds.addAll(teamCalendarIds);
+        return calendarIds;
     }
 }
