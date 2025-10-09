@@ -56,8 +56,6 @@ class TeamServiceTest {
     private MemberRawService memberRawService;
     @Mock
     private TeamMemberRawService teamMemberRawService;
-    @Mock
-    private PersonalEventService personalEventService;
     
     @Mock
     private WhenToMeetRawService whenToMeetRawService;
@@ -66,23 +64,14 @@ class TeamServiceTest {
     
     @InjectMocks
     private TeamService teamService;
-    
-    private Member testMember;
-    private Team testTeam;
-    private TeamMember testTeamMember;
-    
-    @BeforeEach
-    void setUp() {
-        MockitoAnnotations.openMocks(this);
-
-        testMember = new Member("test@email.com", "tester", "password123");
-        testTeam = new Team("테스트팀", "Test Description", "abc123");
-        testTeamMember = new TeamMember(testTeam, testMember, TeamRole.MEMBER);
-    }
 
     @DisplayName("사용자의 팀 목록을 페이지 형태로 조회할 수 있다")
     @Test
     void findMyTeamsWithMembers_shouldReturnPagedTeams() {
+        
+        Member testMember = new Member("test@email.com", "tester", "password123");;
+        Team testTeam = new Team("테스트팀", "Test Description", "abc123");
+        TeamMember testTeamMember = new TeamMember(testTeam, testMember, TeamRole.MEMBER);
         // given
         PaginationRequestDto paginationMeta = new PaginationRequestDto(1, 10, null);
 
