@@ -1,10 +1,7 @@
 package unischedule.team.service;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.IntStream;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -15,9 +12,7 @@ import unischedule.calendar.entity.Calendar;
 import unischedule.calendar.service.internal.CalendarRawService;
 import unischedule.common.dto.PageResponseDto;
 import unischedule.common.dto.PaginationRequestDto;
-import unischedule.events.dto.EventGetResponseDto;
 import unischedule.events.service.PersonalEventService;
-import unischedule.events.service.internal.EventRawService;
 import unischedule.member.domain.Member;
 import unischedule.member.service.internal.MemberRawService;
 import unischedule.team.domain.Team;
@@ -48,7 +43,6 @@ public class TeamService {
     private final CalendarRawService calendarRawService;
     private final MemberRawService memberRawService;
     private final TeamMemberRawService teamMemberRawService;
-    private final PersonalEventService personalEventService;
     private final WhenToMeetRawService whenToMeetRawService;
     private final WhenToMeetLogicService whenToMeetLogicService;
     private final TeamCodeGenerator teamCodeGenerator = new TeamCodeGenerator();

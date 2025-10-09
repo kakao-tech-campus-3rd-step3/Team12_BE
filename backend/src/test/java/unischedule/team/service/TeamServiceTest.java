@@ -10,16 +10,13 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.List;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -29,7 +26,6 @@ import unischedule.calendar.entity.Calendar;
 import unischedule.calendar.service.internal.CalendarRawService;
 import unischedule.common.dto.PageResponseDto;
 import unischedule.common.dto.PaginationRequestDto;
-import unischedule.events.service.PersonalEventService;
 import unischedule.member.domain.Member;
 import unischedule.member.service.internal.MemberRawService;
 import unischedule.team.domain.Team;
@@ -56,8 +52,6 @@ class TeamServiceTest {
     private MemberRawService memberRawService;
     @Mock
     private TeamMemberRawService teamMemberRawService;
-    @Mock
-    private PersonalEventService personalEventService;
     
     @Mock
     private WhenToMeetRawService whenToMeetRawService;
@@ -66,23 +60,14 @@ class TeamServiceTest {
     
     @InjectMocks
     private TeamService teamService;
-    
-    private Member testMember;
-    private Team testTeam;
-    private TeamMember testTeamMember;
-    
-    @BeforeEach
-    void setUp() {
-        MockitoAnnotations.openMocks(this);
-
-        testMember = new Member("test@email.com", "tester", "password123");
-        testTeam = new Team("테스트팀", "Test Description", "abc123");
-        testTeamMember = new TeamMember(testTeam, testMember, TeamRole.MEMBER);
-    }
 
     @DisplayName("사용자의 팀 목록을 페이지 형태로 조회할 수 있다")
     @Test
     void findMyTeamsWithMembers_shouldReturnPagedTeams() {
+        
+        Member testMember = new Member("test@email.com", "tester", "password123");;
+        Team testTeam = new Team("테스트팀", "Test Description", "abc123");
+        TeamMember testTeamMember = new TeamMember(testTeam, testMember, TeamRole.MEMBER);
         // given
         PaginationRequestDto paginationMeta = new PaginationRequestDto(1, 10, null);
 
