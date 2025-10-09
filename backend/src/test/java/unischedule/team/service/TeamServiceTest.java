@@ -61,7 +61,7 @@ class TeamServiceTest {
     void findMyTeamsWithMembers_shouldReturnPagedTeams() {
 
         Member testMember = new Member("test@email.com", "tester", "password123");
-        ;
+
         Team testTeam = new Team("테스트팀", "Test Description", "abc123");
         TeamMember testTeamMember = new TeamMember(testTeam, testMember, TeamRole.MEMBER);
         // given
@@ -279,7 +279,7 @@ class TeamServiceTest {
     @Test
     void 팀장을_팀에서_제거한다() {
         // given
-        Team team = new Team("테스트팀", "abc123", "CODE123");
+        Team team = new Team("테스트팀", "설명", "CODE123");
         Member leader = new Member("leader@email.com", "team leader", "1234");
         Member targetLeader = new Member("target@email.com", "target user", "5678");
 
