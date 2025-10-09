@@ -1,6 +1,7 @@
 package unischedule.team.controller;
 
 import jakarta.validation.Valid;
+
 import java.util.List;
 
 import lombok.RequiredArgsConstructor;
@@ -70,15 +71,15 @@ public class TeamController {
         teamService.closeTeam(userDetails.getUsername(), teamId);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
-    
+
     @GetMapping("/{teamId}/when-to-meet")
     ResponseEntity<List<WhenToMeetResponseDto>> getTeamMembersWhenToMeet(
-        @PathVariable Long teamId
+            @PathVariable Long teamId
     ) {
         List<WhenToMeetResponseDto> whenToMeetList = teamService.getTeamMembersWhenToMeet(teamId);
         return ResponseEntity.ok(whenToMeetList);
     }
-  
+
     @GetMapping
     public ResponseEntity<PageResponseDto<TeamResponseDto>> findMyTeamsWithMembers(
             @AuthenticationPrincipal UserDetails userDetails,
@@ -90,5 +91,17 @@ public class TeamController {
         PageResponseDto<TeamResponseDto> responseDto = teamService.findMyTeamsWithMembers(userDetails.getUsername(), paginationInfo);
 
         return ResponseEntity.ok(responseDto);
+    }
+
+    @DeleteMapping("/{teamId}/members/{memberId}")
+    public ResponseEntity<Void> removeMemberFromTeam(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable Long teamId,
+            @PathVariable Long memberId
+    ) {
+        RemoveMemberRequestDto requestDto = new RemoveMemberRequestDto(userDetails.getUsername(), teamId, memberId);
+        teamService.removeMemberFromTeam(requestDto);
+
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }

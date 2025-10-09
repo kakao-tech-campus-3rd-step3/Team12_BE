@@ -11,6 +11,7 @@ import unischedule.calendar.entity.Calendar;
 import unischedule.calendar.service.internal.CalendarRawService;
 import unischedule.common.dto.PageResponseDto;
 import unischedule.common.dto.PaginationRequestDto;
+import unischedule.exception.NoPermissionException;
 import unischedule.member.domain.Member;
 import unischedule.member.service.internal.MemberRawService;
 import unischedule.team.domain.Team;
@@ -112,7 +113,8 @@ public class TeamService {
     
     /**
      * 팀 탈퇴
-     * @param email 이메일
+     *
+     * @param email  이메일
      * @param teamId 팀 아이디
      */
     @Transactional
@@ -140,9 +142,9 @@ public class TeamService {
         Team findTeam = teamRawService.findTeamById(teamId);
 
         Member findMember = memberRawService.findMemberByEmail(email);
-        
+
         Calendar findCalendar = calendarRawService.getTeamCalendar(findTeam);
-        
+
         TeamMember findRelation = teamMemberRawService.findByTeamAndMember(findTeam, findMember);
 
         findRelation.checkLeader();
@@ -155,12 +157,13 @@ public class TeamService {
         teamMemberRawService.deleteTeamMemberAll(findTeamMember);
         
         calendarRawService.deleteCalendar(findCalendar);
-        
+
         teamRawService.deleteTeam(findTeam);
     }
     
     /**
      * 일정 겹치는 것 체크
+     *
      * @param teamId
      * @return 겹치는 일정 리스트
      */
@@ -169,10 +172,10 @@ public class TeamService {
         List<Member> members = whenToMeetRawService.findTeamMembers(teamId);
         List<LocalDateTime> starts = whenToMeetLogicService.generateIntervalStarts();
         List<LocalDateTime> ends = whenToMeetLogicService.generateIntervalEnds();
-        
+
         List<WhenToMeet> slots = whenToMeetLogicService.generateSlots(members, starts, ends);
         whenToMeetLogicService.applyMemberEvents(slots, members, starts, ends, whenToMeetRawService);
-        
+
         return whenToMeetLogicService.toResponse(slots);
     }
 
@@ -212,5 +215,26 @@ public class TeamService {
         return teamMembers.stream()
                 .map(MemberNameResponseDto::from)
                 .toList();
+    }
+
+    /**
+     * 팀에서 멤버를 제거하는 메서드
+     *
+     * @param requestDto 요청 Dto, 리더 이메일, 팀 아이디, 제거할 멤버 아이디 포함
+     */
+    @Transactional
+    public void removeMemberFromTeam(RemoveMemberRequestDto requestDto) {
+        Team findTeam = teamRawService.findTeamById(requestDto.teamId());
+        Member leaderMember = memberRawService.findMemberByEmail(requestDto.leaderEmail());
+        Member targetMember = memberRawService.findMemberById(requestDto.memberId());
+        TeamMember leader = teamMemberRawService.findByTeamAndMember(findTeam, leaderMember);
+        TeamMember target = teamMemberRawService.findByTeamAndMember(findTeam, targetMember);
+        leader.checkLeader();
+
+        if (target.getRole().equals(TeamRole.LEADER)) {
+            throw new NoPermissionException("팀장 권한을 가진 멤버는 제거할 수 없습니다.");
+        }
+
+        teamMemberRawService.deleteTeamMember(target);
     }
 }
