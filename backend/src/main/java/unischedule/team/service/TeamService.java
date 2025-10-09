@@ -1,24 +1,41 @@
 package unischedule.team.service;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.IntStream;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import unischedule.calendar.entity.Calendar;
 import unischedule.calendar.service.internal.CalendarRawService;
 import unischedule.common.dto.PageResponseDto;
 import unischedule.common.dto.PaginationRequestDto;
+import unischedule.events.dto.EventGetResponseDto;
+import unischedule.events.service.PersonalEventService;
+import unischedule.events.service.internal.EventRawService;
 import unischedule.member.domain.Member;
 import unischedule.member.service.internal.MemberRawService;
-import unischedule.team.domain.TeamRole;
-import unischedule.team.dto.*;
 import unischedule.team.domain.Team;
 import unischedule.team.domain.TeamMember;
+import unischedule.team.domain.TeamRole;
+import unischedule.team.domain.WhenToMeet;
+import unischedule.team.dto.TeamCreateRequestDto;
+import unischedule.team.dto.TeamCreateResponseDto;
+import unischedule.team.dto.TeamJoinRequestDto;
+import unischedule.team.dto.TeamJoinResponseDto;
+import unischedule.team.dto.WhenToMeetResponseDto;
+import unischedule.team.dto.*;
 import unischedule.team.service.internal.TeamCodeGenerator;
 import unischedule.team.service.internal.TeamMemberRawService;
 import unischedule.team.service.internal.TeamRawService;
+import unischedule.team.service.internal.WhenToMeetLogicService;
+import unischedule.team.service.internal.WhenToMeetRawService;
+
 
 /**
  * 팀과 관련한 서비스 메서드들의 클래스
@@ -31,6 +48,9 @@ public class TeamService {
     private final CalendarRawService calendarRawService;
     private final MemberRawService memberRawService;
     private final TeamMemberRawService teamMemberRawService;
+    private final PersonalEventService personalEventService;
+    private final WhenToMeetRawService whenToMeetRawService;
+    private final WhenToMeetLogicService whenToMeetLogicService;
     private final TeamCodeGenerator teamCodeGenerator = new TeamCodeGenerator();
 
     /**
@@ -97,7 +117,12 @@ public class TeamService {
                 findTeam.getDescription()
         );
     }
-
+    
+    /**
+     * 팀 탈퇴
+     * @param email 이메일
+     * @param teamId 팀 아이디
+     */
     @Transactional
     public void withdrawTeam(String email, Long teamId) {
         Team findTeam = teamRawService.findTeamById(teamId);
@@ -112,13 +137,20 @@ public class TeamService {
 
         teamMemberRawService.deleteTeamMember(findRelation);
     }
-
+    
+    /**
+     * 팀 삭제
+     * @param email 이메일
+     * @param teamId 팀 아이디
+     */
     @Transactional
     public void closeTeam(String email, Long teamId) {
         Team findTeam = teamRawService.findTeamById(teamId);
 
         Member findMember = memberRawService.findMemberByEmail(email);
-
+        
+        Calendar findCalendar = calendarRawService.getTeamCalendar(findTeam);
+        
         TeamMember findRelation = teamMemberRawService.findByTeamAndMember(findTeam, findMember);
 
         findRelation.checkLeader();
@@ -129,8 +161,27 @@ public class TeamService {
 
         List<TeamMember> findTeamMember = teamMemberRawService.findByTeam(findTeam);
         teamMemberRawService.deleteTeamMemberAll(findTeamMember);
-
+        
+        calendarRawService.deleteCalendar(findCalendar);
+        
         teamRawService.deleteTeam(findTeam);
+    }
+    
+    /**
+     * 일정 겹치는 것 체크
+     * @param teamId
+     * @return 겹치는 일정 리스트
+     */
+    //현재 "겹치는 일정"이 없다고 보고 만든 코드
+    public List<WhenToMeetResponseDto> getTeamMembersWhenToMeet(Long teamId) {
+        List<Member> members = whenToMeetRawService.findTeamMembers(teamId);
+        List<LocalDateTime> starts = whenToMeetLogicService.generateIntervalStarts();
+        List<LocalDateTime> ends = whenToMeetLogicService.generateIntervalEnds();
+        
+        List<WhenToMeet> slots = whenToMeetLogicService.generateSlots(members, starts, ends);
+        whenToMeetLogicService.applyMemberEvents(slots, members, starts, ends, whenToMeetRawService);
+        
+        return whenToMeetLogicService.toResponse(slots);
     }
 
     /**

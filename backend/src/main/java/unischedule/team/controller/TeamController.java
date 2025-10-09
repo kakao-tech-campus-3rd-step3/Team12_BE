@@ -1,6 +1,8 @@
 package unischedule.team.controller;
 
 import jakarta.validation.Valid;
+import java.util.List;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
@@ -8,10 +10,17 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+
 import unischedule.common.dto.PageResponseDto;
 import unischedule.common.dto.PaginationRequestDto;
+import unischedule.team.dto.TeamCreateRequestDto;
+import unischedule.team.dto.TeamCreateResponseDto;
+import unischedule.team.dto.TeamJoinRequestDto;
+import unischedule.team.dto.TeamJoinResponseDto;
+import unischedule.team.dto.WhenToMeetResponseDto;
 import unischedule.team.dto.*;
 import unischedule.team.service.TeamService;
+
 
 @RestController
 @RequestMapping("/api/teams")
@@ -57,7 +66,15 @@ public class TeamController {
         teamService.closeTeam(userDetails.getUsername(), teamId);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
-
+    
+    @GetMapping("/{teamId}/when-to-meet")
+    ResponseEntity<List<WhenToMeetResponseDto>> getTeamMembersWhenToMeet(
+        @PathVariable Long teamId
+    ) {
+        List<WhenToMeetResponseDto> whenToMeetList = teamService.getTeamMembersWhenToMeet(teamId);
+        return ResponseEntity.ok(whenToMeetList);
+    }
+  
     @GetMapping
     public ResponseEntity<PageResponseDto<TeamResponseDto>> findMyTeamsWithMembers(
             @AuthenticationPrincipal UserDetails userDetails,
