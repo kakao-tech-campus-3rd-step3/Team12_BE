@@ -11,7 +11,6 @@ import unischedule.calendar.entity.Calendar;
 import unischedule.calendar.service.internal.CalendarRawService;
 import unischedule.common.dto.PageResponseDto;
 import unischedule.common.dto.PaginationRequestDto;
-import unischedule.events.service.PersonalEventService;
 import unischedule.member.domain.Member;
 import unischedule.member.service.internal.MemberRawService;
 import unischedule.team.domain.Team;
@@ -42,7 +41,6 @@ public class TeamService {
     private final CalendarRawService calendarRawService;
     private final MemberRawService memberRawService;
     private final TeamMemberRawService teamMemberRawService;
-    private final PersonalEventService personalEventService;
     private final WhenToMeetRawService whenToMeetRawService;
     private final WhenToMeetLogicService whenToMeetLogicService;
     private final TeamCodeGenerator teamCodeGenerator = new TeamCodeGenerator();
