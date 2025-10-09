@@ -305,4 +305,35 @@ class TeamServiceTest {
 
         verify(teamMemberRawService, never()).deleteTeamMember(any());
     }
+
+    @DisplayName("리더가 아닌 멤버가 팀원을 제거할 경우 오류발생")
+    @Test
+    void 리더가_아닌_멤버가_팀원을_제거할_경우_오류발생() {
+        // given
+        Team team = new Team("TeamA", "설명", "CODE123");
+        Member member1 = new Member("member1@email.com", "nickname1", "1234");
+        Member member2 = new Member("member2@email.com", "nickname2", "1234");
+
+        TeamMember teamMember1 = new TeamMember(team, member1, TeamRole.MEMBER);
+        TeamMember teamMember2 = new TeamMember(team, member2, TeamRole.MEMBER);
+
+        RemoveMemberRequestDto requestDto = new RemoveMemberRequestDto(
+                member1.getEmail(),
+                team.getTeamId(),
+                member2.getMemberId()
+        );
+
+        when(teamRawService.findTeamById(requestDto.teamId())).thenReturn(team);
+        when(memberRawService.findMemberByEmail(requestDto.leaderEmail())).thenReturn(member1);
+        when(memberRawService.findMemberById(requestDto.targetMemberId())).thenReturn(member2);
+        when(teamMemberRawService.findByTeamAndMember(team, member1)).thenReturn(teamMember1);
+        when(teamMemberRawService.findByTeamAndMember(team, member2)).thenReturn(teamMember2);
+
+        // when & then
+        assertThatThrownBy(() -> teamService.removeMemberFromTeam(requestDto))
+                .isInstanceOf(NoPermissionException.class)
+                .hasMessage("리더가 아닙니다.");
+
+        verify(teamMemberRawService, never()).deleteTeamMember(any());
+    }
 }
