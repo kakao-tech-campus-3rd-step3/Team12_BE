@@ -226,7 +226,7 @@ public class TeamService {
     public void removeMemberFromTeam(RemoveMemberRequestDto requestDto) {
         Team findTeam = teamRawService.findTeamById(requestDto.teamId());
         Member leaderMember = memberRawService.findMemberByEmail(requestDto.leaderEmail());
-        Member targetMember = memberRawService.findMemberById(requestDto.memberId());
+        Member targetMember = memberRawService.findMemberById(requestDto.targetMemberId());
         TeamMember leader = teamMemberRawService.findByTeamAndMember(findTeam, leaderMember);
         TeamMember target = teamMemberRawService.findByTeamAndMember(findTeam, targetMember);
         leader.checkLeader();
