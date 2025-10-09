@@ -17,7 +17,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import unischedule.common.entity.BaseEntity;
-import unischedule.events.dto.EventModifyRequestDto;
 import unischedule.calendar.entity.Calendar;
 import unischedule.exception.InvalidInputException;
 import unischedule.member.domain.Member;
@@ -112,7 +111,7 @@ public class Event extends BaseEntity {
     }
 
     public void validateIsTeamEvent() {
-        if (this.calendar.getTeam() == null) {
+        if (!this.calendar.hasTeam()) {
             throw new InvalidInputException("팀 일정이 아닙니다.");
         }
     }

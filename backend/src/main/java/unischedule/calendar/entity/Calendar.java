@@ -59,4 +59,8 @@ public class Calendar extends BaseEntity {
             throw new AccessDeniedException("해당 캘린더에 대한 접근 권한이 없습니다.");
         }
     }
+
+    public boolean hasTeam() {
+        return this.team != null;
+    }
 }
