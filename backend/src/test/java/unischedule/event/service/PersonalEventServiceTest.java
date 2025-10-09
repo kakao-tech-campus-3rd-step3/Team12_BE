@@ -1,5 +1,37 @@
 package unischedule.event.service;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.access.AccessDeniedException;
+import unischedule.calendar.entity.Calendar;
+import unischedule.calendar.service.internal.CalendarRawService;
+import unischedule.events.domain.Event;
+import unischedule.events.domain.EventState;
+import unischedule.events.dto.EventCreateResponseDto;
+import unischedule.events.dto.EventGetResponseDto;
+import unischedule.events.dto.EventModifyRequestDto;
+import unischedule.events.dto.EventUpdateDto;
+import unischedule.events.dto.PersonalEventCreateRequestDto;
+import unischedule.events.service.PersonalEventService;
+import unischedule.events.service.internal.EventRawService;
+import unischedule.exception.EntityNotFoundException;
+import unischedule.exception.InvalidInputException;
+import unischedule.member.domain.Member;
+import unischedule.member.service.internal.MemberRawService;
+import unischedule.team.domain.Team;
+import unischedule.team.domain.TeamMember;
+import unischedule.team.service.internal.TeamMemberRawService;
+import unischedule.util.TestUtil;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -15,39 +47,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
-
-import java.time.LocalDateTime;
-import java.util.List;
-
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.access.AccessDeniedException;
-import unischedule.calendar.entity.Calendar;
-import unischedule.calendar.service.internal.CalendarRawService;
-import unischedule.events.dto.EventUpdateDto;
-import unischedule.events.dto.PersonalEventCreateRequestDto;
-import unischedule.events.dto.EventCreateResponseDto;
-import unischedule.events.dto.EventGetResponseDto;
-import unischedule.events.dto.EventModifyRequestDto;
-import unischedule.events.domain.Event;
-import unischedule.events.domain.EventState;
-import unischedule.events.service.PersonalEventService;
-import unischedule.events.service.internal.EventRawService;
-import unischedule.exception.EntityNotFoundException;
-import unischedule.exception.InvalidInputException;
-import unischedule.member.domain.Member;
-import unischedule.member.service.internal.MemberRawService;
-import unischedule.team.domain.Team;
-import unischedule.team.domain.TeamMember;
-import unischedule.team.domain.TeamRole;
-import unischedule.team.service.internal.TeamMemberRawService;
-import unischedule.util.TestUtil;
 
 @ExtendWith(MockitoExtension.class)
 class PersonalEventServiceTest {
@@ -223,7 +222,7 @@ class PersonalEventServiceTest {
         assertThat(responseDto.description()).isEqualTo("새 내용");
         assertThat(responseDto.isPrivate()).isTrue();
 
-        verify(eventRawService, never()).canUpdateEvent(any(), any(), any(), any());
+        verify(eventRawService).canUpdateEvent(any(), any(), any(), any());
     }
 
     @Test

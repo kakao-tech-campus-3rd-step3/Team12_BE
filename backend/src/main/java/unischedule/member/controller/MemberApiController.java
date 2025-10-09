@@ -10,10 +10,18 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import unischedule.auth.jwt.JwtTokenProvider;
 import unischedule.auth.service.RefreshTokenService;
-import unischedule.member.dto.*;
+import unischedule.member.dto.AccessTokenRefreshRequestDto;
+import unischedule.member.dto.CurrentMemberInfoResponseDto;
+import unischedule.member.dto.LoginRequestDto;
+import unischedule.member.dto.MemberRegistrationDto;
+import unischedule.member.dto.MemberTokenResponseDto;
 import unischedule.member.service.MemberService;
 
 @RestController

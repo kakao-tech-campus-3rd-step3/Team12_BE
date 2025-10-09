@@ -2,17 +2,18 @@ package unischedule.external;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.Base64;
-import java.util.List;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 import unischedule.everytime.dto.TimetableDetailDto;
-import unischedule.external.dto.OpenAiChatCompletionResponseDto;
 import unischedule.exception.ExternalApiException;
+import unischedule.external.dto.OpenAiChatCompletionResponseDto;
+
+import java.util.Base64;
+import java.util.List;
+import java.util.Map;
 
 @Component
 @RequiredArgsConstructor

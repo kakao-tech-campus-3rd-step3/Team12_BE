@@ -1,6 +1,5 @@
 package unischedule.events.service.internal;
 
-import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -13,6 +12,7 @@ import unischedule.exception.EntityNotFoundException;
 import unischedule.exception.InvalidInputException;
 import unischedule.member.domain.Member;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 

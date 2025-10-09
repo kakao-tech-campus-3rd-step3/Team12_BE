@@ -6,11 +6,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import unischedule.calendar.entity.Calendar;
 import unischedule.calendar.repository.CalendarRepository;
-import unischedule.exception.EntityNotFoundException;
 import unischedule.exception.dto.EntityAlreadyExistsException;
+import unischedule.member.domain.Member;
 import unischedule.member.dto.CurrentMemberInfoResponseDto;
 import unischedule.member.dto.MemberRegistrationDto;
-import unischedule.member.domain.Member;
 import unischedule.member.repository.MemberRepository;
 import unischedule.member.service.internal.MemberRawService;
 

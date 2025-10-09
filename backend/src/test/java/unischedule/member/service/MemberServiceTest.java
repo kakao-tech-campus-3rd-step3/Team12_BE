@@ -10,15 +10,17 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import unischedule.calendar.repository.CalendarRepository;
 import unischedule.exception.EntityNotFoundException;
 import unischedule.exception.dto.EntityAlreadyExistsException;
+import unischedule.member.domain.Member;
 import unischedule.member.dto.CurrentMemberInfoResponseDto;
 import unischedule.member.dto.MemberRegistrationDto;
-import unischedule.member.domain.Member;
 import unischedule.member.repository.MemberRepository;
 import unischedule.member.service.internal.MemberRawService;
 
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;

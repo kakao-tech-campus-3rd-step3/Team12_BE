@@ -20,7 +20,7 @@ public class Member {
 
     @Column(nullable = false, length = 50)
     private String nickname;
-    @Column(nullable = false, updatable = false, length = 50)
+    @Column(nullable = false, updatable = false, length = 50, unique = true)
     private String email;
     @Column(nullable = false, length = 255)
     private String password;

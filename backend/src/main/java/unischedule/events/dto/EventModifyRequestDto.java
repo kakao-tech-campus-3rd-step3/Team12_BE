@@ -2,9 +2,11 @@ package unischedule.events.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotNull;
+import unischedule.events.validation.ValidEventTime;
 
 import java.time.LocalDateTime;
 
+@ValidEventTime
 public record EventModifyRequestDto(
         @JsonProperty("event_id")
         @NotNull

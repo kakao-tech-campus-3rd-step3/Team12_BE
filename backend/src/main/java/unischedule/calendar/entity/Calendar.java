@@ -1,6 +1,5 @@
 package unischedule.calendar.entity;
 
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.ForeignKey;
@@ -58,5 +57,9 @@ public class Calendar extends BaseEntity {
         if (!this.owner.isEqualMember(member)) {
             throw new AccessDeniedException("해당 캘린더에 대한 접근 권한이 없습니다.");
         }
+    }
+
+    public boolean hasTeam() {
+        return this.team != null;
     }
 }
