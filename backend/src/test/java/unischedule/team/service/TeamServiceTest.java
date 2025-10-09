@@ -12,14 +12,22 @@ import static org.mockito.Mockito.when;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
+
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+
 import unischedule.calendar.entity.Calendar;
 import unischedule.calendar.service.internal.CalendarRawService;
+import unischedule.common.dto.PageResponseDto;
 import unischedule.events.service.PersonalEventService;
 import unischedule.member.domain.Member;
 import unischedule.member.service.internal.MemberRawService;
@@ -34,6 +42,7 @@ import unischedule.team.service.internal.TeamMemberRawService;
 import unischedule.team.service.internal.TeamRawService;
 import unischedule.team.service.internal.WhenToMeetLogicService;
 import unischedule.team.service.internal.WhenToMeetRawService;
+
 
 @ExtendWith(MockitoExtension.class)
 class TeamServiceTest {
@@ -56,6 +65,57 @@ class TeamServiceTest {
     @InjectMocks
     private TeamService teamService;
     
+    private Member testMember;
+    private Team testTeam;
+    private TeamMember testTeamMember;
+    
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
+
+        testMember = new Member("test@email.com", "tester", "password123");
+        testTeam = new Team("테스트팀", "Test Description", "abc123");
+        testTeamMember = new TeamMember(testTeam, testMember, TeamRole.MEMBER);
+    }
+
+    @DisplayName("사용자의 팀 목록을 페이지 형태로 조회할 수 있다")
+    @Test
+    void findMyTeamsWithMembers_shouldReturnPagedTeams() {
+        // given
+        PaginationRequestDto paginationMeta = new PaginationRequestDto(1, 10, null);
+
+        // Mock: 이메일로 Member 조회
+        when(memberRawService.findMemberByEmail("test@email.com"))
+                .thenReturn(testMember);
+
+        // Mock: 사용자가 속한 Team 페이지 조회
+        Page<Team> mockPage = new PageImpl<>(List.of(testTeam), PageRequest.of(0, 10), 1);
+        when(teamRawService.findTeamsByMember(any(Member.class), any(PaginationRequestDto.class)))
+                .thenReturn(mockPage);
+
+        // Mock: Team별 멤버 조회
+        when(teamMemberRawService.findByTeam(any(Team.class)))
+                .thenReturn(List.of(testTeamMember));
+
+        // when
+        PageResponseDto<TeamResponseDto> result =
+                teamService.findMyTeamsWithMembers("test@email.com", paginationMeta);
+
+        // then
+        assertThat(result).isNotNull();
+        assertThat(result.content()).hasSize(1);
+
+        TeamResponseDto teamDto = result.content().get(0);
+        assertThat(teamDto.teamName()).isEqualTo("테스트팀");
+        assertThat(teamDto.memberCount()).isEqualTo(1);
+        assertThat(teamDto.members().get(0).name()).isEqualTo("tester");
+
+        assertThat(result.page()).isEqualTo(1);
+        assertThat(result.size()).isEqualTo(10);
+        assertThat(result.totalElements()).isEqualTo(1);
+        assertThat(result.totalPages()).isEqualTo(1);
+    }
+  
     
     @Test
     @DisplayName("팀 생성 시 팀, 팀멤버, 캘린더가 생성된다")
