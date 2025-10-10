@@ -34,7 +34,7 @@ import unischedule.team.dto.TeamCreateRequestDto;
 import unischedule.team.dto.TeamJoinRequestDto;
 import unischedule.team.dto.TeamResponseDto;
 import unischedule.team.dto.WhenToMeetResponseDto;
-import unischedule.team.dto.RemoveMemberRequestDto;
+import unischedule.team.dto.RemoveMemberCommandDto;
 import unischedule.team.service.internal.TeamMemberRawService;
 import unischedule.team.service.internal.TeamRawService;
 import unischedule.team.service.internal.WhenToMeetLogicService;
@@ -260,7 +260,7 @@ class TeamServiceTest {
         TeamMember leaderTeamMember = new TeamMember(team, leader, TeamRole.LEADER);
         TeamMember memberTeamMember = new TeamMember(team, member, TeamRole.MEMBER);
 
-        RemoveMemberRequestDto requestDto = new RemoveMemberRequestDto(
+        RemoveMemberCommandDto requestDto = new RemoveMemberCommandDto(
                 leader.getEmail(),
                 team.getTeamId(),
                 member.getMemberId()
@@ -290,7 +290,7 @@ class TeamServiceTest {
         TeamMember leaderTeamMember = new TeamMember(team, leader, TeamRole.LEADER);
         TeamMember targetTeamMember = new TeamMember(team, targetLeader, TeamRole.LEADER);
 
-        RemoveMemberRequestDto requestDto = new RemoveMemberRequestDto(
+        RemoveMemberCommandDto requestDto = new RemoveMemberCommandDto(
                 leader.getEmail(),
                 team.getTeamId(),
                 targetLeader.getMemberId()
@@ -321,7 +321,7 @@ class TeamServiceTest {
         TeamMember teamMember1 = new TeamMember(team, member1, TeamRole.MEMBER);
         TeamMember teamMember2 = new TeamMember(team, member2, TeamRole.MEMBER);
 
-        RemoveMemberRequestDto requestDto = new RemoveMemberRequestDto(
+        RemoveMemberCommandDto requestDto = new RemoveMemberCommandDto(
                 member1.getEmail(),
                 team.getTeamId(),
                 member2.getMemberId()

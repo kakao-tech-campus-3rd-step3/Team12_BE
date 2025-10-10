@@ -99,7 +99,7 @@ public class TeamController {
             @PathVariable Long teamId,
             @PathVariable Long memberId
     ) {
-        RemoveMemberRequestDto requestDto = new RemoveMemberRequestDto(userDetails.getUsername(), teamId, memberId);
+        RemoveMemberCommandDto requestDto = new RemoveMemberCommandDto(userDetails.getUsername(), teamId, memberId);
         teamService.removeMemberFromTeam(requestDto);
 
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);

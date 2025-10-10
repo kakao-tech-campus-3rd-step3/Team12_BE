@@ -11,7 +11,6 @@ import unischedule.calendar.entity.Calendar;
 import unischedule.calendar.service.internal.CalendarRawService;
 import unischedule.common.dto.PageResponseDto;
 import unischedule.common.dto.PaginationRequestDto;
-import unischedule.exception.NoPermissionException;
 import unischedule.member.domain.Member;
 import unischedule.member.service.internal.MemberRawService;
 import unischedule.team.domain.Team;
@@ -223,7 +222,7 @@ public class TeamService {
      * @param requestDto 요청 Dto, 리더 이메일, 팀 아이디, 제거할 멤버 아이디 포함
      */
     @Transactional
-    public void removeMemberFromTeam(RemoveMemberRequestDto requestDto) {
+    public void removeMemberFromTeam(RemoveMemberCommandDto requestDto) {
         Team findTeam = teamRawService.findTeamById(requestDto.teamId());
         Member leaderMember = memberRawService.findMemberByEmail(requestDto.leaderEmail());
         Member targetMember = memberRawService.findMemberById(requestDto.targetMemberId());

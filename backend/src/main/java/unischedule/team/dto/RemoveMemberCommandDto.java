@@ -1,6 +1,6 @@
 package unischedule.team.dto;
 
-public record RemoveMemberRequestDto(
+public record RemoveMemberCommandDto(
         String leaderEmail,
         Long teamId,
         Long targetMemberId
