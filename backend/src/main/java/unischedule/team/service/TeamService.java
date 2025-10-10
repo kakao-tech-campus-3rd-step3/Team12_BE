@@ -2,6 +2,7 @@ package unischedule.team.service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
@@ -16,8 +17,15 @@ import unischedule.member.service.internal.MemberRawService;
 import unischedule.team.domain.Team;
 import unischedule.team.domain.TeamMember;
 import unischedule.team.domain.TeamRole;
-import unischedule.team.dto.*;
 import unischedule.team.domain.WhenToMeet;
+import unischedule.team.dto.MemberNameResponseDto;
+import unischedule.team.dto.RemoveMemberCommandDto;
+import unischedule.team.dto.TeamCreateRequestDto;
+import unischedule.team.dto.TeamCreateResponseDto;
+import unischedule.team.dto.TeamJoinRequestDto;
+import unischedule.team.dto.TeamJoinResponseDto;
+import unischedule.team.dto.TeamResponseDto;
+import unischedule.team.dto.WhenToMeetResponseDto;
 import unischedule.team.service.internal.TeamCodeGenerator;
 import unischedule.team.service.internal.TeamMemberRawService;
 import unischedule.team.service.internal.TeamRawService;
@@ -103,7 +111,7 @@ public class TeamService {
                 findTeam.getDescription()
         );
     }
-    
+
     /**
      * 팀 탈퇴
      *
@@ -124,10 +132,11 @@ public class TeamService {
 
         teamMemberRawService.deleteTeamMember(findRelation);
     }
-    
+
     /**
      * 팀 삭제
-     * @param email 이메일
+     *
+     * @param email  이메일
      * @param teamId 팀 아이디
      */
     @Transactional
@@ -148,12 +157,12 @@ public class TeamService {
 
         List<TeamMember> findTeamMember = teamMemberRawService.findByTeam(findTeam);
         teamMemberRawService.deleteTeamMemberAll(findTeamMember);
-        
+
         calendarRawService.deleteCalendar(findCalendar);
 
         teamRawService.deleteTeam(findTeam);
     }
-    
+
     /**
      * 일정 겹치는 것 체크
      *
