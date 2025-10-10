@@ -56,4 +56,10 @@ public class TeamMember {
             throw new NoPermissionException("리더가 아닙니다.");
         }
     }
+
+    public void validateRemovable() {
+        if (this.role.equals(TeamRole.LEADER)) {
+            throw new NoPermissionException("팀장 권한을 가진 멤버는 제거할 수 없습니다.");
+        }
+    }
 }
