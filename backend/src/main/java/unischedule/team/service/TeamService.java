@@ -2,6 +2,7 @@ package unischedule.team.service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
@@ -16,8 +17,9 @@ import unischedule.member.service.internal.MemberRawService;
 import unischedule.team.domain.Team;
 import unischedule.team.domain.TeamMember;
 import unischedule.team.domain.TeamRole;
-import unischedule.team.dto.MemberNameResponseDto;
 import unischedule.team.domain.WhenToMeet;
+import unischedule.team.dto.MemberNameResponseDto;
+import unischedule.team.dto.RemoveMemberCommandDto;
 import unischedule.team.dto.TeamCreateRequestDto;
 import unischedule.team.dto.TeamCreateResponseDto;
 import unischedule.team.dto.TeamJoinRequestDto;
@@ -109,10 +111,11 @@ public class TeamService {
                 findTeam.getDescription()
         );
     }
-    
+
     /**
      * 팀 탈퇴
-     * @param email 이메일
+     *
+     * @param email  이메일
      * @param teamId 팀 아이디
      */
     @Transactional
@@ -129,10 +132,11 @@ public class TeamService {
 
         teamMemberRawService.deleteTeamMember(findRelation);
     }
-    
+
     /**
      * 팀 삭제
-     * @param email 이메일
+     *
+     * @param email  이메일
      * @param teamId 팀 아이디
      */
     @Transactional
@@ -140,9 +144,9 @@ public class TeamService {
         Team findTeam = teamRawService.findTeamById(teamId);
 
         Member findMember = memberRawService.findMemberByEmail(email);
-        
+
         Calendar findCalendar = calendarRawService.getTeamCalendar(findTeam);
-        
+
         TeamMember findRelation = teamMemberRawService.findByTeamAndMember(findTeam, findMember);
 
         findRelation.checkLeader();
@@ -153,14 +157,15 @@ public class TeamService {
 
         List<TeamMember> findTeamMember = teamMemberRawService.findByTeam(findTeam);
         teamMemberRawService.deleteTeamMemberAll(findTeamMember);
-        
+
         calendarRawService.deleteCalendar(findCalendar);
-        
+
         teamRawService.deleteTeam(findTeam);
     }
-    
+
     /**
      * 일정 겹치는 것 체크
+     *
      * @param teamId
      * @return 겹치는 일정 리스트
      */
@@ -169,10 +174,10 @@ public class TeamService {
         List<Member> members = whenToMeetRawService.findTeamMembers(teamId);
         List<LocalDateTime> starts = whenToMeetLogicService.generateIntervalStarts();
         List<LocalDateTime> ends = whenToMeetLogicService.generateIntervalEnds();
-        
+
         List<WhenToMeet> slots = whenToMeetLogicService.generateSlots(members, starts, ends);
         whenToMeetLogicService.applyMemberEvents(slots, members, starts, ends, whenToMeetRawService);
-        
+
         return whenToMeetLogicService.toResponse(slots);
     }
 
@@ -212,5 +217,23 @@ public class TeamService {
         return teamMembers.stream()
                 .map(MemberNameResponseDto::from)
                 .toList();
+    }
+
+    /**
+     * 팀에서 멤버를 제거하는 메서드
+     *
+     * @param requestDto 요청 Dto, 리더 이메일, 팀 아이디, 제거할 멤버 아이디 포함
+     */
+    @Transactional
+    public void removeMemberFromTeam(RemoveMemberCommandDto requestDto) {
+        Team findTeam = teamRawService.findTeamById(requestDto.teamId());
+        Member leaderMember = memberRawService.findMemberByEmail(requestDto.leaderEmail());
+        Member targetMember = memberRawService.findMemberById(requestDto.targetMemberId());
+        TeamMember leader = teamMemberRawService.findByTeamAndMember(findTeam, leaderMember);
+        TeamMember target = teamMemberRawService.findByTeamAndMember(findTeam, targetMember);
+        leader.checkLeader();
+        target.validateRemovable();
+
+        teamMemberRawService.deleteTeamMember(target);
     }
 }

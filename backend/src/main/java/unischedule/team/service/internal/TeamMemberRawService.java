@@ -38,7 +38,7 @@ public class TeamMemberRawService {
     @Transactional(readOnly = true)
     public TeamMember findByTeamAndMember(Team team, Member member) {
         return teamMemberRepository.findByTeamAndMember(team, member)
-                .orElseThrow(() -> new EntityNotFoundException("사용자가 해당 팀 소속이 아닙니다."));
+                .orElseThrow(() -> new EntityNotFoundException("[" + member.getNickname() + "] 사용자가 해당 팀 소속이 아닙니다."));
     }
 
     @Transactional(readOnly = true)
