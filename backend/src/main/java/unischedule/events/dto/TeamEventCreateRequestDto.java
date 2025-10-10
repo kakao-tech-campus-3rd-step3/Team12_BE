@@ -12,7 +12,6 @@ public record TeamEventCreateRequestDto(
         Long teamId,
         @NotBlank
         String title,
-        @NotBlank
         String description,
         @JsonProperty("start_time")
         @NotNull
