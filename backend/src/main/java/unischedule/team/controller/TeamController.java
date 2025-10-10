@@ -19,12 +19,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import unischedule.common.dto.PageResponseDto;
 import unischedule.common.dto.PaginationRequestDto;
-import unischedule.team.dto.TeamCreateRequestDto;
-import unischedule.team.dto.TeamCreateResponseDto;
-import unischedule.team.dto.TeamJoinRequestDto;
-import unischedule.team.dto.TeamJoinResponseDto;
-import unischedule.team.dto.TeamResponseDto;
-import unischedule.team.dto.WhenToMeetResponseDto;
+import unischedule.team.dto.*;
 import unischedule.team.service.TeamService;
 
 @RestController

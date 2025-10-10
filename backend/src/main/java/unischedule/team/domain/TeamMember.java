@@ -18,6 +18,8 @@ import org.springframework.data.annotation.CreatedDate;
 import unischedule.exception.NoPermissionException;
 import unischedule.member.domain.Member;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Getter
 @Table(name = "team_members")
