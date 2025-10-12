@@ -9,7 +9,6 @@ import java.time.LocalDateTime;
 public record PersonalEventCreateRequestDto(
         @NotBlank
         String title,
-        @NotBlank
         String description,
         @JsonProperty("start_time")
         @NotNull
