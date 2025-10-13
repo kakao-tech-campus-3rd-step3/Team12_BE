@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 @ValidEventTime
 public record EventModifyRequestDto(
         @JsonProperty("event_id")
-        @NotNull
+        @NotNull(message = "이벤트 id는 필수입니다.")
         Long eventId,
         String title,
         String description,

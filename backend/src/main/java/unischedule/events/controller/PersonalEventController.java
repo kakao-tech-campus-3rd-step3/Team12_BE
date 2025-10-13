@@ -20,6 +20,7 @@ import unischedule.events.dto.EventCreateResponseDto;
 import unischedule.events.dto.EventGetResponseDto;
 import unischedule.events.dto.EventModifyRequestDto;
 import unischedule.events.dto.PersonalEventCreateRequestDto;
+import unischedule.events.dto.RecurringEventCreateRequestDto;
 import unischedule.events.service.PersonalEventService;
 
 import java.time.LocalDateTime;
@@ -39,6 +40,17 @@ public class PersonalEventController {
             PersonalEventCreateRequestDto requestDto
     ) {
         EventCreateResponseDto responseDto = eventService.makePersonalEvent(userDetails.getUsername(), requestDto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(responseDto);
+    }
+
+    @PostMapping("/recurring/add")
+    public ResponseEntity<EventCreateResponseDto> makeMyRecurringEvent(
+            @AuthenticationPrincipal
+            UserDetails userDetails,
+            @RequestBody @Valid
+            RecurringEventCreateRequestDto requestDto
+    ) {
+        EventCreateResponseDto responseDto = eventService.makePersonalRecurringEvent(userDetails.getUsername(), requestDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(responseDto);
     }
 

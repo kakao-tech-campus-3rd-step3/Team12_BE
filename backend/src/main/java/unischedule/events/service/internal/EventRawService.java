@@ -1,6 +1,8 @@
 package unischedule.events.service.internal;
 
 import lombok.RequiredArgsConstructor;
+import net.fortuna.ical4j.model.Recur;
+import net.fortuna.ical4j.model.property.RRule;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -12,9 +14,14 @@ import unischedule.exception.EntityNotFoundException;
 import unischedule.exception.InvalidInputException;
 import unischedule.member.domain.Member;
 
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 @RequiredArgsConstructor
@@ -52,6 +59,30 @@ public class EventRawService {
     public void validateNoSchedule(Member member, LocalDateTime startTime, LocalDateTime endTime) {
         if (eventRepository.existsPersonalScheduleInPeriod(member.getMemberId(), startTime, endTime)) {
             throw new InvalidInputException("겹치는 일정이 있어 등록할 수 없습니다.");
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public void validateNoScheduleForRecurrence(Member member, LocalDateTime firstStartTime, LocalDateTime firstEndTime, String rruleString) {
+        try {
+            RRule<ZonedDateTime> rrule = new RRule<>(rruleString);
+            Recur<ZonedDateTime> recur = rrule.getRecur();
+
+            ZonedDateTime seed = firstStartTime.atZone(ZoneId.systemDefault());
+            ZonedDateTime endBoundary = getValidationEndDate(firstStartTime, rruleString)
+                    .atZone(ZoneId.systemDefault());
+
+            List<ZonedDateTime> eventStartTimeListZdt = recur.getDates(seed, endBoundary);
+            Duration duration = Duration.between(firstStartTime, firstEndTime);
+
+            for (ZonedDateTime startZdt : eventStartTimeListZdt) {
+                LocalDateTime eventStartTime = startZdt.toLocalDateTime();
+                LocalDateTime eventEndTime = startZdt.plus(duration).toLocalDateTime();
+                validateNoSchedule(member, eventStartTime, eventEndTime);
+            }
+        }
+        catch (RuntimeException e) {
+            throw new InvalidInputException("유효하지 않은 반복 규칙(RRULE) 형식입니다.");
         }
     }
 
@@ -111,5 +142,31 @@ public class EventRawService {
         LocalDateTime startOfDay = today.atStartOfDay();              // 오늘 00:00
         LocalDateTime endOfDay = today.plusDays(1).atStartOfDay();    // 내일 00:00
         return eventRepository.findPersonalScheduleInPeriod(member.getMemberId(), startOfDay, endOfDay);
+    }
+
+    private LocalDateTime getValidationEndDate(LocalDateTime startTime, String rruleString) {
+        // 시스템 부하 방지를 위해 반복 일정은 최대 2년으로 설정
+        LocalDateTime maxEndDate = startTime.plusYears(2);
+
+        Pattern pattern = Pattern.compile("UNTIL=([0-9]{8}T[0-9]{6}Z)");
+        Matcher matcher = pattern.matcher(rruleString.toUpperCase());
+
+        if (matcher.find()) {
+            String until = matcher.group(1);
+            int year = Integer.parseInt(until.substring(0, 4));
+            int month = Integer.parseInt(until.substring(4, 6));
+            int day = Integer.parseInt(until.substring(6, 8));
+
+            LocalDateTime untilEndDate = LocalDateTime.of(year, month, day, 23, 59, 59);
+
+            if (untilEndDate.isBefore(maxEndDate)) {
+                return untilEndDate;
+            }
+            else {
+                return maxEndDate;
+            }
+        }
+        // 기한이 없는 경우 최대 2년으로 설정
+        return maxEndDate;
     }
 }

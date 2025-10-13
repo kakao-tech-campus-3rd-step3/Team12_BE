@@ -7,10 +7,12 @@ import unischedule.calendar.entity.Calendar;
 import unischedule.calendar.service.internal.CalendarRawService;
 import unischedule.events.domain.Event;
 import unischedule.events.domain.EventState;
+import unischedule.events.domain.RecurrenceRule;
 import unischedule.events.dto.EventCreateResponseDto;
 import unischedule.events.dto.EventGetResponseDto;
 import unischedule.events.dto.EventModifyRequestDto;
 import unischedule.events.dto.PersonalEventCreateRequestDto;
+import unischedule.events.dto.RecurringEventCreateRequestDto;
 import unischedule.events.service.internal.EventRawService;
 import unischedule.member.domain.Member;
 import unischedule.member.service.internal.MemberRawService;
@@ -50,6 +52,38 @@ public class PersonalEventService {
                 .build();
 
         newEvent.connectCalendar(targetCalendar);
+        Event saved = eventRawService.saveEvent(newEvent);
+
+        return EventCreateResponseDto.from(saved);
+    }
+
+    @Transactional
+    public EventCreateResponseDto makePersonalRecurringEvent(String email, RecurringEventCreateRequestDto requestDto) {
+        Member member = memberRawService.findMemberByEmail(email);
+
+        Calendar targetCalendar = calendarRawService.getMyPersonalCalendar(member);
+
+        targetCalendar.validateOwner(member);
+
+        eventRawService.validateNoScheduleForRecurrence(
+                member,
+                requestDto.firstStartTime(),
+                requestDto.firstEndTime(),
+                requestDto.rrule()
+        );
+
+        Event newEvent = Event.builder()
+                .title(requestDto.title())
+                .content(requestDto.description())
+                .startAt(requestDto.firstStartTime())
+                .endAt(requestDto.firstEndTime())
+                .state(EventState.CONFIRMED)
+                .isPrivate(requestDto.isPrivate())
+                .build();
+
+        RecurrenceRule rule = new RecurrenceRule(requestDto.rrule());
+        newEvent.connectRecurrenceRule(rule);
+
         Event saved = eventRawService.saveEvent(newEvent);
 
         return EventCreateResponseDto.from(saved);
