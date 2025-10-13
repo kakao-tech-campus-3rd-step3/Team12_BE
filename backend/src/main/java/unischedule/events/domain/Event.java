@@ -49,11 +49,11 @@ public class Event extends BaseEntity {
     
     @Column(nullable = false)
     private Boolean isPrivate;
-    
-    @Column(name = "recurrence_rule_id")
-    private Long recurrenceRuleId;
-    
-    //우선 개인에 맞춰 세팅, 추후 수정 필요
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
+    @JoinColumn(name = "recurrence_rule_id", nullable = true)
+    private RecurrenceRule recurrenceRule;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "calendar_id", nullable = false)
     private Calendar calendar;
@@ -105,6 +105,12 @@ public class Event extends BaseEntity {
 
     public void connectCalendar(Calendar calendar) {
         this.calendar = calendar;
+    }
+
+    public void connectRecurrenceRule(RecurrenceRule recurrenceRule) {
+        if (recurrenceRule != null) {
+            this.recurrenceRule = recurrenceRule;
+        }
     }
 
     public void validateEventOwner(Member member) {
