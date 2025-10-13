@@ -1,11 +1,14 @@
 package unischedule.events.service;
 
 import lombok.RequiredArgsConstructor;
+import net.fortuna.ical4j.model.Recur;
+import net.fortuna.ical4j.model.property.RRule;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import unischedule.calendar.entity.Calendar;
 import unischedule.calendar.service.internal.CalendarRawService;
 import unischedule.events.domain.Event;
+import unischedule.events.domain.EventException;
 import unischedule.events.domain.EventState;
 import unischedule.events.domain.RecurrenceRule;
 import unischedule.events.dto.EventCreateResponseDto;
@@ -13,16 +16,23 @@ import unischedule.events.dto.EventGetResponseDto;
 import unischedule.events.dto.EventModifyRequestDto;
 import unischedule.events.dto.PersonalEventCreateRequestDto;
 import unischedule.events.dto.RecurringEventCreateRequestDto;
+import unischedule.events.repository.EventExceptionRepository;
 import unischedule.events.service.internal.EventRawService;
+import unischedule.exception.InvalidInputException;
 import unischedule.member.domain.Member;
 import unischedule.member.service.internal.MemberRawService;
 import unischedule.team.domain.Team;
 import unischedule.team.domain.TeamMember;
 import unischedule.team.service.internal.TeamMemberRawService;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +41,7 @@ public class PersonalEventService {
     private final EventRawService eventRawService;
     private final TeamMemberRawService teamMemberRawService;
     private final CalendarRawService calendarRawService;
+    private final EventExceptionRepository eventExceptionRepository;
 
     @Transactional
     public EventCreateResponseDto makePersonalEvent(String email, PersonalEventCreateRequestDto requestDto) {
@@ -100,11 +111,21 @@ public class PersonalEventService {
 
         List<Long> calendarIds = getMemberCalendarIds(teamList, member);
 
-        List<Event> findEvents = eventRawService.findSchedule(
-                calendarIds,
-                startAt,
-                endAt
-        );
+        List<Event> findEvents = new ArrayList<>();
+        List<Event> singleEvents = eventRawService.findSingleSchedule(calendarIds, startAt, endAt);
+        findEvents.addAll(singleEvents);
+        List<Event> recurringEvents = eventRawService.findRecurringSchedule(calendarIds, endAt);
+
+        Map<Long, List<EventException>> exceptionsMap = eventExceptionRepository
+                .findEventExceptionsForEvents(recurringEvents, startAt, endAt)
+                .stream()
+                .collect(Collectors.groupingBy(ex -> ex.getOriginalEvent().getEventId()));
+
+        for (Event recurEvent : recurringEvents) {
+            List<Event> occurences = generateOccurrences(recurEvent, startAt, endAt);
+            List<EventException> exceptions = exceptionsMap.getOrDefault(recurEvent.getEventId(), List.of());
+            findEvents.addAll(applyExceptions(occurences, exceptions));
+        }
 
         return findEvents.stream()
                 .map(EventGetResponseDto::from)
@@ -169,5 +190,66 @@ public class PersonalEventService {
 
         calendarIds.addAll(teamCalendarIds);
         return calendarIds;
+    }
+
+    private List<Event> generateOccurrences(Event recEvent, LocalDateTime startAt, LocalDateTime endAt) {
+        try {
+            RRule<ZonedDateTime> rrule = new RRule<>(recEvent.getRecurrenceRule().getRruleString());
+            Recur<ZonedDateTime> recur = rrule.getRecur();
+
+            ZoneId zone = ZoneId.systemDefault();
+            ZonedDateTime seed = recEvent.getStartAt().atZone(zone);
+            ZonedDateTime startZdt = startAt.atZone(zone);
+            ZonedDateTime endZdt = endAt.atZone(zone);
+
+            Duration duration = Duration.between(seed.toLocalDateTime(), recEvent.getEndAt());
+
+            List<ZonedDateTime> dates = recur.getDates(startZdt, endZdt);
+
+            return dates.stream()
+                    .filter(occurrenceStart -> !occurrenceStart.isBefore(startZdt) && occurrenceStart.isBefore(endZdt))
+                    .map(occurrenceStart -> Event.builder()
+                            .title(recEvent.getTitle())
+                            .content(recEvent.getContent())
+                            .startAt(occurrenceStart.toLocalDateTime())
+                            .endAt(occurrenceStart.toLocalDateTime().plus(duration))
+                            .isPrivate(recEvent.getIsPrivate())
+                            .state(recEvent.getState())
+                            .build())
+                    .toList();
+        }
+        catch (RuntimeException e) {
+            throw new InvalidInputException("유효하지 않은 반복 규칙(RRULE) 형식입니다.");
+        }
+    }
+
+    private List<Event> applyExceptions(List<Event> occurrences, List<EventException> exceptions) {
+        if (exceptions.isEmpty()) {
+            return occurrences;
+        }
+
+        Map<LocalDateTime, EventException> exceptionMap = exceptions.stream()
+                .collect(Collectors.toMap(EventException::getOriginalEventTime, ex -> ex));
+
+        List<Event> finalOccurrences = new ArrayList<>();
+
+        for (Event occurrence : occurrences) {
+            if (exceptionMap.containsKey(occurrence.getStartAt())) {
+                EventException exception = exceptionMap.get(occurrence.getStartAt());
+
+                if (exception.getTitle() != null) {
+                    finalOccurrences.add(Event.builder().title(exception.getTitle())
+                            .content(exception.getContent())
+                            .startAt(exception.getStartAt())
+                            .endAt(exception.getEndAt())
+                            .isPrivate(exception.getIsPrivate())
+                            .build());
+                }
+            }
+            else {
+                finalOccurrences.add(occurrence);
+            }
+        }
+        return finalOccurrences;
     }
 }

@@ -123,6 +123,16 @@ public class EventRawService {
     }
 
     @Transactional(readOnly = true)
+    public List<Event> findSingleSchedule(List<Long> calendarIds, LocalDateTime startTime, LocalDateTime endTime) {
+        return eventRepository.findSingleEventsInPeriod(calendarIds, startTime, endTime);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Event> findRecurringSchedule(List<Long> calendarIds, LocalDateTime endTime) {
+        return eventRepository.findRecurringEventsInPeriod(calendarIds, endTime);
+    }
+
+    @Transactional(readOnly = true)
     public void canUpdateEvent(Member member, Event event, LocalDateTime startTime, LocalDateTime endTime) {
         if (eventRepository.existsPersonalScheduleInPeriodExcludingEvent(member.getMemberId(), startTime, endTime, event.getEventId())) {
             throw new InvalidInputException("해당 시간에 겹치는 일정이 있어 수정할 수 없습니다.");

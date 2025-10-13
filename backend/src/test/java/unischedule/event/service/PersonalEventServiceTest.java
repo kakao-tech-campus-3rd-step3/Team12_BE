@@ -18,6 +18,7 @@ import unischedule.events.dto.EventGetResponseDto;
 import unischedule.events.dto.EventModifyRequestDto;
 import unischedule.events.dto.EventUpdateDto;
 import unischedule.events.dto.PersonalEventCreateRequestDto;
+import unischedule.events.repository.EventExceptionRepository;
 import unischedule.events.service.PersonalEventService;
 import unischedule.events.service.internal.EventRawService;
 import unischedule.exception.EntityNotFoundException;
@@ -30,6 +31,7 @@ import unischedule.team.service.internal.TeamMemberRawService;
 import unischedule.util.TestUtil;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -58,6 +60,8 @@ class PersonalEventServiceTest {
     private CalendarRawService calendarRawService;
     @Mock
     private TeamMemberRawService teamMemberRawService;
+    @Mock
+    private EventExceptionRepository eventExceptionRepository;
     @InjectMocks
     private PersonalEventService eventService;
 
@@ -169,14 +173,20 @@ class PersonalEventServiceTest {
                 EventState.CONFIRMED, false
         );
 
+        List<Long> calendarIds = List.of(1L, 2L);
 
         given(memberRawService.findMemberByEmail(memberEmail)).willReturn(owner);
         given(calendarRawService.getMyPersonalCalendar(owner)).willReturn(personalCalendar);
         given(teamMemberRawService.findByMember(owner)).willReturn(List.of(teamMember));
         given(calendarRawService.getTeamCalendar(team)).willReturn(teamCalendar);
-        given(eventRawService.findSchedule(List.of(1L, 2L), start, end))
+
+        given(eventRawService.findSingleSchedule(calendarIds, start, end))
                 .willReturn(List.of(event1, event2));
-        
+        given(eventRawService.findRecurringSchedule(calendarIds, end))
+                .willReturn(new ArrayList<>()); // 이 테스트에서는 반복 일정이 없다고 가정
+        given(eventExceptionRepository.findEventExceptionsForEvents(any(), any(), any()))
+                .willReturn(new ArrayList<>()); // 예외도 없다고 가정
+
         // when
         List<EventGetResponseDto> result = eventService.getPersonalEvents(memberEmail, start, end);
         
@@ -190,7 +200,10 @@ class PersonalEventServiceTest {
         verify(calendarRawService).getMyPersonalCalendar(owner);
         verify(teamMemberRawService).findByMember(owner);
         verify(calendarRawService).getTeamCalendar(team);
-        verify(eventRawService).findSchedule(List.of(1L, 2L), start, end);
+
+        verify(eventRawService).findSingleSchedule(calendarIds, start, end);
+        verify(eventRawService).findRecurringSchedule(calendarIds, end);
+        verify(eventExceptionRepository).findEventExceptionsForEvents(any(), any(), any());
     }
 
     @Test
