@@ -13,7 +13,7 @@ import java.util.List;
 @Repository
 public interface EventRepository extends JpaRepository<Event, Long> {
     /**
-     * 사용자의 특정 기간동안의 모든 일정 조회
+     * 사용자의 특정 기간동안의 모든 단일 일정 조회
      * @param memberId
      * @param startAt
      * @param endAt
@@ -23,10 +23,29 @@ public interface EventRepository extends JpaRepository<Event, Long> {
             SELECT e
             FROM Event e
             WHERE e.calendar.owner.memberId = :memberId
+            AND e.calendar.team IS NULL
+            AND e.recurrenceRule IS NULL
             AND e.endAt > :startAt
             AND e.startAt < :endAt
     """)
     List<Event> findPersonalScheduleInPeriod(
+            @Param("memberId")
+            Long memberId,
+            @Param("startAt")
+            LocalDateTime startAt,
+            @Param("endAt")
+            LocalDateTime endAt
+    );
+
+    @Query("""
+            SELECT e
+            FROM Event e
+            WHERE e.calendar.owner.memberId = :memberId
+            AND e.calendar.team IS NULL
+            AND e.recurrenceRule IS NOT NULL
+            AND e.startAt < :endAt
+    """)
+    List<Event> findPersonalRecurrenceScheduleInPeriod(
             @Param("memberId")
             Long memberId,
             @Param("startAt")
