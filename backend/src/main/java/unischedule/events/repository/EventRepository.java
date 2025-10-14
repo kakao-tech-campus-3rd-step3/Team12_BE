@@ -62,6 +62,29 @@ public interface EventRepository extends JpaRepository<Event, Long> {
     );
 
     /**
+     * 여러 캘린더에서 특정 기간동안의 일정 존재 여부 확인
+     * @param calendarIds
+     * @param startAt
+     * @param endAt
+     * @return
+     */
+    @Query("""
+            SELECT count(e) > 0
+            FROM Event e
+            WHERE e.calendar.calendarId = :calendarIds
+            AND e.endAt > :startAt
+            AND e.startAt < :endAt
+    """)
+    boolean existsSingleScheduleInPeriod(
+            @Param("calendarIds")
+            List<Long> calendarIds,
+            @Param("startAt")
+            LocalDateTime startAt,
+            @Param("endAt")
+            LocalDateTime endAt
+    );
+
+    /**
      * 여러 캘린더에서 특정 기간에 속하는 반복 이벤트 원본 조회
      * @param calendarIds
      * @param endAt

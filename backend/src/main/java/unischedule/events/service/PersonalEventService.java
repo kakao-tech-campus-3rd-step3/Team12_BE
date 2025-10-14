@@ -51,7 +51,7 @@ public class PersonalEventService {
 
         targetCalendar.validateOwner(member);
 
-        eventRawService.validateNoSingleSchedule(member, requestDto.startTime(), requestDto.endTime());
+        eventRawService.validateNoSingleSchedule(List.of(targetCalendar.getCalendarId()), requestDto.startTime(), requestDto.endTime());
 
         Event newEvent = Event.builder()
                 .title(requestDto.title())

@@ -53,8 +53,8 @@ public class EventRawService {
     }
 
     @Transactional(readOnly = true)
-    public void validateNoSingleSchedule(Member member, LocalDateTime startTime, LocalDateTime endTime) {
-        if (eventRepository.existsPersonalScheduleInPeriod(member.getMemberId(), startTime, endTime)) {
+    public void validateNoSingleSchedule(List<Long> calendarIds, LocalDateTime startTime, LocalDateTime endTime) {
+        if (eventRepository.existsSingleScheduleInPeriod(calendarIds, startTime, endTime)) {
             throw new InvalidInputException("겹치는 일정이 있어 등록할 수 없습니다.");
         }
     }
@@ -67,7 +67,7 @@ public class EventRawService {
         for (ZonedDateTime startZdt : eventStartTimeListZdt) {
             LocalDateTime eventStartTime = startZdt.toLocalDateTime();
             LocalDateTime eventEndTime = startZdt.plus(duration).toLocalDateTime();
-            validateNoSingleSchedule(member, eventStartTime, eventEndTime);
+            //validateNoSingleSchedule(member, eventStartTime, eventEndTime);
         }
     }
 
