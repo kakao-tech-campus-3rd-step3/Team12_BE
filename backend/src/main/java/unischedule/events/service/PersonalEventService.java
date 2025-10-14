@@ -122,9 +122,9 @@ public class PersonalEventService {
                 .collect(Collectors.groupingBy(ex -> ex.getOriginalEvent().getEventId()));
 
         for (Event recurEvent : recurringEvents) {
-            List<Event> occurences = generateOccurrences(recurEvent, startAt, endAt);
+            List<Event> occurrences = generateOccurrences(recurEvent, startAt, endAt);
             List<EventException> exceptions = exceptionsMap.getOrDefault(recurEvent.getEventId(), List.of());
-            findEvents.addAll(applyExceptions(occurences, exceptions));
+            findEvents.addAll(applyExceptions(occurrences, exceptions));
         }
 
         return findEvents.stream()
