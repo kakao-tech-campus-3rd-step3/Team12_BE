@@ -11,6 +11,7 @@ import jakarta.persistence.ManyToOne;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import unischedule.events.dto.EventExceptionDto;
 
 import java.time.LocalDateTime;
 
@@ -31,13 +32,15 @@ public class EventException {
     @Column(nullable = false)
     private LocalDateTime originalEventTime;
 
+    @Column(nullable = true)
     private String title;
+    @Column(nullable = true)
     private String content;
-    @Column(nullable = false)
+    @Column(nullable = true)
     private LocalDateTime startAt;
-    @Column(nullable = false)
+    @Column(nullable = true)
     private LocalDateTime endAt;
-    @Column(nullable = false)
+    @Column(nullable = true)
     private Boolean isPrivate;
 
     public EventException(
@@ -56,6 +59,37 @@ public class EventException {
         this.startAt = startAt;
         this.endAt = endAt;
         this.isPrivate = isPrivate;
+    }
+
+    public static EventException makeEventException(Event originEvent, EventExceptionDto exceptionDto) {
+        return new EventException(
+                originEvent,
+                exceptionDto.originalStartTime(),
+                getValueOrDefault(exceptionDto.title(), originEvent.getTitle()),
+                getValueOrDefault(exceptionDto.content(), originEvent.getContent()),
+                getValueOrDefault(exceptionDto.startTime(), originEvent.getStartAt()),
+                getValueOrDefault(exceptionDto.endTime(), originEvent.getEndAt()),
+                getValueOrDefault(exceptionDto.isPrivate(), originEvent.getIsPrivate())
+        );
+    }
+
+    public static EventException makeEventDeleteException(Event originEvent, LocalDateTime originStartTime) {
+        return new EventException(
+                originEvent,
+                originStartTime,
+                null,
+                null,
+                null,
+                null,
+                null
+        );
+    }
+
+    private static <T> T getValueOrDefault(T value, T defaultValue) {
+        if (value != null) {
+            return value;
+        }
+        return defaultValue;
     }
 
     public void update(
@@ -100,5 +134,16 @@ public class EventException {
         if (isPrivate != null) {
             this.isPrivate = isPrivate;
         }
+    }
+
+    public Event toEvent() {
+        return new Event(
+                this.title,
+                this.content,
+                this.startAt,
+                this.endAt,
+                EventState.CONFIRMED,
+                this.isPrivate
+        );
     }
 }

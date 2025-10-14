@@ -22,5 +22,15 @@ public record ExpandedRecurringEventModifyRequestDto(
         @JsonProperty("is_private")
         Boolean isPrivate
 ) {
+    public EventExceptionDto toEventExceptionDto() {
+        return new EventExceptionDto(
+                this.originalStartTime,
+                this.title,
+                this.content,
+                this.startTime,
+                this.endTime,
+                this.isPrivate
+        );
+    }
 
 }
