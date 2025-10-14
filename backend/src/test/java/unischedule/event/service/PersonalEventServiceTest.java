@@ -116,7 +116,7 @@ class PersonalEventServiceTest {
         given(eventRawService.saveEvent(any(Event.class))).willReturn(event);
         
         // when
-        EventCreateResponseDto result = eventService.makePersonalEvent(memberEmail, requestDto);
+        EventCreateResponseDto result = eventService.makePersonalSingleEvent(memberEmail, requestDto);
         
         // then
         assertThat(result).isNotNull();
@@ -146,7 +146,7 @@ class PersonalEventServiceTest {
                 .when(eventRawService).validateNoSingleSchedule(anyList(), any(LocalDateTime.class), any(LocalDateTime.class));
 
         // when & then
-        assertThatThrownBy(() -> eventService.makePersonalEvent(memberEmail, requestDto))
+        assertThatThrownBy(() -> eventService.makePersonalSingleEvent(memberEmail, requestDto))
                 .isInstanceOf(InvalidInputException.class)
                 .hasMessage("겹치는 일정이 있어 등록할 수 없습니다.");
     }

@@ -68,7 +68,7 @@ public class PersonalEventControllerTest {
                 false
         );
 
-        given(eventService.makePersonalEvent(anyString(), any(PersonalEventCreateRequestDto.class))).willReturn(responseDto);
+        given(eventService.makePersonalSingleEvent(anyString(), any(PersonalEventCreateRequestDto.class))).willReturn(responseDto);
 
         // when & then
         mockMvc.perform(post("/api/events/add")
@@ -91,6 +91,7 @@ public class PersonalEventControllerTest {
                 "Description",
                 LocalDateTime.of(2025, 9, 18, 10, 0),
                 LocalDateTime.of(2025, 9, 18, 11, 0),
+                false,
                 false
         );
 
@@ -119,6 +120,7 @@ public class PersonalEventControllerTest {
                 "Description",
                 LocalDateTime.of(2025, 9, 18, 10, 0),
                 LocalDateTime.of(2025, 9, 18, 11, 0),
+                false,
                 false
         );
 

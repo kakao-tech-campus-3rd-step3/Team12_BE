@@ -44,7 +44,7 @@ public class PersonalEventService {
     private final EventExceptionRepository eventExceptionRepository;
 
     @Transactional
-    public EventCreateResponseDto makePersonalEvent(String email, PersonalEventCreateRequestDto requestDto) {
+    public EventCreateResponseDto makePersonalSingleEvent(String email, PersonalEventCreateRequestDto requestDto) {
         Member member = memberRawService.findMemberByEmail(email);
 
         Calendar targetCalendar = calendarRawService.getMyPersonalCalendar(member);
@@ -112,9 +112,12 @@ public class PersonalEventService {
 
         List<Long> calendarIds = getMemberCalendarIds(teamList, member);
 
-        List<Event> findEvents = new ArrayList<>();
-        List<Event> singleEvents = eventRawService.findSingleSchedule(calendarIds, startAt, endAt);
-        findEvents.addAll(singleEvents);
+        List<EventGetResponseDto> findEvents = new ArrayList<>();
+        eventRawService.findSingleSchedule(calendarIds, startAt, endAt)
+                .stream()
+                .map(EventGetResponseDto::fromSingleEvent)
+                .forEach(findEvents::add);
+
         List<Event> recurringEvents = eventRawService.findRecurringSchedule(calendarIds, endAt);
 
         Map<Long, List<EventException>> exceptionsMap = eventExceptionRepository
@@ -125,12 +128,13 @@ public class PersonalEventService {
         for (Event recurEvent : recurringEvents) {
             List<Event> occurrences = generateOccurrences(recurEvent, startAt, endAt);
             List<EventException> exceptions = exceptionsMap.getOrDefault(recurEvent.getEventId(), List.of());
-            findEvents.addAll(applyExceptions(occurrences, exceptions));
+            applyExceptions(occurrences, exceptions)
+                    .stream()
+                    .map(EventGetResponseDto::fromRecurringEvent)
+                    .forEach(findEvents::add);
         }
 
-        return findEvents.stream()
-                .map(EventGetResponseDto::from)
-                .toList();
+        return findEvents;
     }
 
     @Transactional
@@ -145,7 +149,7 @@ public class PersonalEventService {
 
         eventRawService.updateEvent(findEvent, EventModifyRequestDto.toDto(requestDto));
         
-        return EventGetResponseDto.from(findEvent);
+        return EventGetResponseDto.fromSingleEvent(findEvent);
     }
 
     @Transactional
@@ -165,7 +169,7 @@ public class PersonalEventService {
         
         List<Event> upcomingEvents = eventRawService.findUpcomingEventsByMember(member);
         
-        return upcomingEvents.stream().map(EventGetResponseDto::from).toList();
+        return upcomingEvents.stream().map(EventGetResponseDto::fromSingleEvent).toList();
     }
 
     @Transactional(readOnly = true)
@@ -174,7 +178,7 @@ public class PersonalEventService {
         
         List<Event> todayEvents = eventRawService.findTodayEventsByMember(member);
         
-        return todayEvents.stream().map(EventGetResponseDto::from).toList();
+        return todayEvents.stream().map(EventGetResponseDto::fromSingleEvent).toList();
     }
 
     private List<Long> getMemberCalendarIds(List<Team> teamList, Member member) {

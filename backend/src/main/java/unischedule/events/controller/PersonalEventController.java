@@ -39,7 +39,7 @@ public class PersonalEventController {
             @RequestBody @Valid
             PersonalEventCreateRequestDto requestDto
     ) {
-        EventCreateResponseDto responseDto = eventService.makePersonalEvent(userDetails.getUsername(), requestDto);
+        EventCreateResponseDto responseDto = eventService.makePersonalSingleEvent(userDetails.getUsername(), requestDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(responseDto);
     }
 

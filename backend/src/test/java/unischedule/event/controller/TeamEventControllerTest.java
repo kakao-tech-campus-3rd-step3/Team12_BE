@@ -92,6 +92,7 @@ public class TeamEventControllerTest {
                 "Description",
                 LocalDateTime.of(2025, 10, 1, 10, 0),
                 LocalDateTime.of(2025, 10, 1, 11, 0),
+                false,
                 false
         );
 

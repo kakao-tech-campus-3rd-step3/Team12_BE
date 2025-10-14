@@ -71,7 +71,7 @@ public class TeamEventService {
         List<Event> events = eventRawService.findSchedule(List.of(teamCalendar.getCalendarId()), startAt, endAt);
 
         return events.stream()
-                .map(EventGetResponseDto::from)
+                .map(EventGetResponseDto::fromSingleEvent)
                 .toList();
     }
 
@@ -92,7 +92,7 @@ public class TeamEventService {
 
         eventRawService.updateEvent(event, EventModifyRequestDto.toDto(requestDto));
 
-        return EventGetResponseDto.from(event);
+        return EventGetResponseDto.fromSingleEvent(event);
     }
 
     @Transactional
