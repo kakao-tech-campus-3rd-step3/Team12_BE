@@ -8,7 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import unischedule.events.domain.Event;
 import unischedule.events.dto.EventUpdateDto;
 import unischedule.events.repository.EventRepository;
-import unischedule.events.util.RruleParser;
+import unischedule.events.util.RRuleParser;
 import unischedule.exception.EntityNotFoundException;
 import unischedule.exception.InvalidInputException;
 import unischedule.member.domain.Member;
@@ -23,7 +23,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class EventRawService {
     private final EventRepository eventRepository;
-    private final RruleParser rruleParser;
+    private final RRuleParser rruleParser;
 
     @Transactional
     public Event saveEvent(Event event) {

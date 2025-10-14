@@ -1,12 +1,12 @@
 package unischedule.events.util;
 
+import lombok.RequiredArgsConstructor;
 import net.fortuna.ical4j.model.Recur;
 import net.fortuna.ical4j.model.property.RRule;
 import org.springframework.stereotype.Component;
 import unischedule.exception.InvalidInputException;
 
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -14,18 +14,22 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Component
-public class RruleParser {
+@RequiredArgsConstructor
+public class RRuleParser {
+    private final ZonedDateTimeUtil zonedDateTimeUtil;
 
     public List<ZonedDateTime> calEventStartTimeListZdt(LocalDateTime firstStartTime, String rruleString) {
+        Recur<ZonedDateTime> recur = getRecur(rruleString);
+
+        ZonedDateTime seed = zonedDateTimeUtil.localDateTimeToZdt(firstStartTime);
+        ZonedDateTime endBoundary = zonedDateTimeUtil.localDateTimeToZdt(getRepeatEndDate(firstStartTime, rruleString));
+        return recur.getDates(seed, endBoundary);
+    }
+
+    public Recur<ZonedDateTime> getRecur(String rruleString) {
         try {
             RRule<ZonedDateTime> rrule = new RRule<>(rruleString);
-            Recur<ZonedDateTime> recur = rrule.getRecur();
-
-            ZonedDateTime seed = firstStartTime.atZone(ZoneId.systemDefault());
-            ZonedDateTime endBoundary = getRepeatEndDate(firstStartTime, rruleString)
-                    .atZone(ZoneId.systemDefault());
-
-            return recur.getDates(seed, endBoundary);
+            return rrule.getRecur();
         }
         catch (RuntimeException e) {
             throw new InvalidInputException("유효하지 않은 반복 규칙(RRULE) 형식입니다.");
@@ -36,6 +40,18 @@ public class RruleParser {
         Optional<String> untilInfo = extractUntilValue(rruleString);
 
         return determineRepeatEndDate(untilInfo, startTime);
+    }
+
+    private Optional<String> extractUntilValue(String rruleString) {
+        Pattern pattern = Pattern.compile("UNTIL=([0-9]{8}T[0-9]{6}Z)");
+        Matcher matcher = pattern.matcher(rruleString.toUpperCase());
+
+        if (matcher.find()) {
+            return Optional.of(matcher.group(1));
+        }
+        else {
+            return Optional.empty();
+        }
     }
 
     private LocalDateTime determineRepeatEndDate(Optional<String> untilValue, LocalDateTime startTime) {
@@ -53,18 +69,6 @@ public class RruleParser {
         }
         else {
             return maxEndDate;
-        }
-    }
-
-    private Optional<String> extractUntilValue(String rruleString) {
-        Pattern pattern = Pattern.compile("UNTIL=([0-9]{8}T[0-9]{6}Z)");
-        Matcher matcher = pattern.matcher(rruleString.toUpperCase());
-
-        if (matcher.find()) {
-            return Optional.of(matcher.group(1));
-        }
-        else {
-            return Optional.empty();
         }
     }
 

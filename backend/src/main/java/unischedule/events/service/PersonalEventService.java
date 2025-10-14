@@ -2,7 +2,6 @@ package unischedule.events.service;
 
 import lombok.RequiredArgsConstructor;
 import net.fortuna.ical4j.model.Recur;
-import net.fortuna.ical4j.model.property.RRule;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import unischedule.calendar.entity.Calendar;
@@ -18,7 +17,8 @@ import unischedule.events.dto.PersonalEventCreateRequestDto;
 import unischedule.events.dto.RecurringEventCreateRequestDto;
 import unischedule.events.repository.EventExceptionRepository;
 import unischedule.events.service.internal.EventRawService;
-import unischedule.exception.InvalidInputException;
+import unischedule.events.util.RRuleParser;
+import unischedule.events.util.ZonedDateTimeUtil;
 import unischedule.member.domain.Member;
 import unischedule.member.service.internal.MemberRawService;
 import unischedule.team.domain.Team;
@@ -27,7 +27,6 @@ import unischedule.team.service.internal.TeamMemberRawService;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -42,6 +41,8 @@ public class PersonalEventService {
     private final TeamMemberRawService teamMemberRawService;
     private final CalendarRawService calendarRawService;
     private final EventExceptionRepository eventExceptionRepository;
+    private final RRuleParser rruleParser;
+    private final ZonedDateTimeUtil zonedDateTimeUtil;
 
     @Transactional
     public EventCreateResponseDto makePersonalSingleEvent(String email, PersonalEventCreateRequestDto requestDto) {
@@ -113,28 +114,100 @@ public class PersonalEventService {
         List<Long> calendarIds = getMemberCalendarIds(teamList, member);
 
         List<EventGetResponseDto> findEvents = new ArrayList<>();
+        addSingleSchedule(calendarIds, findEvents, startAt, endAt);
+        addExpandedEventsFromRecurringEvents(calendarIds, findEvents, startAt, endAt);
+
+        return findEvents;
+    }
+
+    private void addSingleSchedule(List<Long> calendarIds, List<EventGetResponseDto> findEvents, LocalDateTime startAt, LocalDateTime endAt) {
         eventRawService.findSingleSchedule(calendarIds, startAt, endAt)
                 .stream()
                 .map(EventGetResponseDto::fromSingleEvent)
                 .forEach(findEvents::add);
+    }
 
+    private void addExpandedEventsFromRecurringEvents(List<Long> calendarIds, List<EventGetResponseDto> findEvents, LocalDateTime startAt, LocalDateTime endAt) {
+        expandRecurringEvents(calendarIds, startAt, endAt)
+                .stream()
+                .map(EventGetResponseDto::fromRecurringEvent)
+                .forEach(findEvents::add);
+    }
+
+    private List<Event> expandRecurringEvents(List<Long> calendarIds, LocalDateTime startAt, LocalDateTime endAt) {
         List<Event> recurringEvents = eventRawService.findRecurringSchedule(calendarIds, endAt);
 
-        Map<Long, List<EventException>> exceptionsMap = eventExceptionRepository
+        List<Event> expandedEventList = new ArrayList<>();
+
+        Map<Long, List<EventException>> exceptionsMap = getEventExceptionMap(recurringEvents, startAt, endAt);
+
+        for (Event recurEvent : recurringEvents) {
+            List<Event> expandedEvent = expandRecurringEvent(recurEvent, startAt, endAt);
+            List<EventException> exceptions = exceptionsMap.getOrDefault(recurEvent.getEventId(), List.of());
+            expandedEventList.addAll(applyEventExceptions(expandedEvent, exceptions));
+        }
+
+        return expandedEventList;
+    }
+
+    private Map<Long, List<EventException>> getEventExceptionMap(List<Event> recurringEvents, LocalDateTime startAt, LocalDateTime endAt) {
+        return eventExceptionRepository
                 .findEventExceptionsForEvents(recurringEvents, startAt, endAt)
                 .stream()
                 .collect(Collectors.groupingBy(ex -> ex.getOriginalEvent().getEventId()));
+    }
 
-        for (Event recurEvent : recurringEvents) {
-            List<Event> occurrences = generateOccurrences(recurEvent, startAt, endAt);
-            List<EventException> exceptions = exceptionsMap.getOrDefault(recurEvent.getEventId(), List.of());
-            applyExceptions(occurrences, exceptions)
-                    .stream()
-                    .map(EventGetResponseDto::fromRecurringEvent)
-                    .forEach(findEvents::add);
+    private List<Event> expandRecurringEvent(Event recEvent, LocalDateTime startAt, LocalDateTime endAt) {
+        Recur<ZonedDateTime> recur = rruleParser.getRecur(recEvent.getRecurrenceRule().getRruleString());
+
+        ZonedDateTime seed = zonedDateTimeUtil.localDateTimeToZdt(recEvent.getStartAt());
+        ZonedDateTime startZdt = zonedDateTimeUtil.localDateTimeToZdt(startAt);
+        ZonedDateTime endZdt = zonedDateTimeUtil.localDateTimeToZdt(endAt);
+
+        Duration duration = Duration.between(seed.toLocalDateTime(), recEvent.getEndAt());
+
+        List<ZonedDateTime> dates = recur.getDates(startZdt, endZdt);
+
+        return dates.stream()
+                .filter(eventStart -> !eventStart.isBefore(startZdt) && eventStart.isBefore(endZdt))
+                .map(eventStart -> Event.builder()
+                        .title(recEvent.getTitle())
+                        .content(recEvent.getContent())
+                        .startAt(eventStart.toLocalDateTime())
+                        .endAt(eventStart.toLocalDateTime().plus(duration))
+                        .isPrivate(recEvent.getIsPrivate())
+                        .state(recEvent.getState())
+                        .build())
+                .toList();
+    }
+
+    private List<Event> applyEventExceptions(List<Event> expandedEvents, List<EventException> exceptions) {
+        if (exceptions.isEmpty()) {
+            return expandedEvents;
         }
 
-        return findEvents;
+        Map<LocalDateTime, EventException> exceptionMap = exceptions.stream()
+                .collect(Collectors.toMap(EventException::getOriginalEventTime, ex -> ex));
+
+        List<Event> finalEvents = new ArrayList<>();
+
+        for (Event event : expandedEvents) {
+            if (exceptionMap.containsKey(event.getStartAt())) {
+                EventException exception = exceptionMap.get(event.getStartAt());
+
+                finalEvents.add(Event.builder()
+                        .title(exception.getTitle())
+                        .content(exception.getContent())
+                        .startAt(exception.getStartAt())
+                        .endAt(exception.getEndAt())
+                        .isPrivate(exception.getIsPrivate())
+                        .build());
+            }
+            else {
+                finalEvents.add(event);
+            }
+        }
+        return finalEvents;
     }
 
     @Transactional
@@ -195,66 +268,5 @@ public class PersonalEventService {
 
         calendarIds.addAll(teamCalendarIds);
         return calendarIds;
-    }
-
-    private List<Event> generateOccurrences(Event recEvent, LocalDateTime startAt, LocalDateTime endAt) {
-        try {
-            RRule<ZonedDateTime> rrule = new RRule<>(recEvent.getRecurrenceRule().getRruleString());
-            Recur<ZonedDateTime> recur = rrule.getRecur();
-
-            ZoneId zone = ZoneId.systemDefault();
-            ZonedDateTime seed = recEvent.getStartAt().atZone(zone);
-            ZonedDateTime startZdt = startAt.atZone(zone);
-            ZonedDateTime endZdt = endAt.atZone(zone);
-
-            Duration duration = Duration.between(seed.toLocalDateTime(), recEvent.getEndAt());
-
-            List<ZonedDateTime> dates = recur.getDates(startZdt, endZdt);
-
-            return dates.stream()
-                    .filter(occurrenceStart -> !occurrenceStart.isBefore(startZdt) && occurrenceStart.isBefore(endZdt))
-                    .map(occurrenceStart -> Event.builder()
-                            .title(recEvent.getTitle())
-                            .content(recEvent.getContent())
-                            .startAt(occurrenceStart.toLocalDateTime())
-                            .endAt(occurrenceStart.toLocalDateTime().plus(duration))
-                            .isPrivate(recEvent.getIsPrivate())
-                            .state(recEvent.getState())
-                            .build())
-                    .toList();
-        }
-        catch (RuntimeException e) {
-            throw new InvalidInputException("유효하지 않은 반복 규칙(RRULE) 형식입니다.");
-        }
-    }
-
-    private List<Event> applyExceptions(List<Event> occurrences, List<EventException> exceptions) {
-        if (exceptions.isEmpty()) {
-            return occurrences;
-        }
-
-        Map<LocalDateTime, EventException> exceptionMap = exceptions.stream()
-                .collect(Collectors.toMap(EventException::getOriginalEventTime, ex -> ex));
-
-        List<Event> finalOccurrences = new ArrayList<>();
-
-        for (Event occurrence : occurrences) {
-            if (exceptionMap.containsKey(occurrence.getStartAt())) {
-                EventException exception = exceptionMap.get(occurrence.getStartAt());
-
-                if (exception.getTitle() != null) {
-                    finalOccurrences.add(Event.builder().title(exception.getTitle())
-                            .content(exception.getContent())
-                            .startAt(exception.getStartAt())
-                            .endAt(exception.getEndAt())
-                            .isPrivate(exception.getIsPrivate())
-                            .build());
-                }
-            }
-            else {
-                finalOccurrences.add(occurrence);
-            }
-        }
-        return finalOccurrences;
     }
 }
