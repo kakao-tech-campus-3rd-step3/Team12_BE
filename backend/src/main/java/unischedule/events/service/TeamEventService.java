@@ -105,6 +105,18 @@ public class TeamEventService {
         validateTeamMember(team, member);
         eventRawService.deleteEvent(event);
     }
+    
+    @Transactional(readOnly = true)
+    public List<EventGetResponseDto> getUpcomingTeamEvents() {
+        
+        return null;
+    }
+    
+    @Transactional(readOnly = true)
+    public List<EventGetResponseDto> getTodayTeamEvents() {
+        
+        return null;
+    }
 
     private void validateTeamMember(Team team, Member member) {
         teamMemberRawService.checkTeamAndMember(team, member);

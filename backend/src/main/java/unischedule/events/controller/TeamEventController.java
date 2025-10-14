@@ -6,6 +6,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -80,5 +81,29 @@ public class TeamEventController {
         teamEventService.deleteTeamEvent(userDetails.getUsername(), eventId);
 
         return ResponseEntity.noContent().build();
+    }
+    
+    @GetMapping("/{teamId}/upcomming")
+    public ResponseEntity<List<EventGetResponseDto>> upcomingTeamEvents(
+        @AuthenticationPrincipal
+        UserDetails userDetails,
+        @PathVariable
+        Long teamId
+    ) {
+        List<EventGetResponseDto> upcomingEvents = teamEventService.getUpcomingTeamEvents();
+        
+        return ResponseEntity.ok(upcomingEvents);
+    }
+    
+    @GetMapping("/{teamId}/today")
+    public ResponseEntity<List<EventGetResponseDto>> todayTeamEvents(
+        @AuthenticationPrincipal
+        UserDetails userDetails,
+        @PathVariable
+        Long teamId
+    ) {
+        List<EventGetResponseDto> todayEvents = teamEventService.getTodayTeamEvents();
+        
+        return ResponseEntity.ok(todayEvents);
     }
 }
