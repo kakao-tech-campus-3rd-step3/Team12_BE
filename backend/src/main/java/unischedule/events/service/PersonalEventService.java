@@ -77,7 +77,7 @@ public class PersonalEventService {
         targetCalendar.validateOwner(member);
 
         eventRawService.validateNoRecurringSchedule(
-                member,
+                List.of(targetCalendar.getCalendarId()),
                 requestDto.firstStartTime(),
                 requestDto.firstEndTime(),
                 requestDto.rrule()
@@ -94,6 +94,7 @@ public class PersonalEventService {
 
         RecurrenceRule rule = new RecurrenceRule(requestDto.rrule());
         newEvent.connectRecurrenceRule(rule);
+        newEvent.connectCalendar(targetCalendar);
 
         Event saved = eventRawService.saveEvent(newEvent);
 
@@ -140,7 +141,7 @@ public class PersonalEventService {
 
         findEvent.validateEventOwner(member);
 
-        eventRawService.canUpdateEvent(member, findEvent, requestDto.startTime(), requestDto.endTime());
+        eventRawService.canUpdateEvent(List.of(findEvent.getCalendar().getCalendarId()), findEvent, requestDto.startTime(), requestDto.endTime());
 
         eventRawService.updateEvent(findEvent, EventModifyRequestDto.toDto(requestDto));
         

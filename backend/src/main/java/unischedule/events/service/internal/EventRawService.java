@@ -60,14 +60,14 @@ public class EventRawService {
     }
 
     @Transactional(readOnly = true)
-    public void validateNoRecurringSchedule(Member member, LocalDateTime firstStartTime, LocalDateTime firstEndTime, String rruleString) {
+    public void validateNoRecurringSchedule(List<Long> calendarIds, LocalDateTime firstStartTime, LocalDateTime firstEndTime, String rruleString) {
         List<ZonedDateTime> eventStartTimeListZdt = rruleParser.calEventStartTimeListZdt(firstStartTime, rruleString);
         Duration duration = Duration.between(firstStartTime, firstEndTime);
 
         for (ZonedDateTime startZdt : eventStartTimeListZdt) {
             LocalDateTime eventStartTime = startZdt.toLocalDateTime();
             LocalDateTime eventEndTime = startZdt.plus(duration).toLocalDateTime();
-            //validateNoSingleSchedule(member, eventStartTime, eventEndTime);
+            validateNoSingleSchedule(calendarIds, eventStartTime, eventEndTime);
         }
     }
 
@@ -118,8 +118,8 @@ public class EventRawService {
     }
 
     @Transactional(readOnly = true)
-    public void canUpdateEvent(Member member, Event event, LocalDateTime startTime, LocalDateTime endTime) {
-        if (eventRepository.existsPersonalScheduleInPeriodExcludingEvent(member.getMemberId(), startTime, endTime, event.getEventId())) {
+    public void canUpdateEvent(List<Long> calendarIds, Event event, LocalDateTime startTime, LocalDateTime endTime) {
+        if (eventRepository.existsPersonalScheduleInPeriodExcludingEvent(calendarIds, startTime, endTime, event.getEventId())) {
             throw new InvalidInputException("해당 시간에 겹치는 일정이 있어 수정할 수 없습니다.");
         }
     }

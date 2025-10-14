@@ -223,6 +223,7 @@ class PersonalEventServiceTest {
 
         given(memberRawService.findMemberByEmail(memberEmail)).willReturn(owner);
         given(eventRawService.findEventById(eventId)).willReturn(existingEvent);
+        given(personalCalendar.getCalendarId()).willReturn(calendarId);
 
         doAnswer(invocation -> {
             Event event = invocation.getArgument(0);
