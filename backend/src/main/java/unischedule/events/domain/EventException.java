@@ -31,7 +31,6 @@ public class EventException {
     @Column(nullable = false)
     private LocalDateTime originalEventTime;
 
-    @Column(nullable = false)
     private String title;
     private String content;
     @Column(nullable = false)

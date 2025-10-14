@@ -195,19 +195,31 @@ public class PersonalEventService {
             if (exceptionMap.containsKey(event.getStartAt())) {
                 EventException exception = exceptionMap.get(event.getStartAt());
 
-                finalEvents.add(Event.builder()
-                        .title(exception.getTitle())
-                        .content(exception.getContent())
-                        .startAt(exception.getStartAt())
-                        .endAt(exception.getEndAt())
-                        .isPrivate(exception.getIsPrivate())
-                        .build());
+                if (isDeletionException(exception)) {
+                    continue;
+                }
+
+                finalEvents.add(applyException(event, exception));
             }
             else {
                 finalEvents.add(event);
             }
         }
         return finalEvents;
+    }
+
+    private boolean isDeletionException(EventException eventException) {
+        return eventException.getTitle() == null;
+    }
+
+    private Event applyException(Event event, EventException eventException) {
+        return Event.builder()
+                .title(eventException.getTitle())
+                .content(eventException.getContent())
+                .startAt(eventException.getStartAt())
+                .endAt(eventException.getEndAt())
+                .isPrivate(eventException.getIsPrivate())
+                .build();
     }
 
     @Transactional
