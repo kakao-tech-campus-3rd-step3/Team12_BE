@@ -109,7 +109,7 @@ class PersonalEventServiceTest {
         given(calendarRawService.getMyPersonalCalendar(owner)).willReturn(personalCalendar);
 
         doNothing().when(personalCalendar).validateOwner(owner);
-        doNothing().when(eventRawService).validateNoSchedule(eq(owner), any(LocalDateTime.class), any(LocalDateTime.class));
+        doNothing().when(eventRawService).validateNoSingleSchedule(eq(owner), any(LocalDateTime.class), any(LocalDateTime.class));
 
         given(eventRawService.saveEvent(any(Event.class))).willReturn(event);
         
@@ -139,7 +139,7 @@ class PersonalEventServiceTest {
         given(calendarRawService.getMyPersonalCalendar(owner)).willReturn(personalCalendar);
 
         doThrow(new InvalidInputException("겹치는 일정이 있어 등록할 수 없습니다."))
-                .when(eventRawService).validateNoSchedule(eq(owner), any(LocalDateTime.class), any(LocalDateTime.class));
+                .when(eventRawService).validateNoSingleSchedule(eq(owner), any(LocalDateTime.class), any(LocalDateTime.class));
 
         // when & then
         assertThatThrownBy(() -> eventService.makePersonalEvent(memberEmail, requestDto))

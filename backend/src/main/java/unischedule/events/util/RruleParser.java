@@ -22,7 +22,7 @@ public class RruleParser {
             Recur<ZonedDateTime> recur = rrule.getRecur();
 
             ZonedDateTime seed = firstStartTime.atZone(ZoneId.systemDefault());
-            ZonedDateTime endBoundary = getValidationEndDate(firstStartTime, rruleString)
+            ZonedDateTime endBoundary = getRepeatEndDate(firstStartTime, rruleString)
                     .atZone(ZoneId.systemDefault());
 
             return recur.getDates(seed, endBoundary);
@@ -32,7 +32,7 @@ public class RruleParser {
         }
     }
 
-    private LocalDateTime getValidationEndDate(LocalDateTime startTime, String rruleString) {
+    private LocalDateTime getRepeatEndDate(LocalDateTime startTime, String rruleString) {
         Optional<String> untilInfo = extractUntilValue(rruleString);
 
         return determineRepeatEndDate(untilInfo, startTime);

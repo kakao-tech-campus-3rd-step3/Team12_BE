@@ -53,21 +53,21 @@ public class EventRawService {
     }
 
     @Transactional(readOnly = true)
-    public void validateNoSchedule(Member member, LocalDateTime startTime, LocalDateTime endTime) {
+    public void validateNoSingleSchedule(Member member, LocalDateTime startTime, LocalDateTime endTime) {
         if (eventRepository.existsPersonalScheduleInPeriod(member.getMemberId(), startTime, endTime)) {
             throw new InvalidInputException("겹치는 일정이 있어 등록할 수 없습니다.");
         }
     }
 
     @Transactional(readOnly = true)
-    public void validateNoScheduleForRecurrence(Member member, LocalDateTime firstStartTime, LocalDateTime firstEndTime, String rruleString) {
+    public void validateNoRecurringSchedule(Member member, LocalDateTime firstStartTime, LocalDateTime firstEndTime, String rruleString) {
         List<ZonedDateTime> eventStartTimeListZdt = rruleParser.calEventStartTimeListZdt(firstStartTime, rruleString);
         Duration duration = Duration.between(firstStartTime, firstEndTime);
 
         for (ZonedDateTime startZdt : eventStartTimeListZdt) {
             LocalDateTime eventStartTime = startZdt.toLocalDateTime();
             LocalDateTime eventEndTime = startZdt.plus(duration).toLocalDateTime();
-            validateNoSchedule(member, eventStartTime, eventEndTime);
+            validateNoSingleSchedule(member, eventStartTime, eventEndTime);
         }
     }
 
