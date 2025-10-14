@@ -107,7 +107,14 @@ public class PersonalEventService {
     public List<EventGetResponseDto> getUpcomingMyEvent(String email) {
         Member member = memberRawService.findMemberByEmail(email);
         
-        List<Event> upcomingEvents = eventRawService.findUpcomingEventsByMember(member);
+        List<Team> teamList = teamMemberRawService.findByMember(member)
+            .stream()
+            .map(TeamMember::getTeam)
+            .toList();
+        
+        List<Long> calendarIds = getMemberCalendarIds(teamList, member);
+        
+        List<Event> upcomingEvents = eventRawService.findUpcomingEventsByCalendar(calendarIds);
         
         return upcomingEvents.stream().map(EventGetResponseDto::from).toList();
     }
@@ -116,7 +123,14 @@ public class PersonalEventService {
     public List<EventGetResponseDto> getTodayMyEvent(String email) {
         Member member = memberRawService.findMemberByEmail(email);
         
-        List<Event> todayEvents = eventRawService.findTodayEventsByMember(member);
+        List<Team> teamList = teamMemberRawService.findByMember(member)
+            .stream()
+            .map(TeamMember::getTeam)
+            .toList();
+        
+        List<Long> calendarIds = getMemberCalendarIds(teamList, member);
+        
+        List<Event> todayEvents = eventRawService.findTodayEventsByCalendar(calendarIds);
         
         return todayEvents.stream().map(EventGetResponseDto::from).toList();
     }
