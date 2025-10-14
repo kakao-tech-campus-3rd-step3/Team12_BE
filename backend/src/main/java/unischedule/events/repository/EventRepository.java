@@ -122,10 +122,29 @@ public interface EventRepository extends JpaRepository<Event, Long> {
             AND e.startAt >= :now
             ORDER BY e.startAt ASC
     """)
-    List<Event> findUpcomingEvents(
+    List<Event> findUpcomingEventsForMember(
             @Param("memberId") Long memberId,
             @Param("now") LocalDateTime now,
             Pageable pageable
+    );
+    
+    /**
+     * 다가오는 일정 페이지 단위로 조회
+     * @param teamId
+     * @param now
+     * @param pageable
+     * @return
+     */
+    @Query("""
+            SELECT e FROM Event e
+            WHERE e.calendar.team.teamId = :teamId
+            AND e.startAt >= :now
+            ORDER BY e.startAt ASC
+    """)
+    List<Event> findUpcomingEventsForTeam(
+        @Param("memberId") Long teamId,
+        @Param("now") LocalDateTime now,
+        Pageable pageable
     );
 
     /**

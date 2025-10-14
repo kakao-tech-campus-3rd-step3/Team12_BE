@@ -107,15 +107,26 @@ public class TeamEventService {
     }
     
     @Transactional(readOnly = true)
-    public List<EventGetResponseDto> getUpcomingTeamEvents() {
+    public List<EventGetResponseDto> getUpcomingTeamEvents(String email, Long teamId) {
+        Member member = memberRawService.findMemberByEmail(email);
+        Team team = teamRawService.findTeamById(teamId);
+        teamMemberRawService.checkTeamAndMember(team, member);
         
-        return null;
+        List<Event> upcomingEvents = eventRawService.findUpcomingEventsByTeam(team);
+        
+        return upcomingEvents.stream().map(EventGetResponseDto::from).toList();
     }
     
     @Transactional(readOnly = true)
-    public List<EventGetResponseDto> getTodayTeamEvents() {
+    public List<EventGetResponseDto> getTodayTeamEvents(String email, Long teamId) {
+        Member member = memberRawService.findMemberByEmail(email);
+        Team team = teamRawService.findTeamById(teamId);
+        Calendar teamCalendar = calendarRawService.getTeamCalendar(team);
+        validateTeamMember(team, member);
         
-        return null;
+        List<Event> todayEvents = eventRawService.findTodayEventsByTeamCalendar(teamCalendar);
+        
+        return todayEvents.stream().map(EventGetResponseDto::from).toList();
     }
 
     private void validateTeamMember(Team team, Member member) {

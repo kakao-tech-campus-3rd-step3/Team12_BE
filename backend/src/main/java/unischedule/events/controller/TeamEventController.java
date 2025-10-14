@@ -90,7 +90,9 @@ public class TeamEventController {
         @PathVariable
         Long teamId
     ) {
-        List<EventGetResponseDto> upcomingEvents = teamEventService.getUpcomingTeamEvents();
+        List<EventGetResponseDto> upcomingEvents = teamEventService.getUpcomingTeamEvents(
+            userDetails.getUsername(), teamId
+        );
         
         return ResponseEntity.ok(upcomingEvents);
     }
@@ -102,7 +104,9 @@ public class TeamEventController {
         @PathVariable
         Long teamId
     ) {
-        List<EventGetResponseDto> todayEvents = teamEventService.getTodayTeamEvents();
+        List<EventGetResponseDto> todayEvents = teamEventService.getTodayTeamEvents(
+            userDetails.getUsername(), teamId
+        );
         
         return ResponseEntity.ok(todayEvents);
     }
