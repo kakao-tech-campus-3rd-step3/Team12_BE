@@ -64,25 +64,13 @@ public class EventRawService {
 
     @Transactional(readOnly = true)
     public void validateNoScheduleForRecurrence(Member member, LocalDateTime firstStartTime, LocalDateTime firstEndTime, String rruleString) {
-        try {
-            RRule<ZonedDateTime> rrule = new RRule<>(rruleString);
-            Recur<ZonedDateTime> recur = rrule.getRecur();
+        List<ZonedDateTime> eventStartTimeListZdt = calEventStartTimeListZdt(firstStartTime, rruleString);
+        Duration duration = Duration.between(firstStartTime, firstEndTime);
 
-            ZonedDateTime seed = firstStartTime.atZone(ZoneId.systemDefault());
-            ZonedDateTime endBoundary = getValidationEndDate(firstStartTime, rruleString)
-                    .atZone(ZoneId.systemDefault());
-
-            List<ZonedDateTime> eventStartTimeListZdt = recur.getDates(seed, endBoundary);
-            Duration duration = Duration.between(firstStartTime, firstEndTime);
-
-            for (ZonedDateTime startZdt : eventStartTimeListZdt) {
-                LocalDateTime eventStartTime = startZdt.toLocalDateTime();
-                LocalDateTime eventEndTime = startZdt.plus(duration).toLocalDateTime();
-                validateNoSchedule(member, eventStartTime, eventEndTime);
-            }
-        }
-        catch (RuntimeException e) {
-            throw new InvalidInputException("유효하지 않은 반복 규칙(RRULE) 형식입니다.");
+        for (ZonedDateTime startZdt : eventStartTimeListZdt) {
+            LocalDateTime eventStartTime = startZdt.toLocalDateTime();
+            LocalDateTime eventEndTime = startZdt.plus(duration).toLocalDateTime();
+            validateNoSchedule(member, eventStartTime, eventEndTime);
         }
     }
 
@@ -162,12 +150,7 @@ public class EventRawService {
         Matcher matcher = pattern.matcher(rruleString.toUpperCase());
 
         if (matcher.find()) {
-            String until = matcher.group(1);
-            int year = Integer.parseInt(until.substring(0, 4));
-            int month = Integer.parseInt(until.substring(4, 6));
-            int day = Integer.parseInt(until.substring(6, 8));
-
-            LocalDateTime untilEndDate = LocalDateTime.of(year, month, day, 23, 59, 59);
+            LocalDateTime untilEndDate = calEndDate(matcher);
 
             if (untilEndDate.isBefore(maxEndDate)) {
                 return untilEndDate;
@@ -178,5 +161,30 @@ public class EventRawService {
         }
         // 기한이 없는 경우 최대 2년으로 설정
         return maxEndDate;
+    }
+
+    private static LocalDateTime calEndDate(Matcher matcher) {
+        String until = matcher.group(1);
+        int year = Integer.parseInt(until.substring(0, 4));
+        int month = Integer.parseInt(until.substring(4, 6));
+        int day = Integer.parseInt(until.substring(6, 8));
+
+        return LocalDateTime.of(year, month, day, 23, 59, 59);
+    }
+
+    private List<ZonedDateTime> calEventStartTimeListZdt(LocalDateTime firstStartTime, String rruleString) {
+        try {
+            RRule<ZonedDateTime> rrule = new RRule<>(rruleString);
+            Recur<ZonedDateTime> recur = rrule.getRecur();
+
+            ZonedDateTime seed = firstStartTime.atZone(ZoneId.systemDefault());
+            ZonedDateTime endBoundary = getValidationEndDate(firstStartTime, rruleString)
+                    .atZone(ZoneId.systemDefault());
+
+            return recur.getDates(seed, endBoundary);
+        }
+        catch (RuntimeException e) {
+            throw new InvalidInputException("유효하지 않은 반복 규칙(RRULE) 형식입니다.");
+        }
     }
 }
