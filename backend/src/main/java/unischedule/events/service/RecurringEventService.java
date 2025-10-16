@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import unischedule.events.domain.Event;
 import unischedule.events.domain.EventException;
+import unischedule.events.dto.EventServiceDto;
 import unischedule.events.service.internal.RecurringEventRawService;
 import unischedule.events.util.RRuleParser;
 import unischedule.events.util.ZonedDateTimeUtil;
@@ -25,8 +26,10 @@ public class RecurringEventService {
     private final RRuleParser rruleParser;
     private final ZonedDateTimeUtil zonedDateTimeUtil;
 
+    private final Boolean fromRecurring = true;
+
     @Transactional(readOnly = true)
-    public List<Event> expandRecurringEvents(List<Long> calendarIds, LocalDateTime startAt, LocalDateTime endAt) {
+    public List<EventServiceDto> expandRecurringEvents(List<Long> calendarIds, LocalDateTime startAt, LocalDateTime endAt) {
         List<Event> recurringEvents = recurringEventRawService.findRecurringSchedule(calendarIds, endAt);
 
         List<Event> expandedEventList = new ArrayList<>();
@@ -39,7 +42,9 @@ public class RecurringEventService {
             expandedEventList.addAll(applyEventExceptions(expandedEvent, exceptions));
         }
 
-        return expandedEventList;
+        return expandedEventList.stream()
+                .map(event -> EventServiceDto.from(event, fromRecurring))
+                .toList();
     }
 
     private List<Event> expandRecurringEvent(Event recEvent, LocalDateTime startAt, LocalDateTime endAt) {

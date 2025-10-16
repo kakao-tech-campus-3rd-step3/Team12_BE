@@ -1,5 +1,6 @@
 package unischedule.events.service.internal;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import unischedule.events.domain.Event;
@@ -13,6 +14,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class RecurringEventRawService {
     private EventExceptionRepository eventExceptionRepository;
     private EventRepository eventRepository;

@@ -36,6 +36,7 @@ public class PersonalEventService {
     private final EventRawService eventRawService;
     private final RecurringEventRawService recurringEventRawService;
     private final RecurringEventService recurringEventService;
+    private final EventQueryService eventQueryService;
     private final TeamMemberRawService teamMemberRawService;
     private final CalendarRawService calendarRawService;
     private final EventExceptionRepository eventExceptionRepository;
@@ -109,25 +110,10 @@ public class PersonalEventService {
 
         List<Long> calendarIds = getMemberCalendarIds(teamList, member);
 
-        List<EventGetResponseDto> findEvents = new ArrayList<>();
-        addSingleSchedule(calendarIds, findEvents, startAt, endAt);
-        addExpandedEventsFromRecurringEvents(calendarIds, findEvents, startAt, endAt);
-
-        return findEvents;
-    }
-
-    private void addSingleSchedule(List<Long> calendarIds, List<EventGetResponseDto> findEvents, LocalDateTime startAt, LocalDateTime endAt) {
-        eventRawService.findSingleSchedule(calendarIds, startAt, endAt)
+        return eventQueryService.getEvents(calendarIds, startAt, endAt)
                 .stream()
-                .map(EventGetResponseDto::fromSingleEvent)
-                .forEach(findEvents::add);
-    }
-
-    private void addExpandedEventsFromRecurringEvents(List<Long> calendarIds, List<EventGetResponseDto> findEvents, LocalDateTime startAt, LocalDateTime endAt) {
-        recurringEventService.expandRecurringEvents(calendarIds, startAt, endAt)
-                .stream()
-                .map(EventGetResponseDto::fromRecurringEvent)
-                .forEach(findEvents::add);
+                .map(EventGetResponseDto::fromServiceDto)
+                .toList();
     }
 
     @Transactional

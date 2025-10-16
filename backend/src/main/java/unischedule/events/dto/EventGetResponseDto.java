@@ -43,4 +43,16 @@ public record EventGetResponseDto(
                 true
         );
     }
+
+    public static EventGetResponseDto fromServiceDto(EventServiceDto serviceDto) {
+        return new EventGetResponseDto(
+                serviceDto.eventId(),
+                serviceDto.title(),
+                serviceDto.content(),
+                serviceDto.startAt(),
+                serviceDto.endAt(),
+                serviceDto.isPrivate(),
+                serviceDto.fromRecurring()
+        );
+    }
 }

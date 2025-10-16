@@ -6,6 +6,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import unischedule.events.domain.Event;
+import unischedule.events.dto.EventServiceDto;
 import unischedule.events.dto.EventUpdateDto;
 import unischedule.events.repository.EventRepository;
 import unischedule.events.util.RRuleParser;
@@ -24,6 +25,8 @@ import java.util.List;
 public class EventRawService {
     private final EventRepository eventRepository;
     private final RRuleParser rruleParser;
+
+    private final Boolean fromRecurring = false;
 
     @Transactional
     public Event saveEvent(Event event) {
@@ -108,8 +111,11 @@ public class EventRawService {
     }
 
     @Transactional(readOnly = true)
-    public List<Event> findSingleSchedule(List<Long> calendarIds, LocalDateTime startTime, LocalDateTime endTime) {
-        return eventRepository.findSingleEventsInPeriod(calendarIds, startTime, endTime);
+    public List<EventServiceDto> findSingleSchedule(List<Long> calendarIds, LocalDateTime startTime, LocalDateTime endTime) {
+        return eventRepository.findSingleEventsInPeriod(calendarIds, startTime, endTime)
+                .stream()
+                .map(event -> EventServiceDto.from(event, fromRecurring))
+                .toList();
     }
 
     @Transactional(readOnly = true)
