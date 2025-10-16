@@ -100,7 +100,7 @@ public class TeamEventControllerTest {
                 .willReturn(responseDto);
 
         // when & then
-        mockMvc.perform(patch("/api/events/team/modify")
+        mockMvc.perform(patch("/api/events/team/modify/{eventId}", eventId)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDto)))
