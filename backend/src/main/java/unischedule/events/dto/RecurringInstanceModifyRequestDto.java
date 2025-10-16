@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 
 // 반복 일정 중 단건 수정 요청 Dto
 @ValidEventTime
-public record ExpandedRecurringEventModifyRequestDto(
+public record RecurringInstanceModifyRequestDto(
 
         @NotNull(message = "수정하려는 일정의 시작 시간은 필수입니다.")
         @JsonProperty("original_start_time")

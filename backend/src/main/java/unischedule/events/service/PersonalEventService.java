@@ -12,8 +12,8 @@ import unischedule.events.domain.RecurrenceRule;
 import unischedule.events.dto.EventCreateResponseDto;
 import unischedule.events.dto.EventGetResponseDto;
 import unischedule.events.dto.EventModifyRequestDto;
-import unischedule.events.dto.ExpandedRecurringEventDeleteRequestDto;
-import unischedule.events.dto.ExpandedRecurringEventModifyRequestDto;
+import unischedule.events.dto.RecurringInstanceDeleteRequestDto;
+import unischedule.events.dto.RecurringInstanceModifyRequestDto;
 import unischedule.events.dto.PersonalEventCreateRequestDto;
 import unischedule.events.dto.RecurringEventCreateRequestDto;
 import unischedule.events.repository.EventExceptionRepository;
@@ -123,15 +123,36 @@ public class PersonalEventService {
 
         findEvent.validateEventOwner(member);
 
-        eventQueryService.checkEventUpdateOverlap(List.of(findEvent.getCalendar().getCalendarId()), requestDto.startTime(), requestDto.endTime(), findEvent);
+        modifyEvent(requestDto, findEvent);
 
-        eventRawService.updateEvent(findEvent, EventModifyRequestDto.toDto(requestDto));
-        
         return EventGetResponseDto.fromSingleEvent(findEvent);
     }
 
     @Transactional
-    public EventGetResponseDto modifyPersonalExpandedRecurringEvent(String email, Long eventId, ExpandedRecurringEventModifyRequestDto requestDto) {
+    public EventGetResponseDto modifyRecurringEvent(String email, EventModifyRequestDto requestDto) {
+        Member member = memberRawService.findMemberByEmail(email);
+        Event foundEvent = eventRawService.findEventById(requestDto.eventId());
+        foundEvent.validateEventOwner(member);
+
+        modifyEvent(requestDto, foundEvent);
+        eventExceptionRepository.deleteAllByOriginalEvent(foundEvent);
+
+        return EventGetResponseDto.fromRecurringEvent(foundEvent);
+    }
+
+    private void modifyEvent(EventModifyRequestDto requestDto, Event originalEvent) {
+        eventQueryService.checkEventUpdateOverlap(
+                List.of(originalEvent.getCalendar().getCalendarId()),
+                requestDto.startTime(),
+                requestDto.endTime(),
+                originalEvent
+        );
+
+        eventRawService.updateEvent(originalEvent, EventModifyRequestDto.toDto(requestDto));
+    }
+
+    @Transactional
+    public EventGetResponseDto modifyPersonalExpandedRecurringEvent(String email, Long eventId, RecurringInstanceModifyRequestDto requestDto) {
         Member member = memberRawService.findMemberByEmail(email);
 
         Event originalEvent = eventRawService.findEventById(eventId);
@@ -146,7 +167,7 @@ public class PersonalEventService {
     }
 
     @Transactional
-    public void deletePersonalExpandedRecurringEvent(String email, Long eventId, ExpandedRecurringEventDeleteRequestDto requestDto) {
+    public void deletePersonalExpandedRecurringEvent(String email, Long eventId, RecurringInstanceDeleteRequestDto requestDto) {
         Member member = memberRawService.findMemberByEmail(email);
         Event originalEvent = eventRawService.findEventById(eventId);
 

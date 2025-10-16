@@ -80,6 +80,15 @@ public class PersonalEventController {
         return ResponseEntity.ok(responseDto);
     }
 
+    @PatchMapping("/recurring/modify")
+    public ResponseEntity<EventGetResponseDto> modifyMyRecurringEvent(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestBody @Valid EventModifyRequestDto requestDto
+    ) {
+        EventGetResponseDto responseDto = eventService.modifyRecurringEvent(userDetails.getUsername(), requestDto);
+        return ResponseEntity.ok(responseDto);
+    }
+
     @DeleteMapping("/{eventId}")
     public ResponseEntity<Void> deleteMyEvent(
             @AuthenticationPrincipal
