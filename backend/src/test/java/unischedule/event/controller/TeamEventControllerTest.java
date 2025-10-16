@@ -67,7 +67,7 @@ public class TeamEventControllerTest {
                 false
         );
 
-        given(teamEventService.createTeamEvent(anyString(), any(TeamEventCreateRequestDto.class))).willReturn(responseDto);
+        given(teamEventService.createTeamSingleEvent(anyString(), any(TeamEventCreateRequestDto.class))).willReturn(responseDto);
 
         // when & then
         mockMvc.perform(post("/api/events/team/add")

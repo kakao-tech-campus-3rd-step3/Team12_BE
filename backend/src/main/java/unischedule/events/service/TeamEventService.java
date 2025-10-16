@@ -6,12 +6,19 @@ import org.springframework.transaction.annotation.Transactional;
 import unischedule.calendar.entity.Calendar;
 import unischedule.calendar.service.internal.CalendarRawService;
 import unischedule.events.domain.Event;
+import unischedule.events.domain.EventException;
 import unischedule.events.domain.EventState;
+import unischedule.events.domain.RecurrenceRule;
 import unischedule.events.dto.EventCreateResponseDto;
 import unischedule.events.dto.EventGetResponseDto;
 import unischedule.events.dto.EventModifyRequestDto;
+import unischedule.events.dto.RecurringEventCreateRequestDto;
+import unischedule.events.dto.RecurringInstanceDeleteRequestDto;
+import unischedule.events.dto.RecurringInstanceModifyRequestDto;
 import unischedule.events.dto.TeamEventCreateRequestDto;
+import unischedule.events.service.internal.EventExceptionRawService;
 import unischedule.events.service.internal.EventRawService;
+import unischedule.events.service.internal.RecurringEventRawService;
 import unischedule.member.domain.Member;
 import unischedule.member.service.internal.MemberRawService;
 import unischedule.team.domain.Team;
@@ -30,25 +37,23 @@ import java.util.Set;
 public class TeamEventService {
     private final MemberRawService memberRawService;
     private final EventRawService eventRawService;
+    private final RecurringEventRawService recurringEventRawService;
     private final CalendarRawService calendarRawService;
     private final TeamRawService teamRawService;
     private final TeamMemberRawService teamMemberRawService;
     private final EventQueryService eventQueryService;
+    private final EventExceptionRawService eventExceptionRawService;
 
     @Transactional
-    public EventCreateResponseDto createTeamEvent(String email, TeamEventCreateRequestDto requestDto) {
+    public EventCreateResponseDto createTeamSingleEvent(String email, TeamEventCreateRequestDto requestDto) {
         Member member = memberRawService.findMemberByEmail(email);
-
         Team team = teamRawService.findTeamById(requestDto.teamId());
-
         validateTeamMember(team, member);
 
         List<Long> calendarIdsToValidate = getAllRelatedCalendarIds(team);
-
         eventQueryService.checkNewSingleEventOverlap(calendarIdsToValidate, requestDto.startTime(), requestDto.endTime());
 
         Calendar calendar = calendarRawService.getTeamCalendar(team);
-
         Event event = new Event(
                 requestDto.title(),
                 requestDto.description(),
@@ -57,8 +62,38 @@ public class TeamEventService {
                 EventState.CONFIRMED,
                 requestDto.isPrivate()
         );
-
         event.connectCalendar(calendar);
+
+        return EventCreateResponseDto.from(eventRawService.saveEvent(event));
+    }
+
+    @Transactional
+    public EventCreateResponseDto createTeamRecurringEvent(String email, Long teamId, RecurringEventCreateRequestDto requestDto) {
+        Member member = memberRawService.findMemberByEmail(email);
+        Team team = teamRawService.findTeamById(teamId);
+        validateTeamMember(team, member);
+
+        List<Long> calendarIdsToValidate = getAllRelatedCalendarIds(team);
+        eventQueryService.checkNewRecurringEventOverlap(
+                calendarIdsToValidate,
+                requestDto.firstStartTime(),
+                requestDto.firstEndTime(),
+                requestDto.rrule()
+        );
+
+        Calendar calendar = calendarRawService.getTeamCalendar(team);
+        Event event = new Event(
+                requestDto.title(),
+                requestDto.description(),
+                requestDto.firstStartTime(),
+                requestDto.firstEndTime(),
+                EventState.CONFIRMED,
+                requestDto.isPrivate()
+        );
+
+        RecurrenceRule recurrenceRule = new RecurrenceRule(requestDto.rrule());
+        event.connectCalendar(calendar);
+        event.connectRecurrenceRule(recurrenceRule);
 
         return EventCreateResponseDto.from(eventRawService.saveEvent(event));
     }
@@ -97,7 +132,6 @@ public class TeamEventService {
                 .toList();
     }
 
-
     @Transactional
     public EventGetResponseDto modifyTeamEvent(String email, EventModifyRequestDto requestDto) {
         Member member = memberRawService.findMemberByEmail(email);
@@ -124,6 +158,44 @@ public class TeamEventService {
     }
 
     @Transactional
+    public EventGetResponseDto modifyTeamRecurringEvent(String email, EventModifyRequestDto requestDto) {
+        Member member = memberRawService.findMemberByEmail(email);
+        Event event = eventRawService.findEventById(requestDto.eventId());
+
+        event.validateIsTeamEvent();
+        Team team = event.getCalendar().getTeam();
+        validateTeamMember(team, member);
+
+        List<Long> calendarIdsToValidate = getAllRelatedCalendarIds(team);
+        eventQueryService.checkEventUpdateOverlap(
+                calendarIdsToValidate,
+                requestDto.startTime(),
+                requestDto.endTime(),
+                event
+        );
+
+        eventRawService.updateEvent(event, EventModifyRequestDto.toDto(requestDto));
+        // 기존 예외 삭제
+        eventExceptionRawService.deleteAllEventExceptionByEvent(event);
+
+        return EventGetResponseDto.fromRecurringEvent(event);
+    }
+
+    @Transactional
+    public EventGetResponseDto modifyTeamRecurringInstance(String email, Long eventId, RecurringInstanceModifyRequestDto requestDto) {
+        Member member = memberRawService.findMemberByEmail(email);
+        Event originalEvent = eventRawService.findEventById(eventId);
+        originalEvent.validateIsTeamEvent();
+        Team team = originalEvent.getCalendar().getTeam();
+        validateTeamMember(team, member);
+
+        EventException eventException = EventException.makeEventException(originalEvent, requestDto.toEventExceptionDto());
+        EventException savedException = eventExceptionRawService.saveEventException(eventException);
+
+        return EventGetResponseDto.fromEventException(savedException, originalEvent);
+    }
+
+    @Transactional
     public void deleteTeamEvent(String email, Long eventId) {
         Member member = memberRawService.findMemberByEmail(email);
         Event event = eventRawService.findEventById(eventId);
@@ -132,6 +204,27 @@ public class TeamEventService {
         event.validateIsTeamEvent();
         validateTeamMember(team, member);
         eventRawService.deleteEvent(event);
+    }
+
+    @Transactional
+    public void deleteTeamRecurringEvent(String email, Long eventId) {
+        Member member = memberRawService.findMemberByEmail(email);
+        Event event = eventRawService.findEventById(eventId);
+        event.validateIsTeamEvent();
+        Team team = event.getCalendar().getTeam();
+        validateTeamMember(team, member);
+
+        recurringEventRawService.deleteRecurringEvent(event);
+    }
+
+    @Transactional
+    public void deleteTeamRecurringInstance(String email, Long eventId, RecurringInstanceDeleteRequestDto requestDto) {
+        Member member = memberRawService.findMemberByEmail(email);
+        Event originalEvent = eventRawService.findEventById(eventId);
+        originalEvent.validateIsTeamEvent();
+        Team team = originalEvent.getCalendar().getTeam();
+
+        validateTeamMember(team, member);
     }
 
     private void validateTeamMember(Team team, Member member) {

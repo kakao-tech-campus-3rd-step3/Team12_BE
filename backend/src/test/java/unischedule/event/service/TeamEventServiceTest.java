@@ -78,7 +78,7 @@ class TeamEventServiceTest {
 
 
         // when
-        EventCreateResponseDto responseDto = teamEventService.createTeamEvent(email, requestDto);
+        EventCreateResponseDto responseDto = teamEventService.createTeamSingleEvent(email, requestDto);
 
         // then
         assertThat(responseDto.title()).isEqualTo("팀 회의");
@@ -105,7 +105,7 @@ class TeamEventServiceTest {
                 .when(eventRawService).validateNoScheduleForMembers(anyList(), any(), any());
 
         // when & then
-        assertThatThrownBy(() -> teamEventService.createTeamEvent(email, requestDto))
+        assertThatThrownBy(() -> teamEventService.createTeamSingleEvent(email, requestDto))
                 .isInstanceOf(InvalidInputException.class)
                 .hasMessage("일정이 겹치는 멤버가 있습니다.");
     }

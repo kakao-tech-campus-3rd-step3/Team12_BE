@@ -12,11 +12,11 @@ import unischedule.events.domain.RecurrenceRule;
 import unischedule.events.dto.EventCreateResponseDto;
 import unischedule.events.dto.EventGetResponseDto;
 import unischedule.events.dto.EventModifyRequestDto;
-import unischedule.events.dto.RecurringInstanceDeleteRequestDto;
-import unischedule.events.dto.RecurringInstanceModifyRequestDto;
 import unischedule.events.dto.PersonalEventCreateRequestDto;
 import unischedule.events.dto.RecurringEventCreateRequestDto;
-import unischedule.events.repository.EventExceptionRepository;
+import unischedule.events.dto.RecurringInstanceDeleteRequestDto;
+import unischedule.events.dto.RecurringInstanceModifyRequestDto;
+import unischedule.events.service.internal.EventExceptionRawService;
 import unischedule.events.service.internal.EventRawService;
 import unischedule.events.service.internal.RecurringEventRawService;
 import unischedule.member.domain.Member;
@@ -38,7 +38,7 @@ public class PersonalEventService {
     private final EventQueryService eventQueryService;
     private final TeamMemberRawService teamMemberRawService;
     private final CalendarRawService calendarRawService;
-    private final EventExceptionRepository eventExceptionRepository;
+    private final EventExceptionRawService eventExceptionRawService;
 
     @Transactional
     public EventCreateResponseDto makePersonalSingleEvent(String email, PersonalEventCreateRequestDto requestDto) {
@@ -150,7 +150,7 @@ public class PersonalEventService {
         foundEvent.validateEventOwner(member);
 
         modifyEvent(requestDto, foundEvent);
-        eventExceptionRepository.deleteAllByOriginalEvent(foundEvent);
+        eventExceptionRawService.deleteAllEventExceptionByEvent(foundEvent);
 
         return EventGetResponseDto.fromRecurringEvent(foundEvent);
     }
@@ -176,7 +176,7 @@ public class PersonalEventService {
 
         EventException eventException = EventException.makeEventException(originalEvent, requestDto.toEventExceptionDto());
 
-        EventException savedException = eventExceptionRepository.save(eventException);
+        EventException savedException = eventExceptionRawService.saveEventException(eventException);
 
         return EventGetResponseDto.fromEventException(savedException, originalEvent);
     }
@@ -189,7 +189,7 @@ public class PersonalEventService {
         originalEvent.validateEventOwner(member);
 
         EventException eventException = EventException.makeEventDeleteException(originalEvent, requestDto.originalStartTime());
-        eventExceptionRepository.save(eventException);
+        eventExceptionRawService.saveEventException(eventException);
     }
 
     @Transactional

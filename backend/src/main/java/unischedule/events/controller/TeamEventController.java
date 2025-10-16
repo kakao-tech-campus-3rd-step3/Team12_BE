@@ -38,7 +38,7 @@ public class TeamEventController {
             @RequestBody @Valid
             TeamEventCreateRequestDto requestDto
     ) {
-        EventCreateResponseDto responseDto = teamEventService.createTeamEvent(userDetails.getUsername(), requestDto);
+        EventCreateResponseDto responseDto = teamEventService.createTeamSingleEvent(userDetails.getUsername(), requestDto);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(responseDto);
     }
