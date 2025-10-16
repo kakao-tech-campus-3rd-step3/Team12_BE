@@ -3,6 +3,7 @@ package unischedule.util;
 import unischedule.calendar.entity.Calendar;
 import unischedule.events.domain.Event;
 import unischedule.events.domain.EventState;
+import unischedule.events.domain.RecurrenceRule;
 import unischedule.member.domain.Member;
 import unischedule.team.domain.Team;
 import unischedule.team.domain.TeamMember;
@@ -29,6 +30,22 @@ public class TestUtil {
                 EventState.CONFIRMED,
                 false
         );
+    }
+
+    public static Event makeRecurringEvent(String title, String content) {
+        Event event = new Event(
+                title,
+                content,
+                LocalDateTime.now(),
+                LocalDateTime.now().plusHours(1),
+                EventState.CONFIRMED,
+                false
+        );
+
+        // 매주 반복
+        RecurrenceRule recurrenceRule = new RecurrenceRule("FREQ=WEEKLY;INTERVAL=1");
+        event.connectRecurrenceRule(recurrenceRule);
+        return event;
     }
 
     public static Calendar makePersonalCalendar(Member owner) {

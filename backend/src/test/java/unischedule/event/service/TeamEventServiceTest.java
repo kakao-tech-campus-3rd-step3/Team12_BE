@@ -33,10 +33,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.anyList;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 
@@ -72,7 +70,7 @@ class TeamEventServiceTest {
         given(teamRawService.findTeamById(requestDto.teamId())).willReturn(team);
         doNothing().when(teamMemberRawService).checkTeamAndMember(team, member);
         given(teamMemberRawService.findByTeam(team)).willReturn(List.of(new TeamMember(team, member, null)));
-        doNothing().when(eventRawService).validateNoScheduleForMembers(anyList(), any(), any());
+        //doNothing().when(eventRawService).validateNoScheduleForMembers(anyList(), any(), any());
         given(calendarRawService.getTeamCalendar(team)).willReturn(teamCalendar);
         given(eventRawService.saveEvent(any(Event.class))).willAnswer(invocation -> invocation.getArgument(0));
 
@@ -101,8 +99,8 @@ class TeamEventServiceTest {
         given(teamRawService.findTeamById(requestDto.teamId())).willReturn(team);
         doNothing().when(teamMemberRawService).checkTeamAndMember(team, member);
         given(teamMemberRawService.findByTeam(team)).willReturn(List.of(new TeamMember(team, member, null)));
-        doThrow(new InvalidInputException("일정이 겹치는 멤버가 있습니다."))
-                .when(eventRawService).validateNoScheduleForMembers(anyList(), any(), any());
+        //doThrow(new InvalidInputException("일정이 겹치는 멤버가 있습니다."))
+        //        .when(eventRawService).validateNoScheduleForMembers(anyList(), any(), any());
 
         // when & then
         assertThatThrownBy(() -> teamEventService.createTeamSingleEvent(email, requestDto))
@@ -122,10 +120,10 @@ class TeamEventServiceTest {
         Event event = spy(TestUtil.makeEvent("Original Title", "Original Content"));
         event.connectCalendar(teamCalendar);
 
-        EventModifyRequestDto requestDto = new EventModifyRequestDto(1L, "Updated Title", "Updated Content", null, null, true);
+        EventModifyRequestDto requestDto = new EventModifyRequestDto("Updated Title", "Updated Content", null, null, true);
 
         given(memberRawService.findMemberByEmail(email)).willReturn(member);
-        given(eventRawService.findEventById(requestDto.eventId())).willReturn(event);
+        //given(eventRawService.findEventById(requestDto.eventId())).willReturn(event);
         given(teamCalendar.getTeam()).willReturn(team);
         doNothing().when(event).validateIsTeamEvent();
         doNothing().when(teamMemberRawService).checkTeamAndMember(team, member);
@@ -145,7 +143,7 @@ class TeamEventServiceTest {
         }).when(eventRawService).updateEvent(any(Event.class), any(EventUpdateDto.class));
 
         // when
-        EventGetResponseDto responseDto = teamEventService.modifyTeamEvent(email, requestDto);
+        EventGetResponseDto responseDto = teamEventService.modifyTeamEvent(email, event.getEventId(), requestDto);
 
         // then
         assertThat(responseDto.title()).isEqualTo("Updated Title");

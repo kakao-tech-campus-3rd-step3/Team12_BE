@@ -115,13 +115,13 @@ public class EventException {
     }
 
     private void updateTitle(String title) {
-        if (title != null && title.isBlank()) {
+        if (title != null && !title.isBlank()) {
             this.title = title;
         }
     }
 
     private void updateContent(String content) {
-        if (content != null && title.isBlank()) {
+        if (content != null && !content.isBlank()) {
             this.content = content;
         }
     }

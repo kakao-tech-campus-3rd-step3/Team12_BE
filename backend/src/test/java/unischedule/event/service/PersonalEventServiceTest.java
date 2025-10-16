@@ -12,15 +12,21 @@ import org.springframework.security.access.AccessDeniedException;
 import unischedule.calendar.entity.Calendar;
 import unischedule.calendar.service.internal.CalendarRawService;
 import unischedule.events.domain.Event;
+import unischedule.events.domain.EventException;
 import unischedule.events.domain.EventState;
 import unischedule.events.dto.EventCreateResponseDto;
+import unischedule.events.dto.EventExceptionDto;
 import unischedule.events.dto.EventGetResponseDto;
 import unischedule.events.dto.EventModifyRequestDto;
+import unischedule.events.dto.EventServiceDto;
 import unischedule.events.dto.EventUpdateDto;
 import unischedule.events.dto.PersonalEventCreateRequestDto;
-import unischedule.events.repository.EventExceptionRepository;
+import unischedule.events.dto.RecurringInstanceModifyRequestDto;
+import unischedule.events.service.EventQueryService;
 import unischedule.events.service.PersonalEventService;
+import unischedule.events.service.internal.EventExceptionRawService;
 import unischedule.events.service.internal.EventRawService;
+import unischedule.events.service.internal.RecurringEventRawService;
 import unischedule.exception.EntityNotFoundException;
 import unischedule.exception.InvalidInputException;
 import unischedule.member.domain.Member;
@@ -31,8 +37,8 @@ import unischedule.team.service.internal.TeamMemberRawService;
 import unischedule.util.TestUtil;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
@@ -58,11 +64,15 @@ class PersonalEventServiceTest {
     @Mock
     private MemberRawService memberRawService;
     @Mock
+    private RecurringEventRawService recurringEventRawService;
+    @Mock
+    private EventQueryService eventQueryService;
+    @Mock
     private CalendarRawService calendarRawService;
     @Mock
     private TeamMemberRawService teamMemberRawService;
     @Mock
-    private EventExceptionRepository eventExceptionRepository;
+    private EventExceptionRawService eventExceptionRawService;
     @InjectMocks
     private PersonalEventService eventService;
 
@@ -111,7 +121,7 @@ class PersonalEventServiceTest {
         given(personalCalendar.getCalendarId()).willReturn(calendarId);
 
         doNothing().when(personalCalendar).validateOwner(owner);
-        doNothing().when(eventRawService).checkOverlapForNewSingleSchedule(anyList(), any(LocalDateTime.class), any(LocalDateTime.class));
+        doNothing().when(eventQueryService).checkNewSingleEventOverlap(anyList(), any(LocalDateTime.class), any(LocalDateTime.class));
 
         given(eventRawService.saveEvent(any(Event.class))).willReturn(event);
         
@@ -122,8 +132,8 @@ class PersonalEventServiceTest {
         assertThat(result).isNotNull();
         assertThat(result.title()).isEqualTo("새 회의");
         assertThat(result.description()).isEqualTo("주간 회의");
+        verify(eventQueryService).checkNewSingleEventOverlap(eq(List.of(calendarId)), eq(requestDto.startTime()), eq(requestDto.endTime()));
         verify(eventRawService).saveEvent(any(Event.class));
-        verify(eventRawService).checkOverlapForNewSingleSchedule(eq(List.of(calendarId)), eq(requestDto.startTime()), eq(requestDto.endTime()));
     }
 
     @Test
@@ -143,12 +153,14 @@ class PersonalEventServiceTest {
         given(personalCalendar.getCalendarId()).willReturn(calendarId);
 
         doThrow(new InvalidInputException("겹치는 일정이 있어 등록할 수 없습니다."))
-                .when(eventRawService).checkOverlapForNewSingleSchedule(anyList(), any(LocalDateTime.class), any(LocalDateTime.class));
+                .when(eventQueryService).checkNewSingleEventOverlap(anyList(), any(LocalDateTime.class), any(LocalDateTime.class));
 
         // when & then
         assertThatThrownBy(() -> eventService.makePersonalSingleEvent(memberEmail, requestDto))
                 .isInstanceOf(InvalidInputException.class)
                 .hasMessage("겹치는 일정이 있어 등록할 수 없습니다.");
+
+        verify(eventQueryService).checkNewSingleEventOverlap(eq(List.of(calendarId)), eq(requestDto.startTime()), eq(requestDto.endTime()));
     }
 
     @Test
@@ -161,20 +173,30 @@ class PersonalEventServiceTest {
         Team team = TestUtil.makeTeam();
         TeamMember teamMember = TestUtil.makeTeamMember(team, owner);
         Calendar teamCalendar = mock(Calendar.class);
+
         given(teamCalendar.getCalendarId()).willReturn(2L);
         given(personalCalendar.getCalendarId()).willReturn(1L);
 
-        Event event1 = new Event(
-                "회의", "주간 회의",
+        EventServiceDto event1 = new EventServiceDto(
+                1L,
+                "회의",
+                "주간 회의",
                 LocalDateTime.of(2025, 9, 10, 10, 0),
                 LocalDateTime.of(2025, 9, 10, 11, 0),
-                EventState.CONFIRMED, true
+                EventState.CONFIRMED,
+                true,
+                false
         );
 
-        Event event2 = new Event("워크샵", "분기별 워크샵",
+        EventServiceDto event2 = new EventServiceDto(
+                2L,
+                "워크샵",
+                "분기별 워크샵",
                 LocalDateTime.of(2025, 9, 15, 14, 0),
                 LocalDateTime.of(2025, 9, 15, 17, 0),
-                EventState.CONFIRMED, false
+                EventState.CONFIRMED,
+                false,
+                false
         );
 
         List<Long> calendarIds = List.of(1L, 2L);
@@ -184,27 +206,18 @@ class PersonalEventServiceTest {
         given(teamMemberRawService.findByMember(owner)).willReturn(List.of(teamMember));
         given(calendarRawService.getTeamCalendar(team)).willReturn(teamCalendar);
 
-        given(eventRawService.findSingleSchedule(calendarIds, start, end))
+        given(eventQueryService.getEvents(calendarIds, start, end))
                 .willReturn(List.of(event1, event2));
-        given(eventRawService.expandRecurringEvents(calendarIds, start, end))
-                .willReturn(new ArrayList<>()); // 이 테스트에서는 반복 일정이 없다고 가정
 
         // when
         List<EventGetResponseDto> result = eventService.getPersonalEvents(memberEmail, start, end);
         
         // then
         assertThat(result).hasSize(2);
-        assertThat(result.getFirst().title()).isEqualTo(event1.getTitle());
-        assertThat(result.get(0).title()).isEqualTo(event1.getTitle());
-        assertThat(result.get(1).title()).isEqualTo(event2.getTitle());
+        assertThat(result.getFirst().title()).isEqualTo(event1.title());
+        assertThat(result.get(1).title()).isEqualTo(event2.title());
 
-        verify(memberRawService).findMemberByEmail(memberEmail);
-        verify(calendarRawService).getMyPersonalCalendar(owner);
-        verify(teamMemberRawService).findByMember(owner);
-        verify(calendarRawService).getTeamCalendar(team);
-
-        verify(eventRawService).findSingleSchedule(calendarIds, start, end);
-        verify(eventRawService).expandRecurringEvents(calendarIds, start, end);
+        verify(eventQueryService).getEvents(calendarIds, start, end);
     }
 
     @Test
@@ -216,28 +229,107 @@ class PersonalEventServiceTest {
 
         existingEvent.connectCalendar(personalCalendar);
 
-        EventModifyRequestDto requestDto = new EventModifyRequestDto(eventId, "새 제목", "새 내용", null, null, true);
+        EventModifyRequestDto requestDto = new EventModifyRequestDto("새 제목", "새 내용", null, null, true);
 
+        given(personalCalendar.getCalendarId()).willReturn(1L);
         given(memberRawService.findMemberByEmail(memberEmail)).willReturn(owner);
         given(eventRawService.findEventById(eventId)).willReturn(existingEvent);
-        given(personalCalendar.getCalendarId()).willReturn(calendarId);
 
-        doAnswer(invocation -> {
-            Event event = invocation.getArgument(0);
-            EventUpdateDto dto = invocation.getArgument(1);
-            event.modifyEvent(dto.title(), dto.content(), dto.startTime(), dto.endTime(), dto.isPrivate());
-            return null;
-        }).when(eventRawService).updateEvent(any(Event.class), any(EventUpdateDto.class));
+        doNothing().when(eventQueryService).checkEventUpdateOverlap(anyList(), any(), any(), any());
 
         // when
-        EventGetResponseDto responseDto = eventService.modifyPersonalEvent(memberEmail, requestDto);
+        eventService.modifyPersonalEvent(memberEmail, eventId, requestDto);
 
         // then
-        assertThat(responseDto.title()).isEqualTo("새 제목");
-        assertThat(responseDto.description()).isEqualTo("새 내용");
-        assertThat(responseDto.isPrivate()).isTrue();
+        verify(eventQueryService).checkEventUpdateOverlap(
+                eq(List.of(personalCalendar.getCalendarId())),
+                eq(requestDto.startTime()),
+                eq(requestDto.endTime()),
+                eq(existingEvent)
+        );
+        verify(eventRawService).updateEvent(eq(existingEvent), any(EventUpdateDto.class));
+    }
 
-        verify(eventRawService).canUpdateEvent(any(), any(), any(), any());
+    @Test
+    @DisplayName("반복 일정 날짜 최초 수정 시 EventException 생성")
+    void modifyRecurringInstance_CreateNewEventException() {
+        // given
+        Long eventId = 1L;
+        Event originalEvent = TestUtil.makeRecurringEvent("반복 회의", "주간 회의");
+        originalEvent.connectCalendar(personalCalendar);
+        LocalDateTime originalStartTime = originalEvent.getStartAt().plusDays(7);
+
+        RecurringInstanceModifyRequestDto requestDto = new RecurringInstanceModifyRequestDto(
+                originalStartTime,
+                "변경된 회의",
+                "내용 변경",
+                originalStartTime.plusHours(1),
+                originalStartTime.plusHours(2),
+                false
+        );
+
+        given(memberRawService.findMemberByEmail(memberEmail)).willReturn(owner);
+        given(eventRawService.findEventById(eventId)).willReturn(originalEvent);
+        given(eventExceptionRawService.findEventException(originalEvent, requestDto.originalStartTime()))
+                .willReturn(Optional.empty());
+        given(eventExceptionRawService.saveEventException(any(EventException.class)))
+                .willAnswer(invocation -> invocation.getArgument(0));
+
+        // when
+        EventGetResponseDto result = eventService.modifyPersonalRecurringInstance(memberEmail, eventId, requestDto);
+
+        // then
+        verify(eventExceptionRawService).saveEventException(any(EventException.class));
+        assertThat(result.eventId()).isEqualTo(originalEvent.getEventId());
+        assertThat(result.title()).isEqualTo("변경된 회의");
+        assertThat(result.description()).isEqualTo("내용 변경");
+    }
+
+    @Test
+    @DisplayName("반복 일정의 특정 날짜(instance) 재수정 시 기존 EventException 업데이트")
+    void modifyRecurringInstance_UpdateExistingException() {
+        // given
+        Long eventId = 1L;
+        Event originalEvent = TestUtil.makeRecurringEvent("반복 일정", "주간 회의");
+        originalEvent.connectCalendar(personalCalendar);
+        LocalDateTime originalStartTime = originalEvent.getStartAt().plusDays(7);
+
+        EventException existingException = spy(EventException.makeEventException(
+                originalEvent,
+                new EventExceptionDto(originalStartTime, "첫 번째 수정", null, null, null, null)
+        ));
+
+        RecurringInstanceModifyRequestDto requestDto = new RecurringInstanceModifyRequestDto(
+                originalStartTime,
+                "두 번째 수정",
+                "내용도 수정",
+                null,
+                null,
+                null
+        );
+
+        given(memberRawService.findMemberByEmail(memberEmail)).willReturn(owner);
+        given(eventRawService.findEventById(eventId)).willReturn(originalEvent);
+        given(eventExceptionRawService.findEventException(originalEvent, requestDto.originalStartTime()))
+                .willReturn(Optional.of(existingException));
+        given(eventExceptionRawService.saveEventException(any(EventException.class)))
+                .willAnswer(invocation -> invocation.getArgument(0));
+
+        doAnswer(invocation -> {
+            EventException exception = invocation.getArgument(0);
+            EventExceptionDto dto = invocation.getArgument(1);
+            exception.update(dto.originalStartTime(), dto.title(), dto.content(), dto.startTime(), dto.endTime(), dto.isPrivate());
+            return null;
+        }).when(eventExceptionRawService).updateEventException(any(EventException.class), any(EventExceptionDto.class));
+
+        // when
+        EventGetResponseDto result = eventService.modifyPersonalRecurringInstance(memberEmail, eventId, requestDto);
+
+        // then
+        verify(eventExceptionRawService).updateEventException(any(EventException.class), any(EventExceptionDto.class));
+        verify(eventExceptionRawService).saveEventException(existingException);
+        assertThat(result.title()).isEqualTo("두 번째 수정");
+        assertThat(result.description()).isEqualTo("내용도 수정");
     }
 
     @Test
@@ -249,18 +341,17 @@ class PersonalEventServiceTest {
         Event existingEvent = spy(TestUtil.makeEvent("다른 사람 일정", "내용"));
 
         existingEvent.connectCalendar(personalCalendar);
+        EventModifyRequestDto requestDto = new EventModifyRequestDto("새 제목", null, null, null, null);
 
         given(memberRawService.findMemberByEmail(memberEmail)).willReturn(owner);
         given(eventRawService.findEventById(eventId)).willReturn(existingEvent);
-
-        EventModifyRequestDto requestDto = new EventModifyRequestDto(eventId, "새 제목", null, null, null, null);
 
         doThrow(new AccessDeniedException("해당 캘린더에 대한 접근 권한이 없습니다."))
                 .when(existingEvent).validateEventOwner(any(Member.class));
 
 
         // when & then
-        assertThatThrownBy(() -> eventService.modifyPersonalEvent(memberEmail, requestDto))
+        assertThatThrownBy(() -> eventService.modifyPersonalEvent(memberEmail, eventId, requestDto))
                 .isInstanceOf(AccessDeniedException.class)
                 .hasMessage("해당 캘린더에 대한 접근 권한이 없습니다.");
     }
@@ -328,7 +419,7 @@ class PersonalEventServiceTest {
         verify(eventRawService, times(1)).findUpcomingEventsByMember(member);
         
         assertThat(result).hasSize(1);
-        assertThat(result.get(0).title()).isEqualTo("회의");
+        assertThat(result.getFirst().title()).isEqualTo("회의");
     }
     
     @Test
@@ -354,8 +445,8 @@ class PersonalEventServiceTest {
             .isPrivate(false)
             .build();
         
-        when(memberRawService.findMemberByEmail(email)).thenReturn(member);
-        when(eventRawService.findTodayEventsByMember(member)).thenReturn(List.of(event1, event2));
+        given(memberRawService.findMemberByEmail(email)).willReturn(member);
+        given(eventRawService.findTodayEventsByMember(member)).willReturn(List.of(event1, event2));
         
         // when
         List<EventGetResponseDto> result = eventService.getTodayMyEvent(email);

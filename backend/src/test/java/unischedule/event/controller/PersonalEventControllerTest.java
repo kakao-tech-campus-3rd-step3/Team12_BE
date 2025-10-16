@@ -113,7 +113,7 @@ public class PersonalEventControllerTest {
     void modifyMyEvent() throws Exception {
         // given
         Long eventId = 1L;
-        EventModifyRequestDto requestDto = new EventModifyRequestDto(1L, "Updated Title", null, null, null, null);
+        EventModifyRequestDto requestDto = new EventModifyRequestDto("Updated Title", null, null, null, null);
         EventGetResponseDto responseDto = new EventGetResponseDto(
                 eventId,
                 "Updated Title",
@@ -124,7 +124,7 @@ public class PersonalEventControllerTest {
                 false
         );
 
-        given(eventService.modifyPersonalEvent(anyString(), any(EventModifyRequestDto.class)))
+        given(eventService.modifyPersonalEvent(anyString(), anyLong(), any(EventModifyRequestDto.class)))
                 .willReturn(responseDto);
 
         // when & then

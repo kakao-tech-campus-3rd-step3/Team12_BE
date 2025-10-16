@@ -85,7 +85,7 @@ public class TeamEventControllerTest {
     void modifyTeamEvent() throws Exception {
         // given
         Long eventId = 1L;
-        EventModifyRequestDto requestDto = new EventModifyRequestDto(eventId, "Updated Title", null, null, null, null);
+        EventModifyRequestDto requestDto = new EventModifyRequestDto("Updated Title", null, null, null, null);
         EventGetResponseDto responseDto = new EventGetResponseDto(
                 eventId,
                 "Updated Title",
@@ -96,7 +96,7 @@ public class TeamEventControllerTest {
                 false
         );
 
-        given(teamEventService.modifyTeamEvent(anyString(), any(EventModifyRequestDto.class)))
+        given(teamEventService.modifyTeamEvent(anyString(), anyLong(), any(EventModifyRequestDto.class)))
                 .willReturn(responseDto);
 
         // when & then
