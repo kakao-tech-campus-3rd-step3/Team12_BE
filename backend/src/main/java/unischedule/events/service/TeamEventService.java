@@ -200,8 +200,9 @@ public class TeamEventService {
         else {
             eventException = EventException.makeEventException(originalEvent, requestDto.toEventExceptionDto());
         }
+        EventException savedException = eventExceptionRawService.saveEventException(eventException);
 
-        return EventGetResponseDto.fromEventException(eventException, originalEvent);
+        return EventGetResponseDto.fromEventException(savedException, originalEvent);
     }
 
     @Transactional

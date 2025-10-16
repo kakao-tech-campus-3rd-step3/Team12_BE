@@ -50,17 +50,14 @@ public class TestUtil {
 
     public static Calendar makePersonalCalendar(Member owner) {
         return new Calendar(
-                owner,
-                "My Calendar",
-                "Personal calendar"
+                owner
         );
     }
 
     public static Calendar makeTeamCalendar(Member owner, Team team) {
         return new Calendar(
                 owner,
-                "Team Calendar",
-                "Team calendar"
+                team
         );
     }
 
