@@ -111,7 +111,7 @@ class PersonalEventServiceTest {
         given(personalCalendar.getCalendarId()).willReturn(calendarId);
 
         doNothing().when(personalCalendar).validateOwner(owner);
-        doNothing().when(eventRawService).validateNoSingleSchedule(anyList(), any(LocalDateTime.class), any(LocalDateTime.class));
+        doNothing().when(eventRawService).checkOverlapForNewSingleSchedule(anyList(), any(LocalDateTime.class), any(LocalDateTime.class));
 
         given(eventRawService.saveEvent(any(Event.class))).willReturn(event);
         
@@ -123,7 +123,7 @@ class PersonalEventServiceTest {
         assertThat(result.title()).isEqualTo("새 회의");
         assertThat(result.description()).isEqualTo("주간 회의");
         verify(eventRawService).saveEvent(any(Event.class));
-        verify(eventRawService).validateNoSingleSchedule(eq(List.of(calendarId)), eq(requestDto.startTime()), eq(requestDto.endTime()));
+        verify(eventRawService).checkOverlapForNewSingleSchedule(eq(List.of(calendarId)), eq(requestDto.startTime()), eq(requestDto.endTime()));
     }
 
     @Test
@@ -143,7 +143,7 @@ class PersonalEventServiceTest {
         given(personalCalendar.getCalendarId()).willReturn(calendarId);
 
         doThrow(new InvalidInputException("겹치는 일정이 있어 등록할 수 없습니다."))
-                .when(eventRawService).validateNoSingleSchedule(anyList(), any(LocalDateTime.class), any(LocalDateTime.class));
+                .when(eventRawService).checkOverlapForNewSingleSchedule(anyList(), any(LocalDateTime.class), any(LocalDateTime.class));
 
         // when & then
         assertThatThrownBy(() -> eventService.makePersonalSingleEvent(memberEmail, requestDto))

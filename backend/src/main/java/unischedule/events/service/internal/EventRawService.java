@@ -53,21 +53,21 @@ public class EventRawService {
     }
 
     @Transactional(readOnly = true)
-    public void validateNoSingleSchedule(List<Long> calendarIds, LocalDateTime startTime, LocalDateTime endTime) {
+    public void checkOverlapForNewSingleSchedule(List<Long> calendarIds, LocalDateTime startTime, LocalDateTime endTime) {
         if (eventRepository.existsSingleScheduleInPeriod(calendarIds, startTime, endTime)) {
             throw new InvalidInputException("겹치는 일정이 있어 등록할 수 없습니다.");
         }
     }
 
     @Transactional(readOnly = true)
-    public void validateNoRecurringSchedule(List<Long> calendarIds, LocalDateTime firstStartTime, LocalDateTime firstEndTime, String rruleString) {
+    public void checkOverlapForNewRecurringSchedule(List<Long> calendarIds, LocalDateTime firstStartTime, LocalDateTime firstEndTime, String rruleString) {
         List<ZonedDateTime> eventStartTimeListZdt = rruleParser.calEventStartTimeListZdt(firstStartTime, rruleString);
         Duration duration = Duration.between(firstStartTime, firstEndTime);
 
         for (ZonedDateTime startZdt : eventStartTimeListZdt) {
             LocalDateTime eventStartTime = startZdt.toLocalDateTime();
             LocalDateTime eventEndTime = startZdt.plus(duration).toLocalDateTime();
-            validateNoSingleSchedule(calendarIds, eventStartTime, eventEndTime);
+            checkOverlapForNewSingleSchedule(calendarIds, eventStartTime, eventEndTime);
         }
     }
 

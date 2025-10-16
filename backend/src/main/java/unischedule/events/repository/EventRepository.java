@@ -104,6 +104,25 @@ public interface EventRepository extends JpaRepository<Event, Long> {
             LocalDateTime endAt
     );
 
+    @Query("""
+            SELECT count(e) > 0
+            FROM Event e
+            WHERE e.calendar.calendarId IN :calendarIds
+            AND e.eventId != :eventId
+            AND e.recurrenceRule IS NULL
+            AND e.endAt > :startAt
+            AND e.startAt < :endAt
+    """)
+    boolean existsOtherSingleEventInPeriod(
+            @Param("calendarIds")
+            List<Long> calendarIds,
+            @Param("startAt")
+            LocalDateTime startAt,
+            @Param("endAt")
+            LocalDateTime endAt,
+            @Param("eventId") Long excludeEventId
+    );
+
     /**
      * 여러 캘린더의 특정 기간동안의 모든 일정 조회
      * @param calendarIds

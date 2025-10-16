@@ -13,7 +13,7 @@ public interface EventExceptionRepository extends JpaRepository<EventException, 
 
     @Query("""
             SELECT ex
-            FROM EventException ex 
+            FROM EventException ex
             WHERE ex.originalEvent IN :originalEvents
             AND ex.originalEventTime >= :startAt
             AND ex.originalEventTime < :endAt

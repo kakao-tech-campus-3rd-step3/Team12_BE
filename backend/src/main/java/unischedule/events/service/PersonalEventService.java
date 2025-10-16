@@ -54,7 +54,7 @@ public class PersonalEventService {
 
         targetCalendar.validateOwner(member);
 
-        eventRawService.validateNoSingleSchedule(List.of(targetCalendar.getCalendarId()), requestDto.startTime(), requestDto.endTime());
+        eventRawService.checkOverlapForNewSingleSchedule(List.of(targetCalendar.getCalendarId()), requestDto.startTime(), requestDto.endTime());
 
         Event newEvent = Event.builder()
                 .title(requestDto.title())
@@ -79,7 +79,7 @@ public class PersonalEventService {
 
         targetCalendar.validateOwner(member);
 
-        eventRawService.validateNoRecurringSchedule(
+        eventRawService.checkOverlapForNewRecurringSchedule(
                 List.of(targetCalendar.getCalendarId()),
                 requestDto.firstStartTime(),
                 requestDto.firstEndTime(),
