@@ -64,6 +64,24 @@ public class TeamEventService {
     }
 
     @Transactional(readOnly = true)
+    public EventGetResponseDto getTeamEvent(String email, Long eventId) {
+        Member member = memberRawService.findMemberByEmail(email);
+        Event event = eventRawService.findEventById(eventId);
+
+        event.validateIsTeamEvent();
+
+        Team team = event.getCalendar().getTeam();
+        validateTeamMember(team, member);
+
+        if (event.getRecurrenceRule() == null) {
+            return EventGetResponseDto.fromSingleEvent(event);
+        }
+        else {
+            return EventGetResponseDto.fromRecurringEvent(event);
+        }
+    }
+
+    @Transactional(readOnly = true)
     public List<EventGetResponseDto> getTeamEvents(String email, Long teamId, LocalDateTime startAt, LocalDateTime endAt) {
         Member member = memberRawService.findMemberByEmail(email);
         Team team = teamRawService.findTeamById(teamId);

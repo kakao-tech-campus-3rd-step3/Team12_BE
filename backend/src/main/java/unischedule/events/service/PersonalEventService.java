@@ -99,6 +99,21 @@ public class PersonalEventService {
     }
 
     @Transactional(readOnly = true)
+    public EventGetResponseDto getPersonalEvent(String email, Long eventId) {
+        Member member = memberRawService.findMemberByEmail(email);
+        Event event = eventRawService.findEventById(eventId);
+
+        event.validateEventOwner(member);
+
+        if (event.getRecurrenceRule() == null) {
+            return EventGetResponseDto.fromSingleEvent(event);
+        }
+        else {
+            return EventGetResponseDto.fromRecurringEvent(event);
+        }
+    }
+
+    @Transactional(readOnly = true)
     public List<EventGetResponseDto> getPersonalEvents(String email, LocalDateTime startAt, LocalDateTime endAt) {
         Member member = memberRawService.findMemberByEmail(email);
 
