@@ -35,7 +35,6 @@ public class PersonalEventService {
     private final MemberRawService memberRawService;
     private final EventRawService eventRawService;
     private final RecurringEventRawService recurringEventRawService;
-    private final RecurringEventService recurringEventService;
     private final EventQueryService eventQueryService;
     private final TeamMemberRawService teamMemberRawService;
     private final CalendarRawService calendarRawService;
@@ -49,7 +48,7 @@ public class PersonalEventService {
 
         targetCalendar.validateOwner(member);
 
-        eventRawService.checkOverlapForNewSingleSchedule(List.of(targetCalendar.getCalendarId()), requestDto.startTime(), requestDto.endTime());
+        eventQueryService.checkNewSingleEventOverlap(List.of(targetCalendar.getCalendarId()), requestDto.startTime(), requestDto.endTime());
 
         Event newEvent = Event.builder()
                 .title(requestDto.title())
@@ -74,7 +73,7 @@ public class PersonalEventService {
 
         targetCalendar.validateOwner(member);
 
-        eventRawService.checkOverlapForNewRecurringSchedule(
+        eventQueryService.checkNewRecurringEventOverlap(
                 List.of(targetCalendar.getCalendarId()),
                 requestDto.firstStartTime(),
                 requestDto.firstEndTime(),
@@ -124,7 +123,7 @@ public class PersonalEventService {
 
         findEvent.validateEventOwner(member);
 
-        eventRawService.canUpdateEvent(List.of(findEvent.getCalendar().getCalendarId()), findEvent, requestDto.startTime(), requestDto.endTime());
+        eventQueryService.checkEventUpdateOverlap(List.of(findEvent.getCalendar().getCalendarId()), requestDto.startTime(), requestDto.endTime(), findEvent);
 
         eventRawService.updateEvent(findEvent, EventModifyRequestDto.toDto(requestDto));
         

@@ -41,7 +41,7 @@ public class TeamEventService {
 
         List<Member> teamMembers = getAllTeamMember(team);
 
-        eventRawService.validateNoScheduleForMembers(teamMembers, requestDto.startTime(), requestDto.endTime());
+        //eventRawService.validateNoScheduleForMembers(teamMembers, requestDto.startTime(), requestDto.endTime());
 
         Calendar calendar = calendarRawService.getTeamCalendar(team);
 
@@ -88,7 +88,7 @@ public class TeamEventService {
         validateTeamMember(team, member);
 
         List<Member> teamMembers = getAllTeamMember(team);
-        eventRawService.canUpdateEventForMembers(teamMembers, event, requestDto.startTime(), requestDto.endTime());
+        //eventRawService.canUpdateEventForMembers(teamMembers, event, requestDto.startTime(), requestDto.endTime());
 
         eventRawService.updateEvent(event, EventModifyRequestDto.toDto(requestDto));
 
