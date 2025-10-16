@@ -64,7 +64,7 @@ public class TeamEventController {
         return ResponseEntity.status(HttpStatus.CREATED).body(responseDto);
     }
 
-    @GetMapping("/{eventId}")
+    @GetMapping("/event/{eventId}")
     public ResponseEntity<EventGetResponseDto> getTeamEvent(
             @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable Long eventId
