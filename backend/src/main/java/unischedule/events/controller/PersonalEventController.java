@@ -119,7 +119,7 @@ public class PersonalEventController {
             @RequestBody @Valid
             RecurringInstanceModifyRequestDto requestDto
     ) {
-        EventGetResponseDto responseDto = eventService.modifyPersonalExpandedRecurringEvent(
+        EventGetResponseDto responseDto = eventService.modifyPersonalRecurringInstance(
                 userDetails.getUsername(),
                 eventId,
                 requestDto
@@ -158,7 +158,7 @@ public class PersonalEventController {
             @RequestBody @Valid
             RecurringInstanceDeleteRequestDto requestDto
     ) {
-        eventService.deletePersonalExpandedRecurringEvent(
+        eventService.deletePersonalRecurringInstance(
                 userDetails.getUsername(),
                 eventId,
                 requestDto

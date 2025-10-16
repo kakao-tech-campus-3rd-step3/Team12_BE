@@ -28,6 +28,7 @@ import unischedule.team.service.internal.TeamMemberRawService;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -167,14 +168,21 @@ public class PersonalEventService {
     }
 
     @Transactional
-    public EventGetResponseDto modifyPersonalExpandedRecurringEvent(String email, Long eventId, RecurringInstanceModifyRequestDto requestDto) {
+    public EventGetResponseDto modifyPersonalRecurringInstance(String email, Long eventId, RecurringInstanceModifyRequestDto requestDto) {
         Member member = memberRawService.findMemberByEmail(email);
-
         Event originalEvent = eventRawService.findEventById(eventId);
-
         originalEvent.validateEventOwner(member);
 
-        EventException eventException = EventException.makeEventException(originalEvent, requestDto.toEventExceptionDto());
+        Optional<EventException> eventExceptionOpt = eventExceptionRawService.findEventException(originalEvent, requestDto.originalStartTime());
+
+        EventException eventException;
+        if (eventExceptionOpt.isPresent()) {
+            eventException = eventExceptionOpt.get();
+            eventExceptionRawService.updateEventException(eventException, requestDto.toEventExceptionDto());
+        }
+        else {
+            eventException = EventException.makeEventException(originalEvent, requestDto.toEventExceptionDto());
+        }
 
         EventException savedException = eventExceptionRawService.saveEventException(eventException);
 
@@ -182,7 +190,7 @@ public class PersonalEventService {
     }
 
     @Transactional
-    public void deletePersonalExpandedRecurringEvent(String email, Long eventId, RecurringInstanceDeleteRequestDto requestDto) {
+    public void deletePersonalRecurringInstance(String email, Long eventId, RecurringInstanceDeleteRequestDto requestDto) {
         Member member = memberRawService.findMemberByEmail(email);
         Event originalEvent = eventRawService.findEventById(eventId);
 

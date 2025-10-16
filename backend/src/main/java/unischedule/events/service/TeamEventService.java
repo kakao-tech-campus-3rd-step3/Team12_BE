@@ -30,6 +30,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 @Service
@@ -189,10 +190,18 @@ public class TeamEventService {
         Team team = originalEvent.getCalendar().getTeam();
         validateTeamMember(team, member);
 
-        EventException eventException = EventException.makeEventException(originalEvent, requestDto.toEventExceptionDto());
-        EventException savedException = eventExceptionRawService.saveEventException(eventException);
+        Optional<EventException> eventExceptionOpt = eventExceptionRawService.findEventException(originalEvent, requestDto.originalStartTime());
 
-        return EventGetResponseDto.fromEventException(savedException, originalEvent);
+        EventException eventException;
+        if (eventExceptionOpt.isPresent()) {
+            eventException = eventExceptionOpt.get();
+            eventExceptionRawService.updateEventException(eventException, requestDto.toEventExceptionDto());
+        }
+        else {
+            eventException = EventException.makeEventException(originalEvent, requestDto.toEventExceptionDto());
+        }
+
+        return EventGetResponseDto.fromEventException(eventException, originalEvent);
     }
 
     @Transactional

@@ -8,8 +8,22 @@ import unischedule.events.domain.EventException;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 public interface EventExceptionRepository extends JpaRepository<EventException, Long> {
+
+    @Query("""
+            SELECT ex
+            FROM EventException ex
+            WHERE ex.originalEvent = :originalEvent
+            AND ex.originalEventTime = :originalEventTime
+    """)
+    Optional<EventException> findByOriginEventTime(
+            @Param("originalEvent")
+            Event originalEvent,
+            @Param("originalEventTime")
+            LocalDateTime originalEventTime
+    );
 
     @Query("""
             SELECT ex
