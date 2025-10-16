@@ -62,7 +62,7 @@ public interface EventRepository extends JpaRepository<Event, Long> {
     );
 
     /**
-     * 여러 캘린더에서 특정 기간동안의 일정 존재 여부 확인
+     * 여러 캘린더에서 특정 기간동안의 단일 일정 존재 여부 확인
      * @param calendarIds
      * @param startAt
      * @param endAt
@@ -72,6 +72,7 @@ public interface EventRepository extends JpaRepository<Event, Long> {
             SELECT count(e) > 0
             FROM Event e
             WHERE e.calendar.calendarId = :calendarIds
+            AND e.recurrenceRule IS NULL
             AND e.endAt > :startAt
             AND e.startAt < :endAt
     """)
@@ -163,7 +164,7 @@ public interface EventRepository extends JpaRepository<Event, Long> {
             AND e.endAt > :startAt
             AND e.startAt < :endAt
     """)
-    boolean existsPersonalScheduleInPeriodExcludingEvent(
+    boolean existsScheduleInPeriodExcludingEvent(
             @Param("calendarIds")
             List<Long> calendarIds,
             @Param("startAt")

@@ -20,7 +20,10 @@ import unischedule.team.service.internal.TeamMemberRawService;
 import unischedule.team.service.internal.TeamRawService;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +33,7 @@ public class TeamEventService {
     private final CalendarRawService calendarRawService;
     private final TeamRawService teamRawService;
     private final TeamMemberRawService teamMemberRawService;
+    private final EventQueryService eventQueryService;
 
     @Transactional
     public EventCreateResponseDto createTeamEvent(String email, TeamEventCreateRequestDto requestDto) {
@@ -39,9 +43,9 @@ public class TeamEventService {
 
         validateTeamMember(team, member);
 
-        List<Member> teamMembers = getAllTeamMember(team);
+        List<Long> calendarIdsToValidate = getAllRelatedCalendarIds(team);
 
-        //eventRawService.validateNoScheduleForMembers(teamMembers, requestDto.startTime(), requestDto.endTime());
+        eventQueryService.checkNewSingleEventOverlap(calendarIdsToValidate, requestDto.startTime(), requestDto.endTime());
 
         Calendar calendar = calendarRawService.getTeamCalendar(team);
 
@@ -50,7 +54,7 @@ public class TeamEventService {
                 requestDto.description(),
                 requestDto.startTime(),
                 requestDto.endTime(),
-                EventState.PENDING,
+                EventState.CONFIRMED,
                 requestDto.isPrivate()
         );
 
@@ -87,8 +91,14 @@ public class TeamEventService {
 
         validateTeamMember(team, member);
 
-        List<Member> teamMembers = getAllTeamMember(team);
-        //eventRawService.canUpdateEventForMembers(teamMembers, event, requestDto.startTime(), requestDto.endTime());
+        List<Long> calendarIdsToValidate = getAllRelatedCalendarIds(team);
+
+        eventQueryService.checkEventUpdateOverlap(
+                calendarIdsToValidate,
+                requestDto.startTime(),
+                requestDto.endTime(),
+                event
+        );
 
         eventRawService.updateEvent(event, EventModifyRequestDto.toDto(requestDto));
 
@@ -110,6 +120,27 @@ public class TeamEventService {
         teamMemberRawService.checkTeamAndMember(team, member);
     }
 
+
+    /**
+     * 현재 팀에 속해있는 모든 멤버에 대해 해당 멤버가 속한 모든 캘린더 id 조회
+     * @param currentTeam
+     * @return
+     */
+    private List<Long> getAllRelatedCalendarIds(Team currentTeam) {
+        List<Member> teamMembers = getAllTeamMember(currentTeam);
+        Set<Long> calendarIds = new HashSet<>();
+
+        for (Member member : teamMembers) {
+            calendarIds.add(calendarRawService.getMyPersonalCalendar(member).getCalendarId());
+
+            List<TeamMember> memberships = teamMemberRawService.findByMember(member);
+            for (TeamMember membership : memberships) {
+                Team team = membership.getTeam();
+                calendarIds.add(calendarRawService.getTeamCalendar(team).getCalendarId());
+            }
+        }
+        return new ArrayList<>(calendarIds);
+    }
     private List<Member> getAllTeamMember(Team team) {
         return teamMemberRawService.findByTeam(team)
                 .stream()

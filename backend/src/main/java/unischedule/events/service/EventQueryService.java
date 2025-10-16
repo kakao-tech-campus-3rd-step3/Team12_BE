@@ -87,13 +87,13 @@ public class EventQueryService {
                 .anyMatch(event -> !Objects.equals(event.eventId(), excludeEvent.getEventId()));
 
         if (isOverlapping) {
-            throw new InvalidInputException("해당 시간에 겹치느 일정이 있어 수정할 수 없습니다.");
+            throw new InvalidInputException("해당 시간에 겹치는 일정이 있어 수정할 수 없습니다.");
         }
     }
 
     private boolean hasEvent(List<Long> calendarIds, LocalDateTime startAt, LocalDateTime endAt) {
 
-        if (!eventRawService.findSingleSchedule(calendarIds, startAt, endAt).isEmpty()) {
+        if (eventRawService.existsSingleSchedule(calendarIds, startAt, endAt)) {
             return true;
         }
 

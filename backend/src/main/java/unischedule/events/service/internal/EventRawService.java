@@ -64,6 +64,11 @@ public class EventRawService {
                 .map(event -> EventServiceDto.fromSingleEvent(event, fromRecurring))
                 .toList();
     }
+
+    @Transactional(readOnly = true)
+    public boolean existsSingleSchedule(List<Long> calendarIds, LocalDateTime startTime, LocalDateTime endTime) {
+        return eventRepository.existsSingleScheduleInPeriod(calendarIds, startTime, endTime);
+    }
     
     @Transactional(readOnly = true)
     public List<Event> findUpcomingEventsByMember(Member member) {
