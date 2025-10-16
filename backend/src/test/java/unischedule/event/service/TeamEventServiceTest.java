@@ -9,6 +9,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import unischedule.calendar.entity.Calendar;
 import unischedule.calendar.service.internal.CalendarRawService;
 import unischedule.events.domain.Event;
+import unischedule.events.domain.EventState;
 import unischedule.events.dto.EventCreateResponseDto;
 import unischedule.events.dto.EventGetResponseDto;
 import unischedule.events.dto.EventModifyRequestDto;
@@ -39,6 +40,7 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class TeamEventServiceTest {
@@ -178,4 +180,99 @@ class TeamEventServiceTest {
         // then
         verify(eventRawService).deleteEvent(event);
     }
+    
+    @Test
+    @DisplayName("다가오는 팀 일정 조회 성공")
+    void getUpcomingTeamEvents_success() {
+        // given
+        String email = "team@test.com";
+        Long teamId = 1L;
+        
+        Member member = TestUtil.makeMember();
+        Team team = TestUtil.makeTeam();
+        
+        Calendar teamCalendar = spy(TestUtil.makeTeamCalendar(member, team));
+        when(teamCalendar.getCalendarId()).thenReturn(100L);
+        
+        Event event1 = Event.builder()
+            .title("팀 회의")
+            .content("이번 주 팀 회의")
+            .startAt(LocalDateTime.now().plusHours(1))
+            .endAt(LocalDateTime.now().plusHours(2))
+            .state(EventState.CONFIRMED)
+            .isPrivate(false)
+            .build();
+        
+        when(memberRawService.findMemberByEmail(email)).thenReturn(member);
+        when(teamRawService.findTeamById(teamId)).thenReturn(team);
+        when(calendarRawService.getTeamCalendar(team)).thenReturn(teamCalendar);
+        doNothing().when(teamMemberRawService).checkTeamAndMember(team, member);
+        when(eventRawService.findUpcomingEventsByCalendar(anyList())).thenReturn(List.of(event1));
+        
+        // when
+        List<EventGetResponseDto> result = teamEventService.getUpcomingTeamEvents(email, teamId);
+        
+        // then
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).title()).isEqualTo("팀 회의");
+        
+        verify(memberRawService).findMemberByEmail(email);
+        verify(teamRawService).findTeamById(teamId);
+        verify(calendarRawService).getTeamCalendar(team);
+        verify(teamMemberRawService).checkTeamAndMember(team, member);
+        verify(eventRawService).findUpcomingEventsByCalendar(anyList());
+    }
+    
+    @Test
+    @DisplayName("오늘의 팀 일정 조회 성공")
+    void getTodayTeamEvents_success() {
+        // given
+        String email = "team@test.com";
+        Long teamId = 1L;
+        
+        Member member = TestUtil.makeMember();
+        Team team = TestUtil.makeTeam();
+        
+        Calendar teamCalendar = spy(TestUtil.makeTeamCalendar(member, team));
+        when(teamCalendar.getCalendarId()).thenReturn(100L);
+        
+        Event event1 = Event.builder()
+            .title("오늘 팀 회의")
+            .content("오늘 점심 팀 회의")
+            .startAt(LocalDateTime.now().withHour(12))
+            .endAt(LocalDateTime.now().withHour(13))
+            .state(EventState.CONFIRMED)
+            .isPrivate(false)
+            .build();
+        
+        Event event2 = Event.builder()
+            .title("오늘 팀 스터디")
+            .content("오늘 저녁 팀 스터디")
+            .startAt(LocalDateTime.now().withHour(19))
+            .endAt(LocalDateTime.now().withHour(21))
+            .state(EventState.CONFIRMED)
+            .isPrivate(false)
+            .build();
+        
+        when(memberRawService.findMemberByEmail(email)).thenReturn(member);
+        when(teamRawService.findTeamById(teamId)).thenReturn(team);
+        when(calendarRawService.getTeamCalendar(team)).thenReturn(teamCalendar);
+        doNothing().when(teamMemberRawService).checkTeamAndMember(team, member);
+        when(eventRawService.findTodayEventsByCalendar(anyList())).thenReturn(List.of(event1, event2));
+        
+        // when
+        List<EventGetResponseDto> result = teamEventService.getTodayTeamEvents(email, teamId);
+        
+        // then
+        assertThat(result).hasSize(2);
+        assertThat(result.get(0).title()).isEqualTo("오늘 팀 회의");
+        assertThat(result.get(1).title()).isEqualTo("오늘 팀 스터디");
+        
+        verify(memberRawService).findMemberByEmail(email);
+        verify(teamRawService).findTeamById(teamId);
+        verify(calendarRawService).getTeamCalendar(team);
+        verify(teamMemberRawService).checkTeamAndMember(team, member);
+        verify(eventRawService).findTodayEventsByCalendar(anyList());
+    }
+    
 }
