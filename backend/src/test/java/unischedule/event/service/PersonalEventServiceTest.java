@@ -186,10 +186,8 @@ class PersonalEventServiceTest {
 
         given(eventRawService.findSingleSchedule(calendarIds, start, end))
                 .willReturn(List.of(event1, event2));
-        given(eventRawService.findRecurringSchedule(calendarIds, end))
+        given(eventRawService.expandRecurringEvents(calendarIds, start, end))
                 .willReturn(new ArrayList<>()); // 이 테스트에서는 반복 일정이 없다고 가정
-        given(eventExceptionRepository.findEventExceptionsForEvents(any(), any(), any()))
-                .willReturn(new ArrayList<>()); // 예외도 없다고 가정
 
         // when
         List<EventGetResponseDto> result = eventService.getPersonalEvents(memberEmail, start, end);
@@ -206,8 +204,7 @@ class PersonalEventServiceTest {
         verify(calendarRawService).getTeamCalendar(team);
 
         verify(eventRawService).findSingleSchedule(calendarIds, start, end);
-        verify(eventRawService).findRecurringSchedule(calendarIds, end);
-        verify(eventExceptionRepository).findEventExceptionsForEvents(any(), any(), any());
+        verify(eventRawService).expandRecurringEvents(calendarIds, start, end);
     }
 
     @Test

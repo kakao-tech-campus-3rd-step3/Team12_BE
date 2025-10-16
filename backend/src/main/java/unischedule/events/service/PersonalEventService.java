@@ -1,7 +1,6 @@
 package unischedule.events.service;
 
 import lombok.RequiredArgsConstructor;
-import net.fortuna.ical4j.model.Recur;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import unischedule.calendar.entity.Calendar;
@@ -27,13 +26,9 @@ import unischedule.team.domain.Team;
 import unischedule.team.domain.TeamMember;
 import unischedule.team.service.internal.TeamMemberRawService;
 
-import java.time.Duration;
 import java.time.LocalDateTime;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -130,98 +125,10 @@ public class PersonalEventService {
     }
 
     private void addExpandedEventsFromRecurringEvents(List<Long> calendarIds, List<EventGetResponseDto> findEvents, LocalDateTime startAt, LocalDateTime endAt) {
-        expandRecurringEvents(calendarIds, startAt, endAt)
+        eventRawService.expandRecurringEvents(calendarIds, startAt, endAt)
                 .stream()
                 .map(EventGetResponseDto::fromRecurringEvent)
                 .forEach(findEvents::add);
-    }
-
-    private List<Event> expandRecurringEvents(List<Long> calendarIds, LocalDateTime startAt, LocalDateTime endAt) {
-        List<Event> recurringEvents = eventRawService.findRecurringSchedule(calendarIds, endAt);
-
-        List<Event> expandedEventList = new ArrayList<>();
-
-        Map<Long, List<EventException>> exceptionsMap = getEventExceptionMap(recurringEvents, startAt, endAt);
-
-        for (Event recurEvent : recurringEvents) {
-            List<Event> expandedEvent = expandRecurringEvent(recurEvent, startAt, endAt);
-            List<EventException> exceptions = exceptionsMap.getOrDefault(recurEvent.getEventId(), List.of());
-            expandedEventList.addAll(applyEventExceptions(expandedEvent, exceptions));
-        }
-
-        return expandedEventList;
-    }
-
-    private Map<Long, List<EventException>> getEventExceptionMap(List<Event> recurringEvents, LocalDateTime startAt, LocalDateTime endAt) {
-        return eventExceptionRepository
-                .findEventExceptionsForEvents(recurringEvents, startAt, endAt)
-                .stream()
-                .collect(Collectors.groupingBy(ex -> ex.getOriginalEvent().getEventId()));
-    }
-
-    private List<Event> expandRecurringEvent(Event recEvent, LocalDateTime startAt, LocalDateTime endAt) {
-        Recur<ZonedDateTime> recur = rruleParser.getRecur(recEvent.getRecurrenceRule().getRruleString());
-
-        ZonedDateTime seed = zonedDateTimeUtil.localDateTimeToZdt(recEvent.getStartAt());
-        ZonedDateTime startZdt = zonedDateTimeUtil.localDateTimeToZdt(startAt);
-        ZonedDateTime endZdt = zonedDateTimeUtil.localDateTimeToZdt(endAt);
-
-        Duration duration = Duration.between(seed.toLocalDateTime(), recEvent.getEndAt());
-
-        List<ZonedDateTime> dates = recur.getDates(startZdt, endZdt);
-
-        return dates.stream()
-                .filter(eventStart -> !eventStart.isBefore(startZdt) && eventStart.isBefore(endZdt))
-                .map(eventStart -> Event.builder()
-                        .title(recEvent.getTitle())
-                        .content(recEvent.getContent())
-                        .startAt(eventStart.toLocalDateTime())
-                        .endAt(eventStart.toLocalDateTime().plus(duration))
-                        .isPrivate(recEvent.getIsPrivate())
-                        .state(recEvent.getState())
-                        .build())
-                .toList();
-    }
-
-    private List<Event> applyEventExceptions(List<Event> expandedEvents, List<EventException> exceptions) {
-        if (exceptions.isEmpty()) {
-            return expandedEvents;
-        }
-
-        Map<LocalDateTime, EventException> exceptionMap = exceptions.stream()
-                .collect(Collectors.toMap(EventException::getOriginalEventTime, ex -> ex));
-
-        List<Event> finalEvents = new ArrayList<>();
-
-        for (Event event : expandedEvents) {
-            if (exceptionMap.containsKey(event.getStartAt())) {
-                EventException exception = exceptionMap.get(event.getStartAt());
-
-                if (isDeletionException(exception)) {
-                    continue;
-                }
-
-                finalEvents.add(applyException(event, exception));
-            }
-            else {
-                finalEvents.add(event);
-            }
-        }
-        return finalEvents;
-    }
-
-    private boolean isDeletionException(EventException eventException) {
-        return eventException.getTitle() == null;
-    }
-
-    private Event applyException(Event event, EventException eventException) {
-        return Event.builder()
-                .title(eventException.getTitle())
-                .content(eventException.getContent())
-                .startAt(eventException.getStartAt())
-                .endAt(eventException.getEndAt())
-                .isPrivate(eventException.getIsPrivate())
-                .build();
     }
 
     @Transactional
