@@ -94,29 +94,41 @@ public class TeamEventController {
 
     }
 
-    @PatchMapping("/modify")
+    @PatchMapping("/modify/{eventId}")
     public ResponseEntity<EventGetResponseDto> modifyTeamEvent(
             @AuthenticationPrincipal
             UserDetails userDetails,
+            @PathVariable
+            Long eventId,
             @RequestBody @Valid
             EventModifyRequestDto requestDto
     ) {
-        EventGetResponseDto responseDto = teamEventService.modifyTeamEvent(userDetails.getUsername(), requestDto);
+        EventGetResponseDto responseDto = teamEventService.modifyTeamEvent(
+                userDetails.getUsername(),
+                eventId,
+                requestDto
+        );
         return ResponseEntity.ok(responseDto);
     }
 
-    @PatchMapping("/recurring/modify")
+    @PatchMapping("/recurring/modify/{eventId}")
     public ResponseEntity<EventGetResponseDto> modifyTeamRecurringEvent(
             @AuthenticationPrincipal
             UserDetails userDetails,
+            @PathVariable
+            Long eventId,
             @RequestBody @Valid
             EventModifyRequestDto requestDto
     ) {
-        EventGetResponseDto responseDto = teamEventService.modifyTeamRecurringEvent(userDetails.getUsername(), requestDto);
+        EventGetResponseDto responseDto = teamEventService.modifyTeamRecurringEvent(
+                userDetails.getUsername(),
+                eventId,
+                requestDto
+        );
         return ResponseEntity.ok(responseDto);
     }
 
-    @PatchMapping("/recurring/instance/{eventId}/modify")
+    @PatchMapping("/recurring/instance/{eventId}")
     public ResponseEntity<EventGetResponseDto> modifyTeamRecurringInstance(
             @AuthenticationPrincipal
             UserDetails userDetails,

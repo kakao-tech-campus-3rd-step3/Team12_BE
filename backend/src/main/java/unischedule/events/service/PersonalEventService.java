@@ -131,10 +131,10 @@ public class PersonalEventService {
     }
 
     @Transactional
-    public EventGetResponseDto modifyPersonalEvent(String email, EventModifyRequestDto requestDto) {
+    public EventGetResponseDto modifyPersonalEvent(String email, Long eventId, EventModifyRequestDto requestDto) {
         Member member = memberRawService.findMemberByEmail(email);
 
-        Event findEvent = eventRawService.findEventById(requestDto.eventId());
+        Event findEvent = eventRawService.findEventById(eventId);
 
         findEvent.validateEventOwner(member);
 
@@ -144,9 +144,9 @@ public class PersonalEventService {
     }
 
     @Transactional
-    public EventGetResponseDto modifyRecurringEvent(String email, EventModifyRequestDto requestDto) {
+    public EventGetResponseDto modifyRecurringEvent(String email, Long eventId, EventModifyRequestDto requestDto) {
         Member member = memberRawService.findMemberByEmail(email);
-        Event foundEvent = eventRawService.findEventById(requestDto.eventId());
+        Event foundEvent = eventRawService.findEventById(eventId);
         foundEvent.validateEventOwner(member);
 
         modifyEvent(requestDto, foundEvent);

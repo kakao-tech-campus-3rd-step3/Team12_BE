@@ -76,29 +76,37 @@ public class PersonalEventController {
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
             LocalDateTime endAt
     ) {
-        List<EventGetResponseDto> responseDto = eventService.getPersonalEvents(userDetails.getUsername(), startAt, endAt);
+        List<EventGetResponseDto> responseDto = eventService.getPersonalEvents(
+                userDetails.getUsername(),
+                startAt,
+                endAt
+        );
         return ResponseEntity.ok(responseDto);
     }
     
-    @PatchMapping("/modify")
+    @PatchMapping("/modify/{eventId}")
     public ResponseEntity<EventGetResponseDto> modifyMyEvent(
             @AuthenticationPrincipal
             UserDetails userDetails,
+            @PathVariable
+            Long eventId,
             @RequestBody @Valid
             EventModifyRequestDto requestDto
     ) {
-        EventGetResponseDto responseDto = eventService.modifyPersonalEvent(userDetails.getUsername(), requestDto);
+        EventGetResponseDto responseDto = eventService.modifyPersonalEvent(userDetails.getUsername(), eventId, requestDto);
         return ResponseEntity.ok(responseDto);
     }
 
-    @PatchMapping("/recurring/modify")
+    @PatchMapping("/recurring/modify/{eventId}")
     public ResponseEntity<EventGetResponseDto> modifyMyRecurringEvent(
             @AuthenticationPrincipal
             UserDetails userDetails,
+            @PathVariable
+            Long eventId,
             @RequestBody @Valid
             EventModifyRequestDto requestDto
     ) {
-        EventGetResponseDto responseDto = eventService.modifyRecurringEvent(userDetails.getUsername(), requestDto);
+        EventGetResponseDto responseDto = eventService.modifyRecurringEvent(userDetails.getUsername(), eventId, requestDto);
         return ResponseEntity.ok(responseDto);
     }
 

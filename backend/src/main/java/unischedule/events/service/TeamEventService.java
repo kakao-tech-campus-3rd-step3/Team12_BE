@@ -133,10 +133,10 @@ public class TeamEventService {
     }
 
     @Transactional
-    public EventGetResponseDto modifyTeamEvent(String email, EventModifyRequestDto requestDto) {
+    public EventGetResponseDto modifyTeamEvent(String email, Long eventId, EventModifyRequestDto requestDto) {
         Member member = memberRawService.findMemberByEmail(email);
 
-        Event event = eventRawService.findEventById(requestDto.eventId());
+        Event event = eventRawService.findEventById(eventId);
 
         Team team = event.getCalendar().getTeam();
         event.validateIsTeamEvent();
@@ -158,9 +158,9 @@ public class TeamEventService {
     }
 
     @Transactional
-    public EventGetResponseDto modifyTeamRecurringEvent(String email, EventModifyRequestDto requestDto) {
+    public EventGetResponseDto modifyTeamRecurringEvent(String email, Long eventId, EventModifyRequestDto requestDto) {
         Member member = memberRawService.findMemberByEmail(email);
-        Event event = eventRawService.findEventById(requestDto.eventId());
+        Event event = eventRawService.findEventById(eventId);
 
         event.validateIsTeamEvent();
         Team team = event.getCalendar().getTeam();
