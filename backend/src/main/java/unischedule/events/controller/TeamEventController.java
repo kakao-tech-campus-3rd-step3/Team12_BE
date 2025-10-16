@@ -19,6 +19,9 @@ import org.springframework.web.bind.annotation.RestController;
 import unischedule.events.dto.EventCreateResponseDto;
 import unischedule.events.dto.EventGetResponseDto;
 import unischedule.events.dto.EventModifyRequestDto;
+import unischedule.events.dto.RecurringEventCreateRequestDto;
+import unischedule.events.dto.RecurringInstanceDeleteRequestDto;
+import unischedule.events.dto.RecurringInstanceModifyRequestDto;
 import unischedule.events.dto.TeamEventCreateRequestDto;
 import unischedule.events.service.TeamEventService;
 
@@ -43,6 +46,24 @@ public class TeamEventController {
         return ResponseEntity.status(HttpStatus.CREATED).body(responseDto);
     }
 
+    @PostMapping("/recurring/add/{teamId}")
+    public ResponseEntity<EventCreateResponseDto> createTeamRecurringEvent(
+            @AuthenticationPrincipal
+            UserDetails userDetails,
+            @PathVariable
+            Long teamId,
+            @RequestBody @Valid
+            RecurringEventCreateRequestDto requestDto
+    ) {
+        EventCreateResponseDto responseDto = teamEventService.createTeamRecurringEvent(
+                userDetails.getUsername(),
+                teamId,
+                requestDto
+        );
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(responseDto);
+    }
+
     @GetMapping("/{eventId}")
     public ResponseEntity<EventGetResponseDto> getTeamEvent(
             @AuthenticationPrincipal UserDetails userDetails,
@@ -63,7 +84,12 @@ public class TeamEventController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
             LocalDateTime endAt
     ) {
-        List<EventGetResponseDto> responseDto = teamEventService.getTeamEvents(userDetails.getUsername(), teamId, startAt, endAt);
+        List<EventGetResponseDto> responseDto = teamEventService.getTeamEvents(
+                userDetails.getUsername(),
+                teamId,
+                startAt,
+                endAt
+        );
         return ResponseEntity.ok(responseDto);
 
     }
@@ -79,6 +105,35 @@ public class TeamEventController {
         return ResponseEntity.ok(responseDto);
     }
 
+    @PatchMapping("/recurring/modify")
+    public ResponseEntity<EventGetResponseDto> modifyTeamRecurringEvent(
+            @AuthenticationPrincipal
+            UserDetails userDetails,
+            @RequestBody @Valid
+            EventModifyRequestDto requestDto
+    ) {
+        EventGetResponseDto responseDto = teamEventService.modifyTeamRecurringEvent(userDetails.getUsername(), requestDto);
+        return ResponseEntity.ok(responseDto);
+    }
+
+    @PatchMapping("/recurring/instance/{eventId}/modify")
+    public ResponseEntity<EventGetResponseDto> modifyTeamRecurringInstance(
+            @AuthenticationPrincipal
+            UserDetails userDetails,
+            @PathVariable
+            Long eventId,
+            @RequestBody @Valid
+            RecurringInstanceModifyRequestDto requestDto
+    ) {
+        EventGetResponseDto responseDto = teamEventService.modifyTeamRecurringInstance(
+                userDetails.getUsername(),
+                eventId,
+                requestDto
+        );
+
+        return ResponseEntity.ok(responseDto);
+    }
+
     @DeleteMapping("/{eventId}")
     public ResponseEntity<Void> deleteTeamEvent(
             @AuthenticationPrincipal
@@ -87,6 +142,36 @@ public class TeamEventController {
             Long eventId
     ) {
         teamEventService.deleteTeamEvent(userDetails.getUsername(), eventId);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/recurring/{eventId}")
+    public ResponseEntity<Void> deleteTeamRecurringEvent(
+            @AuthenticationPrincipal
+            UserDetails userDetails,
+            @PathVariable
+            Long eventId
+    ) {
+        teamEventService.deleteTeamRecurringEvent(userDetails.getUsername(), eventId);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/recurring/instance/{eventId}")
+    public ResponseEntity<Void> deleteTeamRecurringInstance(
+            @AuthenticationPrincipal
+            UserDetails userDetails,
+            @PathVariable
+            Long eventId,
+            @RequestBody @Valid
+            RecurringInstanceDeleteRequestDto requestDto
+    ) {
+        teamEventService.deleteTeamRecurringInstance(
+                userDetails.getUsername(),
+                eventId,
+                requestDto
+        );
 
         return ResponseEntity.noContent().build();
     }
