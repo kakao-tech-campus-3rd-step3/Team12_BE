@@ -186,7 +186,7 @@ class PersonalEventServiceTest {
 
         given(eventRawService.findSingleSchedule(calendarIds, start, end))
                 .willReturn(List.of(event1, event2));
-        given(eventRawService.expandRecurringEvents(calendarIds, start, end))
+        given(eventRawService .expandRecurringEvents(calendarIds, start, end))
                 .willReturn(new ArrayList<>()); // 이 테스트에서는 반복 일정이 없다고 가정
 
         // when

@@ -26,4 +26,6 @@ public interface EventExceptionRepository extends JpaRepository<EventException, 
             @Param("andAt")
             LocalDateTime endAt
     );
+
+    void deleteAllByOriginalEvent(Event event);
 }

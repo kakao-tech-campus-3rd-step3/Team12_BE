@@ -18,8 +18,7 @@ import unischedule.events.dto.PersonalEventCreateRequestDto;
 import unischedule.events.dto.RecurringEventCreateRequestDto;
 import unischedule.events.repository.EventExceptionRepository;
 import unischedule.events.service.internal.EventRawService;
-import unischedule.events.util.RRuleParser;
-import unischedule.events.util.ZonedDateTimeUtil;
+import unischedule.events.service.internal.RecurringEventRawService;
 import unischedule.member.domain.Member;
 import unischedule.member.service.internal.MemberRawService;
 import unischedule.team.domain.Team;
@@ -35,11 +34,11 @@ import java.util.List;
 public class PersonalEventService {
     private final MemberRawService memberRawService;
     private final EventRawService eventRawService;
+    private final RecurringEventRawService recurringEventRawService;
+    private final RecurringEventService recurringEventService;
     private final TeamMemberRawService teamMemberRawService;
     private final CalendarRawService calendarRawService;
     private final EventExceptionRepository eventExceptionRepository;
-    private final RRuleParser rruleParser;
-    private final ZonedDateTimeUtil zonedDateTimeUtil;
 
     @Transactional
     public EventCreateResponseDto makePersonalSingleEvent(String email, PersonalEventCreateRequestDto requestDto) {
@@ -125,7 +124,7 @@ public class PersonalEventService {
     }
 
     private void addExpandedEventsFromRecurringEvents(List<Long> calendarIds, List<EventGetResponseDto> findEvents, LocalDateTime startAt, LocalDateTime endAt) {
-        eventRawService.expandRecurringEvents(calendarIds, startAt, endAt)
+        recurringEventService.expandRecurringEvents(calendarIds, startAt, endAt)
                 .stream()
                 .map(EventGetResponseDto::fromRecurringEvent)
                 .forEach(findEvents::add);
@@ -181,6 +180,17 @@ public class PersonalEventService {
         event.validateEventOwner(member);
 
         eventRawService.deleteEvent(event);
+    }
+
+    @Transactional
+    public void deleteRecurringEvent(String email, Long eventId) {
+        Member member = memberRawService.findMemberByEmail(email);
+
+        Event event = eventRawService.findEventById(eventId);
+
+        event.validateEventOwner(member);
+
+        recurringEventRawService.deleteRecurringEvent(event);
     }
 
     @Transactional(readOnly = true)

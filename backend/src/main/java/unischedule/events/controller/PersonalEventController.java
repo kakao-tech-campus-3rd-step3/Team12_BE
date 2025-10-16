@@ -90,6 +90,17 @@ public class PersonalEventController {
         eventService.deletePersonalEvent(userDetails.getUsername(), eventId);
         return ResponseEntity.noContent().build();
     }
+
+    @DeleteMapping("/recurring/{eventId}")
+    public ResponseEntity<Void> deleteMyRecurringEvent(
+            @AuthenticationPrincipal
+            UserDetails userDetails,
+            @PathVariable
+            Long eventId
+    ) {
+        eventService.deleteRecurringEvent(userDetails.getUsername(), eventId);
+        return ResponseEntity.noContent().build();
+    }
     
     @GetMapping("/upcomming")
     public ResponseEntity<List<EventGetResponseDto>> upcomingMyEvent(
