@@ -142,7 +142,7 @@ public class PersonalEventService {
 
         EventException savedException = eventExceptionRepository.save(eventException);
 
-        return EventGetResponseDto.fromRecurringEvent(savedException.toEvent());
+        return EventGetResponseDto.fromEventException(savedException, originalEvent);
     }
 
     @Transactional

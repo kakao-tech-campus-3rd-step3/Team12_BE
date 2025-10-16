@@ -2,6 +2,7 @@ package unischedule.events.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import unischedule.events.domain.Event;
+import unischedule.events.domain.EventException;
 
 import java.time.LocalDateTime;
 
@@ -40,6 +41,18 @@ public record EventGetResponseDto(
                 event.getStartAt(),
                 event.getEndAt(),
                 event.getIsPrivate(),
+                true
+        );
+    }
+
+    public static EventGetResponseDto fromEventException(EventException eventException, Event event) {
+        return new EventGetResponseDto(
+                event.getEventId(),
+                eventException.getTitle(),
+                eventException.getContent(),
+                eventException.getStartAt(),
+                eventException.getEndAt(),
+                eventException.getIsPrivate(),
                 true
         );
     }
