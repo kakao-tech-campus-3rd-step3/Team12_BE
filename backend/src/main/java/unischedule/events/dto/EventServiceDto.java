@@ -15,9 +15,22 @@ public record EventServiceDto(
         Boolean isPrivate,
         Boolean fromRecurring
 ) {
-    public static EventServiceDto from(Event event, Boolean fromRecurring) {
+    public static EventServiceDto fromSingleEvent(Event event, Boolean fromRecurring) {
         return new EventServiceDto(
                 event.getEventId(),
+                event.getTitle(),
+                event.getContent(),
+                event.getStartAt(),
+                event.getEndAt(),
+                event.getState(),
+                event.getIsPrivate(),
+                fromRecurring
+        );
+    }
+
+    public static EventServiceDto fromRecurringEvent(Event event, Boolean fromRecurring, Event originalEvent) {
+        return new EventServiceDto(
+                originalEvent.getEventId(),
                 event.getTitle(),
                 event.getContent(),
                 event.getStartAt(),

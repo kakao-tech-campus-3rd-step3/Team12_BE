@@ -61,7 +61,7 @@ public class EventRawService {
     public List<EventServiceDto> findSingleSchedule(List<Long> calendarIds, LocalDateTime startTime, LocalDateTime endTime) {
         return eventRepository.findSingleEventsInPeriod(calendarIds, startTime, endTime)
                 .stream()
-                .map(event -> EventServiceDto.from(event, fromRecurring))
+                .map(event -> EventServiceDto.fromSingleEvent(event, fromRecurring))
                 .toList();
     }
     

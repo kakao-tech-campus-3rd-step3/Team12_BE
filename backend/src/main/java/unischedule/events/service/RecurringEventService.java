@@ -32,19 +32,21 @@ public class RecurringEventService {
     public List<EventServiceDto> expandRecurringEvents(List<Long> calendarIds, LocalDateTime startAt, LocalDateTime endAt) {
         List<Event> recurringEvents = recurringEventRawService.findRecurringSchedule(calendarIds, endAt);
 
-        List<Event> expandedEventList = new ArrayList<>();
+        List<EventServiceDto> expandedEventList = new ArrayList<>();
 
         Map<Long, List<EventException>> exceptionsMap = recurringEventRawService.getEventExceptionMap(recurringEvents, startAt, endAt);
 
         for (Event recurEvent : recurringEvents) {
             List<Event> expandedEvent = expandRecurringEvent(recurEvent, startAt, endAt);
             List<EventException> exceptions = exceptionsMap.getOrDefault(recurEvent.getEventId(), List.of());
-            expandedEventList.addAll(applyEventExceptions(expandedEvent, exceptions));
+
+            applyEventExceptions(expandedEvent, exceptions)
+                    .stream()
+                    .map(event -> EventServiceDto.fromRecurringEvent(event, fromRecurring, recurEvent))
+                    .forEach(expandedEventList::add);
         }
 
-        return expandedEventList.stream()
-                .map(event -> EventServiceDto.from(event, fromRecurring))
-                .toList();
+        return expandedEventList;
     }
 
     private List<Event> expandRecurringEvent(Event recEvent, LocalDateTime startAt, LocalDateTime endAt) {
