@@ -21,6 +21,8 @@ import unischedule.events.dto.EventGetResponseDto;
 import unischedule.events.dto.EventModifyRequestDto;
 import unischedule.events.dto.PersonalEventCreateRequestDto;
 import unischedule.events.dto.RecurringEventCreateRequestDto;
+import unischedule.events.dto.RecurringInstanceDeleteRequestDto;
+import unischedule.events.dto.RecurringInstanceModifyRequestDto;
 import unischedule.events.service.PersonalEventService;
 
 import java.time.LocalDateTime;
@@ -91,10 +93,29 @@ public class PersonalEventController {
 
     @PatchMapping("/recurring/modify")
     public ResponseEntity<EventGetResponseDto> modifyMyRecurringEvent(
-            @AuthenticationPrincipal UserDetails userDetails,
-            @RequestBody @Valid EventModifyRequestDto requestDto
+            @AuthenticationPrincipal
+            UserDetails userDetails,
+            @RequestBody @Valid
+            EventModifyRequestDto requestDto
     ) {
         EventGetResponseDto responseDto = eventService.modifyRecurringEvent(userDetails.getUsername(), requestDto);
+        return ResponseEntity.ok(responseDto);
+    }
+
+    @PatchMapping("/recurring/instance/{eventId}")
+    public ResponseEntity<EventGetResponseDto> modifyMyRecurringInstance(
+            @AuthenticationPrincipal
+            UserDetails userDetails,
+            @PathVariable
+            Long eventId,
+            @RequestBody @Valid
+            RecurringInstanceModifyRequestDto requestDto
+    ) {
+        EventGetResponseDto responseDto = eventService.modifyPersonalExpandedRecurringEvent(
+                userDetails.getUsername(),
+                eventId,
+                requestDto
+        );
         return ResponseEntity.ok(responseDto);
     }
 
@@ -117,6 +138,23 @@ public class PersonalEventController {
             Long eventId
     ) {
         eventService.deleteRecurringEvent(userDetails.getUsername(), eventId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/recurring/instance/{eventId}")
+    public ResponseEntity<Void> deleteMyRecurringInstance(
+            @AuthenticationPrincipal
+            UserDetails userDetails,
+            @PathVariable
+            Long eventId,
+            @RequestBody @Valid
+            RecurringInstanceDeleteRequestDto requestDto
+    ) {
+        eventService.deletePersonalExpandedRecurringEvent(
+                userDetails.getUsername(),
+                eventId,
+                requestDto
+        );
         return ResponseEntity.noContent().build();
     }
     
