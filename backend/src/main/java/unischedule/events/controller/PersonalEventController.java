@@ -54,6 +54,15 @@ public class PersonalEventController {
         return ResponseEntity.status(HttpStatus.CREATED).body(responseDto);
     }
 
+    @GetMapping("/{eventId}")
+    public ResponseEntity<EventGetResponseDto> getMyEvent(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable Long eventId
+    ) {
+        EventGetResponseDto responseDto = eventService.getPersonalEvent(userDetails.getUsername(), eventId);
+        return ResponseEntity.ok(responseDto);
+    }
+
     @GetMapping
     public ResponseEntity<List<EventGetResponseDto>> getMyEvents(
             @AuthenticationPrincipal

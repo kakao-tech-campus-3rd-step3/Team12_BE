@@ -43,6 +43,15 @@ public class TeamEventController {
         return ResponseEntity.status(HttpStatus.CREATED).body(responseDto);
     }
 
+    @GetMapping("/{eventId}")
+    public ResponseEntity<EventGetResponseDto> getTeamEvent(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable Long eventId
+    ) {
+        EventGetResponseDto responseDto = teamEventService.getTeamEvent(userDetails.getUsername(), eventId);
+        return ResponseEntity.ok(responseDto);
+    }
+
     @GetMapping("/{teamId}")
     public ResponseEntity<List<EventGetResponseDto>> getTeamEvents(
             @AuthenticationPrincipal
