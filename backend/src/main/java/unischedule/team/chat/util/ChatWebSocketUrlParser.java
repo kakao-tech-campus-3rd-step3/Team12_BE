@@ -12,6 +12,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 public class ChatWebSocketUrlParser {
 
     private static final String TOKEN_PARAM = "token";
+    private static final int TEAM_ID_SEGMENT_INDEX = 2;
 
     public Long extractTeamId(WebSocketSession session) {
         UriComponents components = buildComponents(session);
@@ -20,12 +21,11 @@ public class ChatWebSocketUrlParser {
         }
 
         List<String> segments = components.getPathSegments();
-        if (segments.size() < 4) {
+        if (segments.size() <= TEAM_ID_SEGMENT_INDEX) {
             return null;
         }
-        return parseTeamId(segments.get(2));
+        return parseTeamId(segments.get(TEAM_ID_SEGMENT_INDEX));
     }
-
     public String extractToken(WebSocketSession session) {
         UriComponents components = buildComponents(session);
         if (components == null) {

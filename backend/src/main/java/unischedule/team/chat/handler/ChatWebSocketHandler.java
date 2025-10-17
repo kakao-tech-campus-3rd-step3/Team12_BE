@@ -49,13 +49,16 @@ public class ChatWebSocketHandler implements WebSocketHandler {
     private final TeamMemberRawService teamMemberRawService;
 
     @Override
-    public void afterConnectionEstablished(@NonNull WebSocketSession session) throws Exception {
+    public void afterConnectionEstablished(@NonNull WebSocketSession session) {
         Long teamId = urlParser.extractTeamId(session);
         String token = urlParser.extractToken(session);
 
         if (!isValidHandshake(teamId, token)) {
             sendErrorResponse(session, "올바르지 않은 연결 정보입니다");
-            session.close();
+            try {
+                session.close();
+            } catch (IOException ignored) {
+            }
             return;
         }
 
@@ -68,7 +71,7 @@ public class ChatWebSocketHandler implements WebSocketHandler {
     @Override
     public void handleMessage(
             @NonNull WebSocketSession session,
-            @NonNull WebSocketMessage<?> message) throws Exception {
+            @NonNull WebSocketMessage<?> message) {
         Long teamId = resolveTeamId(session);
         if (teamId == null) {
             sendErrorResponse(session, "올바르지 않은 연결 정보입니다");
@@ -76,7 +79,16 @@ public class ChatWebSocketHandler implements WebSocketHandler {
         }
 
         ChatWebSocketRequestDto request = parseRequest(message, session);
-        if (request == null || !ChatConstants.MESSAGE_TYPE_SEND.equals(request.type())) {
+        if (request == null) {
+            return;
+        }
+
+        if (!ChatConstants.MESSAGE_TYPE_SEND.equals(request.type())) {
+            return;
+        }
+
+        if (request.content() == null || request.content().isBlank()) {
+            sendErrorResponse(session, "메시지 내용이 비어있습니다");
             return;
         }
 
@@ -98,14 +110,14 @@ public class ChatWebSocketHandler implements WebSocketHandler {
     @Override
     public void handleTransportError(
             @NonNull WebSocketSession session,
-            @NonNull Throwable exception) throws Exception {
+            @NonNull Throwable exception) {
         sendErrorResponse(session, "통신 중 오류가 발생했습니다");
     }
 
     @Override
     public void afterConnectionClosed(
             @NonNull WebSocketSession session,
-            @NonNull CloseStatus closeStatus) throws Exception {
+            @NonNull CloseStatus closeStatus) {
         Long teamId = urlParser.extractTeamId(session);
         if (teamId != null) {
             sessionManager.removeSession(teamId, session.getId());

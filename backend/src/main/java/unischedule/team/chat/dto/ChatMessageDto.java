@@ -17,8 +17,8 @@ public record ChatMessageDto(
     public static ChatMessageDto from(ChatMessage chatMessage) {
         return ChatMessageDto.builder()
                 .id(chatMessage.getId())
-                .teamId(chatMessage.getTeamId())
-                .senderId(chatMessage.getSenderId())
+                .teamId(chatMessage.getTeam().getTeamId())
+                .senderId(chatMessage.getSender().getMemberId())
                 .senderName(chatMessage.getSenderName())
                 .content(chatMessage.getContent())
                 .createdAt(chatMessage.getCreatedAt())

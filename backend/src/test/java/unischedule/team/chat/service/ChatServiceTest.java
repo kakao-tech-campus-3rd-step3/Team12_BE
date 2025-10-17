@@ -46,18 +46,21 @@ class ChatServiceTest {
     @InjectMocks
     private ChatService chatService;
 
+    private Team testTeam;
+    private Member testMember;
+
     @BeforeEach
     void setUp() {
-        Team team = TestUtil.makeTeam();
-        Member member = TestUtil.makeMember();
+        testTeam = TestUtil.makeTeam();
+        testMember = TestUtil.makeMember();
 
-        ReflectionTestUtils.setField(team, "teamId", 1L);
-        ReflectionTestUtils.setField(member, "memberId", 10L);
-        ReflectionTestUtils.setField(member, "nickname", "테스터");
+        ReflectionTestUtils.setField(testTeam, "teamId", 1L);
+        ReflectionTestUtils.setField(testMember, "memberId", 10L);
+        ReflectionTestUtils.setField(testMember, "nickname", "테스터");
 
-        when(teamRawService.findTeamById(1L)).thenReturn(team);
-        when(memberRawService.findMemberByEmail("user@test.com")).thenReturn(member);
-        doNothing().when(teamMemberRawService).validateMembership(team, member);
+        when(teamRawService.findTeamById(1L)).thenReturn(testTeam);
+        when(memberRawService.findMemberByEmail("user@test.com")).thenReturn(testMember);
+        doNothing().when(teamMemberRawService).validateMembership(testTeam, testMember);
     }
 
     @Test
@@ -66,7 +69,7 @@ class ChatServiceTest {
         List<ChatMessage> messages = List.of(createMessage(3L), createMessage(2L));
         Slice<ChatMessage> slice = new SliceImpl<>(messages, PageRequest.of(0, 50), true);
 
-        when(chatMessageRepository.findByTeamIdOrderByIdDesc(1L, PageRequest.of(0, 50)))
+        when(chatMessageRepository.findByTeamOrderByIdDesc(testTeam, PageRequest.of(0, 50)))
                 .thenReturn(slice);
 
         ChatMessageHistoryResponseDto result = chatService.getMessages(1L, "user@test.com", null, 50);
@@ -82,7 +85,7 @@ class ChatServiceTest {
         List<ChatMessage> messages = List.of(createMessage(1L));
         Slice<ChatMessage> slice = new SliceImpl<>(messages, PageRequest.of(0, 50), false);
 
-        when(chatMessageRepository.findByTeamIdAndIdLessThanOrderByIdDesc(1L, 3L, PageRequest.of(0, 50)))
+        when(chatMessageRepository.findByTeamAndIdLessThanOrderByIdDesc(testTeam, 3L, PageRequest.of(0, 50)))
                 .thenReturn(slice);
 
         ChatMessageHistoryResponseDto result = chatService.getMessages(1L, "user@test.com", 3L, 50);
@@ -109,8 +112,8 @@ class ChatServiceTest {
 
     private ChatMessage createMessage(Long id) {
         ChatMessage message = ChatMessage.builder()
-                .teamId(1L)
-                .senderId(10L)
+                .team(testTeam)
+                .sender(testMember)
                 .senderName("테스터")
                 .content("안녕하세요")
                 .build();

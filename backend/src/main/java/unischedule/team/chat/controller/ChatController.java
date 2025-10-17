@@ -1,5 +1,6 @@
 package unischedule.team.chat.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -19,7 +20,7 @@ public class ChatController {
     @GetMapping("/messages")
     public ResponseEntity<ChatMessageHistoryResponseDto> getMessages(
             @PathVariable Long teamId,
-            @ModelAttribute ChatMessageHistoryRequestDto requestDto,
+            @ModelAttribute @Valid ChatMessageHistoryRequestDto requestDto,
             @AuthenticationPrincipal UserDetails userDetails
     ) {
         ChatMessageHistoryResponseDto response = chatService.getMessages(

@@ -39,9 +39,9 @@ public class ChatService {
 
         Slice<ChatMessage> slice;
         if (cursor != null) {
-            slice = chatMessageRepository.findByTeamIdAndIdLessThanOrderByIdDesc(teamId, cursor, pageable);
+            slice = chatMessageRepository.findByTeamAndIdLessThanOrderByIdDesc(team, cursor, pageable);
         } else {
-            slice = chatMessageRepository.findByTeamIdOrderByIdDesc(teamId, pageable);
+            slice = chatMessageRepository.findByTeamOrderByIdDesc(team, pageable);
         }
 
         List<ChatMessage> messages = slice.getContent();
@@ -63,8 +63,8 @@ public class ChatService {
         teamMemberRawService.validateMembership(team, sender);
 
         ChatMessage message = ChatMessage.builder()
-                .teamId(teamId)
-                .senderId(sender.getMemberId())
+                .team(team)
+                .sender(sender)
                 .senderName(sender.getNickname())
                 .content(requestDto.content())
                 .build();

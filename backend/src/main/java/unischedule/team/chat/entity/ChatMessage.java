@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import unischedule.common.entity.BaseEntity;
+import unischedule.member.domain.Member;
+import unischedule.team.domain.Team;
 
 @Entity
 @Getter
@@ -23,11 +25,13 @@ public class ChatMessage extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "team_id", nullable = false)
-    private Long teamId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "team_id", nullable = false)
+    private Team team;
 
-    @Column(name = "sender_id", nullable = false)
-    private Long senderId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "sender_id", nullable = false)
+    private Member sender;
 
     @Column(name = "sender_name", nullable = false)
     private String senderName;
@@ -37,9 +41,9 @@ public class ChatMessage extends BaseEntity {
 
 
     @Builder
-    public ChatMessage(Long teamId, Long senderId, String senderName, String content) {
-        this.teamId = teamId;
-        this.senderId = senderId;
+    public ChatMessage(Team team, Member sender, String senderName, String content) {
+        this.team = team;
+        this.sender = sender;
         this.senderName = senderName;
         this.content = content;
     }
