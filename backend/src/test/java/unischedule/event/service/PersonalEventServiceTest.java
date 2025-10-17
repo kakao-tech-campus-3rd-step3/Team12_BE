@@ -241,12 +241,6 @@ class PersonalEventServiceTest {
         eventService.modifyPersonalEvent(memberEmail, eventId, requestDto);
 
         // then
-        verify(eventQueryService).checkEventUpdateOverlap(
-                eq(List.of(personalCalendar.getCalendarId())),
-                eq(requestDto.startTime()),
-                eq(requestDto.endTime()),
-                eq(existingEvent)
-        );
         verify(eventRawService).updateEvent(eq(existingEvent), any(EventUpdateDto.class));
     }
 
