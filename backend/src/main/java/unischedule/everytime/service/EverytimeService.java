@@ -1,17 +1,18 @@
 package unischedule.everytime.service;
 
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import unischedule.exception.EntityNotFoundException;
-import unischedule.external.OpenAiClient;
 import unischedule.everytime.dto.TimetableDetailDto;
 import unischedule.everytime.dto.TimetableDto;
-import unischedule.external.dto.EverytimeTimetableRawResponseDto;
-import unischedule.external.EverytimeClient;
 import unischedule.everytime.mapper.EverytimeTimetableMapper;
+import unischedule.exception.EntityNotFoundException;
 import unischedule.exception.ExternalApiException;
+import unischedule.external.EverytimeClient;
+import unischedule.external.OpenAiClient;
+import unischedule.external.dto.EverytimeTimetableRawResponseDto;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor

@@ -37,4 +37,9 @@ public class CalendarRawService {
         return calendarRepository.findByTeam(team)
                 .orElseThrow(() -> new EntityNotFoundException("팀 캘린더를 찾을 수 없습니다."));
     }
+    
+    @Transactional
+    public void deleteCalendar(Calendar calendar) {
+        calendarRepository.delete(calendar);
+    }
 }

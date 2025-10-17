@@ -56,7 +56,8 @@ resource "aws_iam_role_policy" "ecs_task_execution_ssm" {
           data.aws_ssm_parameter.db_username.arn,
           data.aws_ssm_parameter.db_password.arn,
           data.aws_ssm_parameter.jwt_secret.arn,
-          data.aws_ssm_parameter.openai_api_key.arn
+          data.aws_ssm_parameter.openai_api_key.arn,
+          data.aws_ssm_parameter.redis_password.arn,
         ]
       }
     ]

@@ -1,13 +1,14 @@
 package unischedule.everytime.mapper;
 
-import java.time.LocalTime;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import unischedule.everytime.dto.TimetableDetailDto;
 import unischedule.everytime.dto.TimetableDto;
 import unischedule.external.dto.EverytimeTimetableRawResponseDto;
 import unischedule.external.dto.EverytimeTimetableRawResponseDto.Attr;
+
+import java.time.LocalTime;
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor

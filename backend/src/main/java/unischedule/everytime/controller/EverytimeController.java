@@ -1,7 +1,6 @@
 package unischedule.everytime.controller;
 
 import jakarta.validation.Valid;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -17,6 +16,8 @@ import unischedule.everytime.dto.TimetableDetailRequestDto;
 import unischedule.everytime.dto.TimetableDto;
 import unischedule.everytime.dto.TimetablesRequestDto;
 import unischedule.everytime.service.EverytimeService;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/everytime")

@@ -1,12 +1,5 @@
 package unischedule.everytime.service;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.verify;
-
-import java.time.LocalTime;
-import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,9 +7,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
-import unischedule.external.EverytimeClient;
 import unischedule.everytime.dto.TimetableDetailDto;
 import unischedule.everytime.dto.TimetableDto;
+import unischedule.everytime.mapper.EverytimeTimetableMapper;
+import unischedule.exception.EntityNotFoundException;
+import unischedule.exception.ExternalApiException;
+import unischedule.external.EverytimeClient;
 import unischedule.external.dto.EverytimeTimetableRawResponseDto;
 import unischedule.external.dto.EverytimeTimetableRawResponseDto.Attr;
 import unischedule.external.dto.EverytimeTimetableRawResponseDto.PrimaryTable;
@@ -25,9 +21,14 @@ import unischedule.external.dto.EverytimeTimetableRawResponseDto.Subject;
 import unischedule.external.dto.EverytimeTimetableRawResponseDto.Table;
 import unischedule.external.dto.EverytimeTimetableRawResponseDto.Time;
 import unischedule.external.dto.EverytimeTimetableRawResponseDto.TimeData;
-import unischedule.everytime.mapper.EverytimeTimetableMapper;
-import unischedule.exception.ExternalApiException;
-import unischedule.exception.EntityNotFoundException;
+
+import java.time.LocalTime;
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("EverytimeService 테스트")
