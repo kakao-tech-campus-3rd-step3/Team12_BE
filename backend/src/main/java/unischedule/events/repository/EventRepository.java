@@ -71,7 +71,7 @@ public interface EventRepository extends JpaRepository<Event, Long> {
     @Query("""
             SELECT count(e) > 0
             FROM Event e
-            WHERE e.calendar.calendarId = :calendarIds
+            WHERE e.calendar.calendarId IN :calendarIds
             AND e.recurrenceRule IS NULL
             AND e.endAt > :startAt
             AND e.startAt < :endAt

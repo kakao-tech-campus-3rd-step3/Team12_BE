@@ -16,8 +16,8 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class RecurringEventRawService {
-    private EventExceptionRepository eventExceptionRepository;
-    private EventRepository eventRepository;
+    private final EventExceptionRepository eventExceptionRepository;
+    private final EventRepository eventRepository;
 
     @Transactional(readOnly = true)
     public List<Event> findRecurringSchedule(List<Long> calendarIds, LocalDateTime endTime) {

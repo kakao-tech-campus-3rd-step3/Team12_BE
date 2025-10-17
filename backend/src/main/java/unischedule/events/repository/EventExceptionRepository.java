@@ -37,7 +37,7 @@ public interface EventExceptionRepository extends JpaRepository<EventException, 
             List<Event> originalEvents,
             @Param("startAt")
             LocalDateTime startAt,
-            @Param("andAt")
+            @Param("endAt")
             LocalDateTime endAt
     );
 
