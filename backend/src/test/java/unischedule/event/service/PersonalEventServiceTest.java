@@ -12,10 +12,10 @@ import org.springframework.security.access.AccessDeniedException;
 import unischedule.calendar.entity.Calendar;
 import unischedule.calendar.service.internal.CalendarRawService;
 import unischedule.events.domain.Event;
-import unischedule.events.domain.EventException;
+import unischedule.events.domain.EventOverride;
 import unischedule.events.domain.EventState;
 import unischedule.events.dto.EventCreateResponseDto;
-import unischedule.events.dto.EventExceptionDto;
+import unischedule.events.dto.EventOverrideDto;
 import unischedule.events.dto.EventGetResponseDto;
 import unischedule.events.dto.EventModifyRequestDto;
 import unischedule.events.dto.EventServiceDto;
@@ -24,7 +24,7 @@ import unischedule.events.dto.PersonalEventCreateRequestDto;
 import unischedule.events.dto.RecurringInstanceModifyRequestDto;
 import unischedule.events.service.EventQueryService;
 import unischedule.events.service.PersonalEventService;
-import unischedule.events.service.internal.EventExceptionRawService;
+import unischedule.events.service.internal.EventOverrideRawService;
 import unischedule.events.service.internal.EventRawService;
 import unischedule.events.service.internal.RecurringEventRawService;
 import unischedule.exception.EntityNotFoundException;
@@ -72,7 +72,7 @@ class PersonalEventServiceTest {
     @Mock
     private TeamMemberRawService teamMemberRawService;
     @Mock
-    private EventExceptionRawService eventExceptionRawService;
+    private EventOverrideRawService eventOverrideRawService;
     @InjectMocks
     private PersonalEventService eventService;
 
@@ -251,8 +251,8 @@ class PersonalEventServiceTest {
     }
 
     @Test
-    @DisplayName("반복 일정 날짜 최초 수정 시 EventException 생성")
-    void modifyRecurringInstance_CreateNewEventException() {
+    @DisplayName("반복 일정 날짜 최초 수정 시 EventOverride 생성")
+    void modifyRecurringInstance_CreateNewEventOverride() {
         // given
         Long eventId = 1L;
         Event originalEvent = TestUtil.makeRecurringEvent("반복 회의", "주간 회의");
@@ -270,33 +270,33 @@ class PersonalEventServiceTest {
 
         given(memberRawService.findMemberByEmail(memberEmail)).willReturn(owner);
         given(eventRawService.findEventById(eventId)).willReturn(originalEvent);
-        given(eventExceptionRawService.findEventException(originalEvent, requestDto.originalStartTime()))
+        given(eventOverrideRawService.findEventOverride(originalEvent, requestDto.originalStartTime()))
                 .willReturn(Optional.empty());
-        given(eventExceptionRawService.saveEventException(any(EventException.class)))
+        given(eventOverrideRawService.saveEventOverride(any(EventOverride.class)))
                 .willAnswer(invocation -> invocation.getArgument(0));
 
         // when
         EventGetResponseDto result = eventService.modifyPersonalRecurringInstance(memberEmail, eventId, requestDto);
 
         // then
-        verify(eventExceptionRawService).saveEventException(any(EventException.class));
+        verify(eventOverrideRawService).saveEventOverride(any(EventOverride.class));
         assertThat(result.eventId()).isEqualTo(originalEvent.getEventId());
         assertThat(result.title()).isEqualTo("변경된 회의");
         assertThat(result.description()).isEqualTo("내용 변경");
     }
 
     @Test
-    @DisplayName("반복 일정의 특정 날짜(instance) 재수정 시 기존 EventException 업데이트")
-    void modifyRecurringInstance_UpdateExistingException() {
+    @DisplayName("반복 일정의 특정 날짜(instance) 재수정 시 기존 EventOverride 업데이트")
+    void modifyRecurringInstance_UpdateExistingOverride() {
         // given
         Long eventId = 1L;
         Event originalEvent = TestUtil.makeRecurringEvent("반복 일정", "주간 회의");
         originalEvent.connectCalendar(personalCalendar);
         LocalDateTime originalStartTime = originalEvent.getStartAt().plusDays(7);
 
-        EventException existingException = spy(EventException.makeEventException(
+        EventOverride existingOverride = spy(EventOverride.makeEventOverride(
                 originalEvent,
-                new EventExceptionDto(originalStartTime, "첫 번째 수정", null, null, null, null)
+                new EventOverrideDto(originalStartTime, "첫 번째 수정", null, null, null, null)
         ));
 
         RecurringInstanceModifyRequestDto requestDto = new RecurringInstanceModifyRequestDto(
@@ -310,24 +310,24 @@ class PersonalEventServiceTest {
 
         given(memberRawService.findMemberByEmail(memberEmail)).willReturn(owner);
         given(eventRawService.findEventById(eventId)).willReturn(originalEvent);
-        given(eventExceptionRawService.findEventException(originalEvent, requestDto.originalStartTime()))
-                .willReturn(Optional.of(existingException));
-        given(eventExceptionRawService.saveEventException(any(EventException.class)))
+        given(eventOverrideRawService.findEventOverride(originalEvent, requestDto.originalStartTime()))
+                .willReturn(Optional.of(existingOverride));
+        given(eventOverrideRawService.saveEventOverride(any(EventOverride.class)))
                 .willAnswer(invocation -> invocation.getArgument(0));
 
         doAnswer(invocation -> {
-            EventException exception = invocation.getArgument(0);
-            EventExceptionDto dto = invocation.getArgument(1);
+            EventOverride exception = invocation.getArgument(0);
+            EventOverrideDto dto = invocation.getArgument(1);
             exception.update(dto.originalStartTime(), dto.title(), dto.content(), dto.startTime(), dto.endTime(), dto.isPrivate());
             return null;
-        }).when(eventExceptionRawService).updateEventException(any(EventException.class), any(EventExceptionDto.class));
+        }).when(eventOverrideRawService).updateEventOverride(any(EventOverride.class), any(EventOverrideDto.class));
 
         // when
         EventGetResponseDto result = eventService.modifyPersonalRecurringInstance(memberEmail, eventId, requestDto);
 
         // then
-        verify(eventExceptionRawService).updateEventException(any(EventException.class), any(EventExceptionDto.class));
-        verify(eventExceptionRawService).saveEventException(existingException);
+        verify(eventOverrideRawService).updateEventOverride(any(EventOverride.class), any(EventOverrideDto.class));
+        verify(eventOverrideRawService).saveEventOverride(existingOverride);
         assertThat(result.title()).isEqualTo("두 번째 수정");
         assertThat(result.description()).isEqualTo("내용도 수정");
     }

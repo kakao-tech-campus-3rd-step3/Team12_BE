@@ -9,9 +9,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import unischedule.calendar.entity.Calendar;
 import unischedule.calendar.service.internal.CalendarRawService;
 import unischedule.events.domain.Event;
-import unischedule.events.domain.EventException;
+import unischedule.events.domain.EventOverride;
 import unischedule.events.dto.EventCreateResponseDto;
-import unischedule.events.dto.EventExceptionDto;
+import unischedule.events.dto.EventOverrideDto;
 import unischedule.events.dto.EventGetResponseDto;
 import unischedule.events.dto.EventModifyRequestDto;
 import unischedule.events.dto.EventUpdateDto;
@@ -20,7 +20,7 @@ import unischedule.events.dto.RecurringInstanceModifyRequestDto;
 import unischedule.events.dto.TeamEventCreateRequestDto;
 import unischedule.events.service.EventQueryService;
 import unischedule.events.service.TeamEventService;
-import unischedule.events.service.internal.EventExceptionRawService;
+import unischedule.events.service.internal.EventOverrideRawService;
 import unischedule.events.service.internal.EventRawService;
 import unischedule.events.service.internal.RecurringEventRawService;
 import unischedule.exception.InvalidInputException;
@@ -65,7 +65,7 @@ class TeamEventServiceTest {
     @Mock
     private EventQueryService eventQueryService;
     @Mock
-    private EventExceptionRawService eventExceptionRawService;
+    private EventOverrideRawService eventOverrideRawService;
     @Mock
     private RecurringEventRawService recurringEventRawService;
     @InjectMocks
@@ -170,14 +170,14 @@ class TeamEventServiceTest {
         given(memberRawService.findMemberByEmail(email)).willReturn(member);
         given(eventRawService.findEventById(eventId)).willReturn(originalEvent);
         doNothing().when(teamMemberRawService).checkTeamAndMember(team, member);
-        given(eventExceptionRawService.findEventException(originalEvent, originalStartTime)).willReturn(Optional.empty());
-        given(eventExceptionRawService.saveEventException(any(EventException.class))).willAnswer(inv -> inv.getArgument(0));
+        given(eventOverrideRawService.findEventOverride(originalEvent, originalStartTime)).willReturn(Optional.empty());
+        given(eventOverrideRawService.saveEventOverride(any(EventOverride.class))).willAnswer(inv -> inv.getArgument(0));
 
         // when
         EventGetResponseDto result = teamEventService.modifyTeamRecurringInstance(email, eventId, requestDto);
 
         // then
-        verify(eventExceptionRawService).saveEventException(any(EventException.class));
+        verify(eventOverrideRawService).saveEventOverride(any(EventOverride.class));
         assertThat(result.title()).isEqualTo("수정된 팀 회의");
         assertThat(result.isRecurring()).isTrue();
     }
@@ -193,9 +193,9 @@ class TeamEventServiceTest {
         originalEvent.connectCalendar(TestUtil.makeTeamCalendar(member, team));
         LocalDateTime originalStartTime = originalEvent.getStartAt().plusWeeks(1);
 
-        EventException exsitingException = spy(EventException.makeEventException(
+        EventOverride exsitingException = spy(EventOverride.makeEventOverride(
                 originalEvent,
-                new EventExceptionDto(
+                new EventOverrideDto(
                         originalStartTime,
                         "첫 번째 수정",
                         null,
@@ -217,15 +217,15 @@ class TeamEventServiceTest {
         given(memberRawService.findMemberByEmail(email)).willReturn(member);
         given(eventRawService.findEventById(eventId)).willReturn(originalEvent);
         doNothing().when(teamMemberRawService).checkTeamAndMember(team, member);
-        given(eventExceptionRawService.findEventException(originalEvent, originalStartTime)).willReturn(Optional.of(exsitingException));
-        given(eventExceptionRawService.saveEventException(any(EventException.class))).willAnswer(inv -> inv.getArgument(0));
+        given(eventOverrideRawService.findEventOverride(originalEvent, originalStartTime)).willReturn(Optional.of(exsitingException));
+        given(eventOverrideRawService.saveEventOverride(any(EventOverride.class))).willAnswer(inv -> inv.getArgument(0));
 
         // when
         teamEventService.modifyTeamRecurringInstance(email, eventId, requestDto);
 
         // then
-        verify(eventExceptionRawService).updateEventException(any(EventException.class), any(EventExceptionDto.class));
-        verify(eventExceptionRawService).saveEventException(exsitingException);
+        verify(eventOverrideRawService).updateEventOverride(any(EventOverride.class), any(EventOverrideDto.class));
+        verify(eventOverrideRawService).saveEventOverride(exsitingException);
     }
 
     @Test

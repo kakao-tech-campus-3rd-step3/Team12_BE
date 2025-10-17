@@ -2,7 +2,7 @@ package unischedule.events.dto;
 
 import java.time.LocalDateTime;
 
-public record EventExceptionDto(
+public record EventOverrideDto(
         LocalDateTime originalStartTime,
         String title,
         String content,

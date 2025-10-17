@@ -5,7 +5,7 @@ import net.fortuna.ical4j.model.Recur;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import unischedule.events.domain.Event;
-import unischedule.events.domain.EventException;
+import unischedule.events.domain.EventOverride;
 import unischedule.events.dto.EventServiceDto;
 import unischedule.events.service.internal.RecurringEventRawService;
 import unischedule.events.util.RRuleParser;
@@ -34,13 +34,13 @@ public class RecurringEventService {
 
         List<EventServiceDto> expandedEventList = new ArrayList<>();
 
-        Map<Long, List<EventException>> exceptionsMap = recurringEventRawService.getEventExceptionMap(recurringEvents, startAt, endAt);
+        Map<Long, List<EventOverride>> exceptionsMap = recurringEventRawService.getEventOverrideMap(recurringEvents, startAt, endAt);
 
         for (Event recurEvent : recurringEvents) {
             List<Event> expandedEvent = expandRecurringEvent(recurEvent, startAt, endAt);
-            List<EventException> exceptions = exceptionsMap.getOrDefault(recurEvent.getEventId(), List.of());
+            List<EventOverride> overrides = exceptionsMap.getOrDefault(recurEvent.getEventId(), List.of());
 
-            applyEventExceptions(expandedEvent, exceptions)
+            applyEventOverrides(expandedEvent, overrides)
                     .stream()
                     .map(event -> EventServiceDto.fromRecurringEvent(event, fromRecurring, recurEvent))
                     .forEach(expandedEventList::add);
@@ -73,25 +73,25 @@ public class RecurringEventService {
                 .toList();
     }
 
-    private List<Event> applyEventExceptions(List<Event> expandedEvents, List<EventException> exceptions) {
+    private List<Event> applyEventOverrides(List<Event> expandedEvents, List<EventOverride> exceptions) {
         if (exceptions.isEmpty()) {
             return expandedEvents;
         }
 
-        Map<LocalDateTime, EventException> exceptionMap = exceptions.stream()
-                .collect(Collectors.toMap(EventException::getOriginalEventTime, ex -> ex));
+        Map<LocalDateTime, EventOverride> exceptionMap = exceptions.stream()
+                .collect(Collectors.toMap(EventOverride::getOriginalEventTime, ex -> ex));
 
         List<Event> finalEvents = new ArrayList<>();
 
         for (Event event : expandedEvents) {
             if (exceptionMap.containsKey(event.getStartAt())) {
-                EventException exception = exceptionMap.get(event.getStartAt());
+                EventOverride exception = exceptionMap.get(event.getStartAt());
 
                 if (isDeletionException(exception)) {
                     continue;
                 }
 
-                finalEvents.add(applyException(exception));
+                finalEvents.add(applyOverride(exception));
             }
             else {
                 finalEvents.add(event);
@@ -100,17 +100,17 @@ public class RecurringEventService {
         return finalEvents;
     }
 
-    private boolean isDeletionException(EventException eventException) {
-        return eventException.getTitle() == null;
+    private boolean isDeletionException(EventOverride eventOverride) {
+        return eventOverride.getTitle() == null;
     }
 
-    private Event applyException(EventException eventException) {
+    private Event applyOverride(EventOverride eventOverride) {
         return Event.builder()
-                .title(eventException.getTitle())
-                .content(eventException.getContent())
-                .startAt(eventException.getStartAt())
-                .endAt(eventException.getEndAt())
-                .isPrivate(eventException.getIsPrivate())
+                .title(eventOverride.getTitle())
+                .content(eventOverride.getContent())
+                .startAt(eventOverride.getStartAt())
+                .endAt(eventOverride.getEndAt())
+                .isPrivate(eventOverride.getIsPrivate())
                 .build();
     }
 }

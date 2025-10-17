@@ -6,7 +6,7 @@ import org.springframework.transaction.annotation.Transactional;
 import unischedule.calendar.entity.Calendar;
 import unischedule.calendar.service.internal.CalendarRawService;
 import unischedule.events.domain.Event;
-import unischedule.events.domain.EventException;
+import unischedule.events.domain.EventOverride;
 import unischedule.events.domain.EventState;
 import unischedule.events.domain.RecurrenceRule;
 import unischedule.events.dto.EventCreateResponseDto;
@@ -16,7 +16,7 @@ import unischedule.events.dto.PersonalEventCreateRequestDto;
 import unischedule.events.dto.RecurringEventCreateRequestDto;
 import unischedule.events.dto.RecurringInstanceDeleteRequestDto;
 import unischedule.events.dto.RecurringInstanceModifyRequestDto;
-import unischedule.events.service.internal.EventExceptionRawService;
+import unischedule.events.service.internal.EventOverrideRawService;
 import unischedule.events.service.internal.EventRawService;
 import unischedule.events.service.internal.RecurringEventRawService;
 import unischedule.member.domain.Member;
@@ -39,7 +39,7 @@ public class PersonalEventService {
     private final EventQueryService eventQueryService;
     private final TeamMemberRawService teamMemberRawService;
     private final CalendarRawService calendarRawService;
-    private final EventExceptionRawService eventExceptionRawService;
+    private final EventOverrideRawService eventOverrideRawService;
 
     @Transactional
     public EventCreateResponseDto makePersonalSingleEvent(String email, PersonalEventCreateRequestDto requestDto) {
@@ -151,7 +151,7 @@ public class PersonalEventService {
         foundEvent.validateEventOwner(member);
 
         modifyEvent(requestDto, foundEvent);
-        eventExceptionRawService.deleteAllEventExceptionByEvent(foundEvent);
+        eventOverrideRawService.deleteAllEventOverrideByEvent(foundEvent);
 
         return EventGetResponseDto.fromRecurringEvent(foundEvent);
     }
@@ -173,20 +173,20 @@ public class PersonalEventService {
         Event originalEvent = eventRawService.findEventById(eventId);
         originalEvent.validateEventOwner(member);
 
-        Optional<EventException> eventExceptionOpt = eventExceptionRawService.findEventException(originalEvent, requestDto.originalStartTime());
+        Optional<EventOverride> eventOverrideOpt = eventOverrideRawService.findEventOverride(originalEvent, requestDto.originalStartTime());
 
-        EventException eventException;
-        if (eventExceptionOpt.isPresent()) {
-            eventException = eventExceptionOpt.get();
-            eventExceptionRawService.updateEventException(eventException, requestDto.toEventExceptionDto());
+        EventOverride eventOverride;
+        if (eventOverrideOpt.isPresent()) {
+            eventOverride = eventOverrideOpt.get();
+            eventOverrideRawService.updateEventOverride(eventOverride, requestDto.toEventOverrideDto());
         }
         else {
-            eventException = EventException.makeEventException(originalEvent, requestDto.toEventExceptionDto());
+            eventOverride = EventOverride.makeEventOverride(originalEvent, requestDto.toEventOverrideDto());
         }
 
-        EventException savedException = eventExceptionRawService.saveEventException(eventException);
+        EventOverride savedException = eventOverrideRawService.saveEventOverride(eventOverride);
 
-        return EventGetResponseDto.fromEventException(savedException, originalEvent);
+        return EventGetResponseDto.fromEventOverride(savedException, originalEvent);
     }
 
     @Transactional
@@ -196,8 +196,8 @@ public class PersonalEventService {
 
         originalEvent.validateEventOwner(member);
 
-        EventException eventException = EventException.makeEventDeleteException(originalEvent, requestDto.originalStartTime());
-        eventExceptionRawService.saveEventException(eventException);
+        EventOverride eventOverride = EventOverride.makeEventDeleteOverride(originalEvent, requestDto.originalStartTime());
+        eventOverrideRawService.saveEventOverride(eventOverride);
     }
 
     @Transactional

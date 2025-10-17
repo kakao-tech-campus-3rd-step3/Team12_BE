@@ -11,14 +11,14 @@ import jakarta.persistence.ManyToOne;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import unischedule.events.dto.EventExceptionDto;
+import unischedule.events.dto.EventOverrideDto;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class EventException {
+public class EventOverride {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -43,7 +43,7 @@ public class EventException {
     @Column(nullable = true)
     private Boolean isPrivate;
 
-    public EventException(
+    public EventOverride(
             Event originalEvent,
             LocalDateTime originalEventTime,
             String title,
@@ -61,8 +61,8 @@ public class EventException {
         this.isPrivate = isPrivate;
     }
 
-    public static EventException makeEventException(Event originEvent, EventExceptionDto exceptionDto) {
-        return new EventException(
+    public static EventOverride makeEventOverride(Event originEvent, EventOverrideDto exceptionDto) {
+        return new EventOverride(
                 originEvent,
                 exceptionDto.originalStartTime(),
                 getValueOrDefault(exceptionDto.title(), originEvent.getTitle()),
@@ -73,8 +73,8 @@ public class EventException {
         );
     }
 
-    public static EventException makeEventDeleteException(Event originEvent, LocalDateTime originStartTime) {
-        return new EventException(
+    public static EventOverride makeEventDeleteOverride(Event originEvent, LocalDateTime originStartTime) {
+        return new EventOverride(
                 originEvent,
                 originStartTime,
                 null,

@@ -6,7 +6,7 @@ import org.springframework.transaction.annotation.Transactional;
 import unischedule.calendar.entity.Calendar;
 import unischedule.calendar.service.internal.CalendarRawService;
 import unischedule.events.domain.Event;
-import unischedule.events.domain.EventException;
+import unischedule.events.domain.EventOverride;
 import unischedule.events.domain.EventState;
 import unischedule.events.domain.RecurrenceRule;
 import unischedule.events.dto.EventCreateResponseDto;
@@ -16,7 +16,7 @@ import unischedule.events.dto.RecurringEventCreateRequestDto;
 import unischedule.events.dto.RecurringInstanceDeleteRequestDto;
 import unischedule.events.dto.RecurringInstanceModifyRequestDto;
 import unischedule.events.dto.TeamEventCreateRequestDto;
-import unischedule.events.service.internal.EventExceptionRawService;
+import unischedule.events.service.internal.EventOverrideRawService;
 import unischedule.events.service.internal.EventRawService;
 import unischedule.events.service.internal.RecurringEventRawService;
 import unischedule.member.domain.Member;
@@ -43,7 +43,7 @@ public class TeamEventService {
     private final TeamRawService teamRawService;
     private final TeamMemberRawService teamMemberRawService;
     private final EventQueryService eventQueryService;
-    private final EventExceptionRawService eventExceptionRawService;
+    private final EventOverrideRawService eventOverrideRawService;
 
     @Transactional
     public EventCreateResponseDto createTeamSingleEvent(String email, TeamEventCreateRequestDto requestDto) {
@@ -177,7 +177,7 @@ public class TeamEventService {
 
         eventRawService.updateEvent(event, EventModifyRequestDto.toDto(requestDto));
         // 기존 예외 삭제
-        eventExceptionRawService.deleteAllEventExceptionByEvent(event);
+        eventOverrideRawService.deleteAllEventOverrideByEvent(event);
 
         return EventGetResponseDto.fromRecurringEvent(event);
     }
@@ -190,19 +190,19 @@ public class TeamEventService {
         Team team = originalEvent.getCalendar().getTeam();
         validateTeamMember(team, member);
 
-        Optional<EventException> eventExceptionOpt = eventExceptionRawService.findEventException(originalEvent, requestDto.originalStartTime());
+        Optional<EventOverride> eventOverrideOpt = eventOverrideRawService.findEventOverride(originalEvent, requestDto.originalStartTime());
 
-        EventException eventException;
-        if (eventExceptionOpt.isPresent()) {
-            eventException = eventExceptionOpt.get();
-            eventExceptionRawService.updateEventException(eventException, requestDto.toEventExceptionDto());
+        EventOverride eventOverride;
+        if (eventOverrideOpt.isPresent()) {
+            eventOverride = eventOverrideOpt.get();
+            eventOverrideRawService.updateEventOverride(eventOverride, requestDto.toEventOverrideDto());
         }
         else {
-            eventException = EventException.makeEventException(originalEvent, requestDto.toEventExceptionDto());
+            eventOverride = EventOverride.makeEventOverride(originalEvent, requestDto.toEventOverrideDto());
         }
-        EventException savedException = eventExceptionRawService.saveEventException(eventException);
+        EventOverride savedException = eventOverrideRawService.saveEventOverride(eventOverride);
 
-        return EventGetResponseDto.fromEventException(savedException, originalEvent);
+        return EventGetResponseDto.fromEventOverride(savedException, originalEvent);
     }
 
     @Transactional
