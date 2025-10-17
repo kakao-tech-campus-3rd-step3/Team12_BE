@@ -5,13 +5,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import unischedule.calendar.entity.Calendar;
 import unischedule.calendar.service.internal.CalendarRawService;
-import unischedule.events.dto.PersonalEventCreateRequestDto;
-import unischedule.events.dto.EventCreateResponseDto;
-import unischedule.events.dto.EventModifyRequestDto;
-import unischedule.events.domain.EventState;
-import unischedule.events.service.internal.EventRawService;
-import unischedule.events.dto.EventGetResponseDto;
 import unischedule.events.domain.Event;
+import unischedule.events.domain.EventState;
+import unischedule.events.dto.EventCreateResponseDto;
+import unischedule.events.dto.EventGetResponseDto;
+import unischedule.events.dto.EventModifyRequestDto;
+import unischedule.events.dto.PersonalEventCreateRequestDto;
+import unischedule.events.service.internal.EventRawService;
 import unischedule.member.domain.Member;
 import unischedule.member.service.internal.MemberRawService;
 import unischedule.team.domain.Team;
@@ -21,7 +21,6 @@ import unischedule.team.service.internal.TeamMemberRawService;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -65,18 +64,7 @@ public class PersonalEventService {
                 .map(TeamMember::getTeam)
                 .toList();
 
-        List<Long> calendarIds = new ArrayList<>();
-
-        // 팀 캘린더
-        List<Long> teamCalendarIds = teamList.stream()
-                .map(calendarRawService::getTeamCalendar)
-                .map(Calendar::getCalendarId)
-                .toList();
-
-        // 개인 캘린더
-        calendarIds.add(calendarRawService.getMyPersonalCalendar(member).getCalendarId());
-
-        calendarIds.addAll(teamCalendarIds);
+        List<Long> calendarIds = getMemberCalendarIds(teamList, member);
 
         List<Event> findEvents = eventRawService.findSchedule(
                 calendarIds,
@@ -88,7 +76,7 @@ public class PersonalEventService {
                 .map(EventGetResponseDto::from)
                 .toList();
     }
-    
+
     @Transactional
     public EventGetResponseDto modifyPersonalEvent(String email, EventModifyRequestDto requestDto) {
         Member member = memberRawService.findMemberByEmail(email);
@@ -97,20 +85,11 @@ public class PersonalEventService {
 
         findEvent.validateEventOwner(member);
 
-        validateUpdateTime(member, findEvent, requestDto.startTime(), requestDto.endTime());
+        eventRawService.canUpdateEvent(member, findEvent, requestDto.startTime(), requestDto.endTime());
 
         eventRawService.updateEvent(findEvent, EventModifyRequestDto.toDto(requestDto));
         
         return EventGetResponseDto.from(findEvent);
-    }
-
-    private void validateUpdateTime(Member member, Event event, LocalDateTime startTime, LocalDateTime endTime) {
-        if (startTime == null && endTime == null) return;
-
-        LocalDateTime newStartTime = Objects.requireNonNullElse(startTime, event.getStartAt());
-        LocalDateTime newEndTime = Objects.requireNonNullElse(endTime, event.getEndAt());
-
-        eventRawService.canUpdateEvent(member, event, newStartTime, newEndTime);
     }
 
     @Transactional
@@ -140,5 +119,21 @@ public class PersonalEventService {
         List<Event> todayEvents = eventRawService.findTodayEventsByMember(member);
         
         return todayEvents.stream().map(EventGetResponseDto::from).toList();
+    }
+
+    private List<Long> getMemberCalendarIds(List<Team> teamList, Member member) {
+        List<Long> calendarIds = new ArrayList<>();
+
+        // 팀 캘린더
+        List<Long> teamCalendarIds = teamList.stream()
+                .map(calendarRawService::getTeamCalendar)
+                .map(Calendar::getCalendarId)
+                .toList();
+
+        // 개인 캘린더
+        calendarIds.add(calendarRawService.getMyPersonalCalendar(member).getCalendarId());
+
+        calendarIds.addAll(teamCalendarIds);
+        return calendarIds;
     }
 }

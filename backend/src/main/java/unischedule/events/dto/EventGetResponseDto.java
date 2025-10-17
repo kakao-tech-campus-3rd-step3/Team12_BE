@@ -1,9 +1,9 @@
 package unischedule.events.dto;
 
-import java.time.LocalDateTime;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
 import unischedule.events.domain.Event;
+
+import java.time.LocalDateTime;
 
 public record EventGetResponseDto(
         @JsonProperty("event_id")

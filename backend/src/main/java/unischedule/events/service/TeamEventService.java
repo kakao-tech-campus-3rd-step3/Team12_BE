@@ -5,12 +5,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import unischedule.calendar.entity.Calendar;
 import unischedule.calendar.service.internal.CalendarRawService;
+import unischedule.events.domain.Event;
+import unischedule.events.domain.EventState;
 import unischedule.events.dto.EventCreateResponseDto;
 import unischedule.events.dto.EventGetResponseDto;
 import unischedule.events.dto.EventModifyRequestDto;
 import unischedule.events.dto.TeamEventCreateRequestDto;
-import unischedule.events.domain.Event;
-import unischedule.events.domain.EventState;
 import unischedule.events.service.internal.EventRawService;
 import unischedule.member.domain.Member;
 import unischedule.member.service.internal.MemberRawService;
@@ -39,10 +39,8 @@ public class TeamEventService {
 
         validateTeamMember(team, member);
 
-        List<Member> teamMembers = teamMemberRawService.findByTeam(team)
-                .stream()
-                .map(TeamMember::getMember)
-                .toList();
+        List<Member> teamMembers = getAllTeamMember(team);
+
         eventRawService.validateNoScheduleForMembers(teamMembers, requestDto.startTime(), requestDto.endTime());
 
         Calendar calendar = calendarRawService.getTeamCalendar(team);
@@ -89,10 +87,7 @@ public class TeamEventService {
 
         validateTeamMember(team, member);
 
-        List<Member> teamMembers = teamMemberRawService.findByTeam(team)
-                .stream()
-                .map(TeamMember::getMember)
-                .toList();
+        List<Member> teamMembers = getAllTeamMember(team);
         eventRawService.canUpdateEventForMembers(teamMembers, event, requestDto.startTime(), requestDto.endTime());
 
         eventRawService.updateEvent(event, EventModifyRequestDto.toDto(requestDto));
@@ -112,6 +107,13 @@ public class TeamEventService {
     }
 
     private void validateTeamMember(Team team, Member member) {
-        teamMemberRawService.findByTeamAndMember(team, member);
+        teamMemberRawService.checkTeamAndMember(team, member);
+    }
+
+    private List<Member> getAllTeamMember(Team team) {
+        return teamMemberRawService.findByTeam(team)
+                .stream()
+                .map(TeamMember::getMember)
+                .toList();
     }
 }

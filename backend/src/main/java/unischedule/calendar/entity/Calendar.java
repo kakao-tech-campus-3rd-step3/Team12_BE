@@ -1,6 +1,5 @@
 package unischedule.calendar.entity;
 
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.ForeignKey;
@@ -25,7 +24,7 @@ public class Calendar extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long calendarId;
-    
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(
             name = "member_id",
@@ -55,8 +54,12 @@ public class Calendar extends BaseEntity {
     }
 
     public void validateOwner(Member member) {
-        if(!this.owner.isEqualMember(member)) {
+        if (!this.owner.isEqualMember(member)) {
             throw new AccessDeniedException("해당 캘린더에 대한 접근 권한이 없습니다.");
         }
+    }
+
+    public boolean hasTeam() {
+        return this.team != null;
     }
 }

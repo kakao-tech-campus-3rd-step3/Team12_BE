@@ -8,10 +8,10 @@ import java.time.LocalDateTime;
 
 public record TeamEventCreateRequestDto(
         @NotNull
+        @JsonProperty("team_id")
         Long teamId,
         @NotBlank
         String title,
-        @NotBlank
         String description,
         @JsonProperty("start_time")
         @NotNull

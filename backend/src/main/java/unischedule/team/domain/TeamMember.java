@@ -11,13 +11,14 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 import unischedule.exception.NoPermissionException;
 import unischedule.member.domain.Member;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Getter
@@ -53,6 +54,12 @@ public class TeamMember {
     public void checkLeader() {
         if(!this.role.equals(TeamRole.LEADER)) {
             throw new NoPermissionException("리더가 아닙니다.");
+        }
+    }
+
+    public void validateRemovable() {
+        if (this.role.equals(TeamRole.LEADER)) {
+            throw new NoPermissionException("팀장 권한을 가진 멤버는 제거할 수 없습니다.");
         }
     }
 }

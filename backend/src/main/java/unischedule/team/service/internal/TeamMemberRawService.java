@@ -19,6 +19,7 @@ public class TeamMemberRawService {
 
     /**
      * 팀 멤버 관계 저장
+     *
      * @param relation
      * @return
      */
@@ -29,6 +30,7 @@ public class TeamMemberRawService {
 
     /**
      * 특정 팀의 특정 멤버 검색
+     *
      * @param team
      * @param member
      * @return
@@ -36,12 +38,19 @@ public class TeamMemberRawService {
     @Transactional(readOnly = true)
     public TeamMember findByTeamAndMember(Team team, Member member) {
         return teamMemberRepository.findByTeamAndMember(team, member)
-                .orElseThrow(() -> new EntityNotFoundException("사용자가 해당 팀 소속이 아닙니다."));
+                .orElseThrow(() -> new EntityNotFoundException("[" + member.getNickname() + "] 사용자가 해당 팀 소속이 아닙니다."));
+    }
+
+    @Transactional(readOnly = true)
+    public void checkTeamAndMember(Team team, Member member) {
+        if (!teamMemberRepository.existsByTeamAndMember(team, member)) {
+            throw new EntityNotFoundException("사용자가 해당 팀 소속이 아닙니다.");
+        }
     }
 
     @Transactional(readOnly = true)
     public void validateDuplication(Team team, Member member) {
-        if(teamMemberRepository.existsByTeamAndMember(team, member)) {
+        if (teamMemberRepository.existsByTeamAndMember(team, member)) {
             throw new ConflictException("이미 가입된 멤버입니다.");
         }
     }
@@ -60,6 +69,7 @@ public class TeamMemberRawService {
 
     /**
      * 멤버가 속한 팀 조회
+     *
      * @param member
      * @return
      */
@@ -70,6 +80,7 @@ public class TeamMemberRawService {
 
     /**
      * 팀의 멤버 조회
+     *
      * @param team
      * @return
      */

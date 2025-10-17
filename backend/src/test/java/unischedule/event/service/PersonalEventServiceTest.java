@@ -1,22 +1,5 @@
 package unischedule.event.service;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-
-import java.time.LocalDateTime;
-import java.util.List;
-
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -28,13 +11,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.access.AccessDeniedException;
 import unischedule.calendar.entity.Calendar;
 import unischedule.calendar.service.internal.CalendarRawService;
-import unischedule.events.dto.EventUpdateDto;
-import unischedule.events.dto.PersonalEventCreateRequestDto;
+import unischedule.events.domain.Event;
+import unischedule.events.domain.EventState;
 import unischedule.events.dto.EventCreateResponseDto;
 import unischedule.events.dto.EventGetResponseDto;
 import unischedule.events.dto.EventModifyRequestDto;
-import unischedule.events.domain.Event;
-import unischedule.events.domain.EventState;
+import unischedule.events.dto.EventUpdateDto;
+import unischedule.events.dto.PersonalEventCreateRequestDto;
 import unischedule.events.service.PersonalEventService;
 import unischedule.events.service.internal.EventRawService;
 import unischedule.exception.EntityNotFoundException;
@@ -43,9 +26,27 @@ import unischedule.member.domain.Member;
 import unischedule.member.service.internal.MemberRawService;
 import unischedule.team.domain.Team;
 import unischedule.team.domain.TeamMember;
-import unischedule.team.domain.TeamRole;
 import unischedule.team.service.internal.TeamMemberRawService;
 import unischedule.util.TestUtil;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class PersonalEventServiceTest {
@@ -221,7 +222,7 @@ class PersonalEventServiceTest {
         assertThat(responseDto.description()).isEqualTo("새 내용");
         assertThat(responseDto.isPrivate()).isTrue();
 
-        verify(eventRawService, never()).canUpdateEvent(any(), any(), any(), any());
+        verify(eventRawService).canUpdateEvent(any(), any(), any(), any());
     }
 
     @Test
@@ -284,5 +285,72 @@ class PersonalEventServiceTest {
                 .isInstanceOf(EntityNotFoundException.class)
                 .hasMessage("해당 일정을 찾을 수 없습니다.");
         verify(eventRawService, never()).deleteEvent(any());
+    }
+    
+    @Test
+    @DisplayName("다가오는 개인 일정 조회 성공")
+    void getUpcomingMyEvent_success() {
+        // given
+        String email = "test@test.com";
+        Member member = new Member(email, "tester", "1234");
+        Event event1 = Event.builder()
+            .title("회의")
+            .content("팀 회의")
+            .startAt(LocalDateTime.now().plusHours(1))
+            .endAt(LocalDateTime.now().plusHours(2))
+            .state(EventState.CONFIRMED)
+            .isPrivate(false)
+            .build();
+        
+        when(memberRawService.findMemberByEmail(email)).thenReturn(member);
+        when(eventRawService.findUpcomingEventsByMember(member)).thenReturn(List.of(event1));
+        
+        // when
+        List<EventGetResponseDto> result = eventService.getUpcomingMyEvent(email);
+        
+        // then
+        verify(memberRawService, times(1)).findMemberByEmail(email);
+        verify(eventRawService, times(1)).findUpcomingEventsByMember(member);
+        
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).title()).isEqualTo("회의");
+    }
+    
+    @Test
+    @DisplayName("오늘의 개인 일정 조회 성공")
+    void getTodayMyEvent_success() {
+        // given
+        String email = "today@test.com";
+        Member member = new Member(email, "todayUser", "pw");
+        Event event1 = Event.builder()
+            .title("점심 회의")
+            .content("오늘 점심 회의")
+            .startAt(LocalDateTime.now().withHour(12))
+            .endAt(LocalDateTime.now().withHour(13))
+            .state(EventState.CONFIRMED)
+            .isPrivate(true)
+            .build();
+        Event event2 = Event.builder()
+            .title("스터디")
+            .content("오늘 저녁 스터디")
+            .startAt(LocalDateTime.now().withHour(19))
+            .endAt(LocalDateTime.now().withHour(21))
+            .state(EventState.CONFIRMED)
+            .isPrivate(false)
+            .build();
+        
+        when(memberRawService.findMemberByEmail(email)).thenReturn(member);
+        when(eventRawService.findTodayEventsByMember(member)).thenReturn(List.of(event1, event2));
+        
+        // when
+        List<EventGetResponseDto> result = eventService.getTodayMyEvent(email);
+        
+        // then
+        verify(memberRawService, times(1)).findMemberByEmail(email);
+        verify(eventRawService, times(1)).findTodayEventsByMember(member);
+        
+        assertThat(result).hasSize(2);
+        assertThat(result.get(0).title()).isEqualTo("점심 회의");
+        assertThat(result.get(1).title()).isEqualTo("스터디");
     }
 }
