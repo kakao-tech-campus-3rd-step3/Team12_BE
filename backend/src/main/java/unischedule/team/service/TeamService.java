@@ -24,6 +24,7 @@ import unischedule.team.dto.TeamCreateRequestDto;
 import unischedule.team.dto.TeamCreateResponseDto;
 import unischedule.team.dto.TeamJoinRequestDto;
 import unischedule.team.dto.TeamJoinResponseDto;
+import unischedule.team.dto.TeamMemberResponseDto;
 import unischedule.team.dto.TeamResponseDto;
 import unischedule.team.dto.WhenToMeetResponseDto;
 import unischedule.team.service.internal.TeamCodeGenerator;
@@ -204,6 +205,15 @@ public class TeamService {
         });
 
         return PageResponseDto.from(responseDtos);
+    }
+
+    @Transactional(readOnly = true)
+    public PageResponseDto<TeamMemberResponseDto> getTeamMembers(String email, Long teamId, PaginationRequestDto paginationMeta) {
+        Member findMember = memberRawService.findMemberByEmail(email);
+        Team findTeam = teamRawService.findTeamById(teamId);
+        TeamMember teamMember = teamMemberRawService.findByTeamAndMember(findTeam, findMember);
+
+        return null;
     }
 
     /**
