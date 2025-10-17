@@ -1,6 +1,8 @@
 package unischedule.team.repository;
 
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import unischedule.member.domain.Member;
 import unischedule.team.domain.Team;
@@ -18,4 +20,6 @@ public interface TeamMemberRepository extends JpaRepository<TeamMember, Long> {
     List<TeamMember> findByMember(Member member);
 
     Boolean existsByTeamAndMember(Team findTeam, Member findMember);
+
+    Page<TeamMember> findTeamMemberByTeam(Team team, Pageable pageable);
 }

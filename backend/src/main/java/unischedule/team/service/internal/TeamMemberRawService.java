@@ -1,8 +1,13 @@
 package unischedule.team.service.internal;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import unischedule.common.dto.PaginationRequestDto;
 import unischedule.exception.ConflictException;
 import unischedule.exception.EntityNotFoundException;
 import unischedule.member.domain.Member;
@@ -57,12 +62,13 @@ public class TeamMemberRawService {
 
     /**
      * 팀 멤버 검증
+     *
      * @param team
      * @param member
      */
     @Transactional(readOnly = true)
     public void validateMembership(Team team, Member member) {
-        if(!teamMemberRepository.existsByTeamAndMember(team, member)) {
+        if (!teamMemberRepository.existsByTeamAndMember(team, member)) {
             throw new EntityNotFoundException("사용자가 해당 팀 소속이 아닙니다.");
         }
     }
@@ -76,6 +82,18 @@ public class TeamMemberRawService {
     @Transactional(readOnly = true)
     public List<TeamMember> findByMember(Member member) {
         return teamMemberRepository.findByMember(member);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<TeamMember> getTeamMembersByTeam(Team team, PaginationRequestDto paginationInfo) {
+        Pageable pageable = PageRequest.of(paginationInfo.page() - 1, paginationInfo.limit(), Sort.by(Sort.Order.by("role"), Sort.Order.asc("name")));
+        String keyword = paginationInfo.search();
+
+        if (keyword == null || keyword.isBlank()) {
+
+
+        }
+
     }
 
     /**
