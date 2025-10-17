@@ -62,7 +62,7 @@ public class WhenToMeetRawService {
         List<Event> events = eventRawService.findSchedule(calendarIds, start, end);
         
         return events.stream()
-            .map(EventGetResponseDto::from)
+            .map(EventGetResponseDto::fromSingleEvent)
             .toList();
     }
 }

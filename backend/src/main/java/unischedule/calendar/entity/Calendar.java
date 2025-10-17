@@ -49,7 +49,7 @@ public class Calendar extends BaseEntity {
         this.team = team;
     }
 
-    public Calendar(Member owner, String title, String description) {
+    public Calendar(Member owner) {
         this(owner, null);
     }
 

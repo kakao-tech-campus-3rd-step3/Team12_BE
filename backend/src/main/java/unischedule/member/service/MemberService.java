@@ -41,9 +41,7 @@ public class MemberService {
         memberRepository.save(newMember);
 
         Calendar personalCalendar = new Calendar(
-                newMember,
-                "내 캘린더",
-                "기본 개인 캘린더입니다."
+                newMember
         );
         calendarRepository.save(personalCalendar);
     }
