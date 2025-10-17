@@ -157,14 +157,22 @@ public class PersonalEventService {
     }
 
     private void modifyEvent(EventModifyRequestDto requestDto, Event originalEvent) {
+
         eventQueryService.checkEventUpdateOverlap(
                 List.of(originalEvent.getCalendar().getCalendarId()),
-                requestDto.startTime(),
-                requestDto.endTime(),
+                getValueOrDefault(requestDto.startTime(), originalEvent.getStartAt()),
+                getValueOrDefault(requestDto.endTime(), originalEvent.getEndAt()),
                 originalEvent
         );
 
         eventRawService.updateEvent(originalEvent, EventModifyRequestDto.toDto(requestDto));
+    }
+
+    private static <T> T getValueOrDefault(T value, T defaultValue) {
+        if (value != null) {
+            return value;
+        }
+        return defaultValue;
     }
 
     @Transactional
@@ -184,9 +192,9 @@ public class PersonalEventService {
             eventOverride = EventOverride.makeEventOverride(originalEvent, requestDto.toEventOverrideDto());
         }
 
-        EventOverride savedException = eventOverrideRawService.saveEventOverride(eventOverride);
+        EventOverride savedOverride = eventOverrideRawService.saveEventOverride(eventOverride);
 
-        return EventGetResponseDto.fromEventOverride(savedException, originalEvent);
+        return EventGetResponseDto.fromEventOverride(savedOverride, originalEvent);
     }
 
     @Transactional

@@ -65,8 +65,8 @@ public class EventOverride {
         return new EventOverride(
                 originEvent,
                 exceptionDto.originalStartTime(),
-                getValueOrDefault(exceptionDto.title(), originEvent.getTitle()),
-                getValueOrDefault(exceptionDto.content(), originEvent.getContent()),
+                getNonBlankOrDefault(exceptionDto.title(), originEvent.getTitle()),
+                getNonBlankOrDefault(exceptionDto.content(), originEvent.getContent()),
                 getValueOrDefault(exceptionDto.startTime(), originEvent.getStartAt()),
                 getValueOrDefault(exceptionDto.endTime(), originEvent.getEndAt()),
                 getValueOrDefault(exceptionDto.isPrivate(), originEvent.getIsPrivate())
@@ -90,6 +90,15 @@ public class EventOverride {
             return value;
         }
         return defaultValue;
+    }
+
+    private static String getNonBlankOrDefault(String value, String defaultValue) {
+        if (value != null && !value.isBlank()) {
+            return value;
+        }
+        else {
+            return defaultValue;
+        }
     }
 
     public void update(

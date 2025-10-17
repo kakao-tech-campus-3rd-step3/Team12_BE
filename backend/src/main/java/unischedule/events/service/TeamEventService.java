@@ -235,6 +235,9 @@ public class TeamEventService {
         Team team = originalEvent.getCalendar().getTeam();
 
         validateTeamMember(team, member);
+
+        EventOverride eventOverride = EventOverride.makeEventDeleteOverride(originalEvent, requestDto.originalStartTime());
+        eventOverrideRawService.saveEventOverride(eventOverride);
     }
 
     private void validateTeamMember(Team team, Member member) {

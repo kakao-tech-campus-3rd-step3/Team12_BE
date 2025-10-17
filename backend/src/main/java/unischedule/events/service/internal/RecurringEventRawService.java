@@ -9,6 +9,7 @@ import unischedule.events.repository.EventOverrideRepository;
 import unischedule.events.repository.EventRepository;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -25,7 +26,14 @@ public class RecurringEventRawService {
     }
 
     @Transactional(readOnly = true)
-    public Map<Long, List<EventOverride>> getEventOverrideMap(List<Event> recurringEvents, LocalDateTime startAt, LocalDateTime endAt) {
+    public Map<Long, List<EventOverride>> getEventOverrideMap(
+            List<Event> recurringEvents,
+            LocalDateTime startAt,
+            LocalDateTime endAt
+    ) {
+        if (recurringEvents == null || recurringEvents.isEmpty()) {
+            return Collections.emptyMap();
+        }
         return eventOverrideRepository
                 .findEventOverridesForEvents(recurringEvents, startAt, endAt)
                 .stream()

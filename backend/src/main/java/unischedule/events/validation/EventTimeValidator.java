@@ -14,6 +14,10 @@ public class EventTimeValidator implements ConstraintValidator<ValidEventTime, O
         LocalDateTime startTime;
         LocalDateTime endTime;
 
+        if (value == null) {
+            return false;
+        }
+
         if (value instanceof EventModifyRequestDto requestDto) {
             startTime = requestDto.startTime();
             endTime = requestDto.endTime();

@@ -58,7 +58,7 @@ public class RecurringEventService {
 
         Duration duration = Duration.between(seed.toLocalDateTime(), recEvent.getEndAt());
 
-        List<ZonedDateTime> dates = recur.getDates(startZdt, endZdt);
+        List<ZonedDateTime> dates = recur.getDates(seed, startZdt, endZdt);
 
         return dates.stream()
                 .filter(eventStart -> !eventStart.isBefore(startZdt) && eventStart.isBefore(endZdt))
