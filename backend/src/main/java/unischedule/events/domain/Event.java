@@ -11,16 +11,16 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import unischedule.common.entity.BaseEntity;
-import unischedule.events.dto.EventModifyRequestDto;
 import unischedule.calendar.entity.Calendar;
+import unischedule.common.entity.BaseEntity;
 import unischedule.exception.InvalidInputException;
 import unischedule.member.domain.Member;
+
+import java.time.LocalDateTime;
 
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -49,11 +49,11 @@ public class Event extends BaseEntity {
     
     @Column(nullable = false)
     private Boolean isPrivate;
-    
-    @Column(name = "recurrence_rule_id")
-    private Long recurrenceRuleId;
-    
-    //우선 개인에 맞춰 세팅, 추후 수정 필요
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
+    @JoinColumn(name = "recurrence_rule_id", nullable = true)
+    private RecurrenceRule recurrenceRule;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "calendar_id", nullable = false)
     private Calendar calendar;
@@ -107,12 +107,18 @@ public class Event extends BaseEntity {
         this.calendar = calendar;
     }
 
+    public void connectRecurrenceRule(RecurrenceRule recurrenceRule) {
+        if (recurrenceRule != null) {
+            this.recurrenceRule = recurrenceRule;
+        }
+    }
+
     public void validateEventOwner(Member member) {
         this.calendar.validateOwner(member);
     }
 
     public void validateIsTeamEvent() {
-        if (this.calendar.getTeam() == null) {
+        if (!this.calendar.hasTeam()) {
             throw new InvalidInputException("팀 일정이 아닙니다.");
         }
     }
