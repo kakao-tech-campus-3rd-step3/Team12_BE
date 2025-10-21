@@ -1,5 +1,6 @@
 package unischedule.event.service;
 
+import java.time.LocalDate;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -404,34 +405,51 @@ class PersonalEventServiceTest {
         Calendar personalCalendar = spy(TestUtil.makePersonalCalendar(owner));
         when(personalCalendar.getCalendarId()).thenReturn(200L);
         
-        Event event1 = Event.builder()
-            .title("회의")
-            .content("팀 회의")
-            .startAt(LocalDateTime.now().plusHours(1))
-            .endAt(LocalDateTime.now().plusHours(2))
-            .state(EventState.CONFIRMED)
-            .isPrivate(false)
-            .build();
-        
         when(memberRawService.findMemberByEmail(email)).thenReturn(member);
         when(teamMemberRawService.findByMember(member)).thenReturn(List.of(teamMember));
         when(calendarRawService.getTeamCalendar(team)).thenReturn(teamCalendar);
         when(calendarRawService.getMyPersonalCalendar(member)).thenReturn(personalCalendar);
         
-        when(eventRawService.findUpcomingEventsByCalendar(anyList())).thenReturn(List.of(event1));
+        LocalDateTime start = LocalDate.now().plusDays(1).atStartOfDay();
+        LocalDateTime end = LocalDate.now().plusDays(8).atStartOfDay();
         
-        //when
+        EventServiceDto event1 = new EventServiceDto(
+            1L,
+            "회의",
+            "주간 회의",
+            LocalDateTime.of(2025, 9, 10, 10, 0),
+            LocalDateTime.of(2025, 9, 10, 11, 0),
+            EventState.CONFIRMED,
+            true,
+            false
+        );
+        
+        EventServiceDto event2 = new EventServiceDto(
+            2L,
+            "워크샵",
+            "분기별 워크샵",
+            LocalDateTime.of(2025, 9, 15, 14, 0),
+            LocalDateTime.of(2025, 9, 15, 17, 0),
+            EventState.CONFIRMED,
+            false,
+            false
+        );
+        
+        when(eventQueryService.getEvents(anyList(), eq(start), eq(end)))
+            .thenReturn(List.of(event1, event2));
+        
+        // when
         List<EventGetResponseDto> result = eventService.getUpcomingMyEvent(email);
         
-        //then
-        assertThat(result).hasSize(1);
+        // then
+        assertThat(result).hasSize(2);
         assertThat(result.get(0).title()).isEqualTo("회의");
         
         verify(memberRawService).findMemberByEmail(email);
         verify(teamMemberRawService).findByMember(member);
         verify(calendarRawService).getTeamCalendar(team);
         verify(calendarRawService).getMyPersonalCalendar(member);
-        verify(eventRawService).findUpcomingEventsByCalendar(anyList());
+        verify(eventQueryService).getEvents(anyList(), eq(start), eq(end));
     }
     
     @Test
@@ -450,43 +468,50 @@ class PersonalEventServiceTest {
         Calendar personalCalendar = spy(TestUtil.makePersonalCalendar(owner));
         when(personalCalendar.getCalendarId()).thenReturn(200L);
         
-        Event event1 = Event.builder()
-            .title("점심 회의")
-            .content("오늘 점심 회의")
-            .startAt(LocalDateTime.now().withHour(12))
-            .endAt(LocalDateTime.now().withHour(13))
-            .state(EventState.CONFIRMED)
-            .isPrivate(true)
-            .build();
+        LocalDateTime start = LocalDate.now().atStartOfDay();
+        LocalDateTime end = LocalDate.now().plusDays(1).atStartOfDay();
         
-        Event event2 = Event.builder()
-            .title("스터디")
-            .content("오늘 저녁 스터디")
-            .startAt(LocalDateTime.now().withHour(19))
-            .endAt(LocalDateTime.now().withHour(21))
-            .state(EventState.CONFIRMED)
-            .isPrivate(false)
-            .build();
+        EventServiceDto event1 = new EventServiceDto(
+            1L,
+            "회의",
+            "주간 회의",
+            LocalDateTime.of(2025, 9, 10, 10, 0),
+            LocalDateTime.of(2025, 9, 10, 11, 0),
+            EventState.CONFIRMED,
+            true,
+            false
+        );
+        
+        EventServiceDto event2 = new EventServiceDto(
+            2L,
+            "워크샵",
+            "분기별 워크샵",
+            LocalDateTime.of(2025, 9, 15, 14, 0),
+            LocalDateTime.of(2025, 9, 15, 17, 0),
+            EventState.CONFIRMED,
+            false,
+            false
+        );
         
         when(memberRawService.findMemberByEmail(email)).thenReturn(member);
         when(teamMemberRawService.findByMember(member)).thenReturn(List.of(teamMember));
         when(calendarRawService.getTeamCalendar(team)).thenReturn(teamCalendar);
         when(calendarRawService.getMyPersonalCalendar(member)).thenReturn(personalCalendar);
         
-        when(eventRawService.findTodayEventsByCalendar(anyList())).thenReturn(List.of(event1, event2));
+        when(eventQueryService.getEvents(anyList(), eq(start), eq(end))).thenReturn(List.of(event1, event2));
         
         //when
         List<EventGetResponseDto> result = eventService.getTodayMyEvent(email);
         
         //then
         assertThat(result).hasSize(2);
-        assertThat(result.get(0).title()).isEqualTo("점심 회의");
-        assertThat(result.get(1).title()).isEqualTo("스터디");
+        assertThat(result.get(0).title()).isEqualTo("회의");
+        assertThat(result.get(1).title()).isEqualTo("워크샵");
         
         verify(memberRawService).findMemberByEmail(email);
         verify(teamMemberRawService).findByMember(member);
         verify(calendarRawService).getTeamCalendar(team);
         verify(calendarRawService).getMyPersonalCalendar(member);
-        verify(eventRawService).findTodayEventsByCalendar(anyList());
+        verify(eventQueryService).getEvents(anyList(), eq(start), eq(end));
     }
 }

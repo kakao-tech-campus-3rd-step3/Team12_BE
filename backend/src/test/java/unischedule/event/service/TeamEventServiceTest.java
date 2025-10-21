@@ -1,5 +1,6 @@
 package unischedule.event.service;
 
+import java.time.LocalDate;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -15,6 +16,7 @@ import unischedule.events.dto.EventCreateResponseDto;
 import unischedule.events.dto.EventOverrideDto;
 import unischedule.events.dto.EventGetResponseDto;
 import unischedule.events.dto.EventModifyRequestDto;
+import unischedule.events.dto.EventServiceDto;
 import unischedule.events.dto.EventUpdateDto;
 import unischedule.events.dto.RecurringEventCreateRequestDto;
 import unischedule.events.dto.RecurringInstanceModifyRequestDto;
@@ -338,33 +340,49 @@ class TeamEventServiceTest {
         Calendar teamCalendar = spy(TestUtil.makeTeamCalendar(member, team));
         when(teamCalendar.getCalendarId()).thenReturn(100L);
         
-        Event event1 = Event.builder()
-            .title("팀 회의")
-            .content("이번 주 팀 회의")
-            .startAt(LocalDateTime.now().plusHours(1))
-            .endAt(LocalDateTime.now().plusHours(2))
-            .state(EventState.CONFIRMED)
-            .isPrivate(false)
-            .build();
+        EventServiceDto event1 = new EventServiceDto(
+            1L,
+            "회의",
+            "주간 회의",
+            LocalDateTime.of(2025, 9, 10, 10, 0),
+            LocalDateTime.of(2025, 9, 10, 11, 0),
+            EventState.CONFIRMED,
+            true,
+            false
+        );
+        
+        EventServiceDto event2 = new EventServiceDto(
+            2L,
+            "워크샵",
+            "분기별 워크샵",
+            LocalDateTime.of(2025, 9, 15, 14, 0),
+            LocalDateTime.of(2025, 9, 15, 17, 0),
+            EventState.CONFIRMED,
+            false,
+            false
+        );
+        
+        LocalDateTime start = LocalDate.now().plusDays(1).atStartOfDay();
+        LocalDateTime end = LocalDate.now().plusDays(8).atStartOfDay();
         
         when(memberRawService.findMemberByEmail(email)).thenReturn(member);
         when(teamRawService.findTeamById(teamId)).thenReturn(team);
         when(calendarRawService.getTeamCalendar(team)).thenReturn(teamCalendar);
         doNothing().when(teamMemberRawService).checkTeamAndMember(team, member);
-        when(eventRawService.findUpcomingEventsByCalendar(anyList())).thenReturn(List.of(event1));
+        when(eventQueryService.getEvents(anyList(), eq(start), eq(end))).thenReturn(List.of(event1, event2));
         
         // when
         List<EventGetResponseDto> result = teamEventService.getUpcomingTeamEvents(email, teamId);
         
         // then
-        assertThat(result).hasSize(1);
-        assertThat(result.get(0).title()).isEqualTo("팀 회의");
+        assertThat(result).hasSize(2);
+        assertThat(result.get(0).title()).isEqualTo("회의");
         
         verify(memberRawService).findMemberByEmail(email);
         verify(teamRawService).findTeamById(teamId);
         verify(calendarRawService).getTeamCalendar(team);
         verify(teamMemberRawService).checkTeamAndMember(team, member);
-        verify(eventRawService).findUpcomingEventsByCalendar(anyList());
+        verify(eventQueryService).getEvents(anyList(), eq(start), eq(end));
     }
     
     @Test
@@ -380,43 +398,50 @@ class TeamEventServiceTest {
         Calendar teamCalendar = spy(TestUtil.makeTeamCalendar(member, team));
         when(teamCalendar.getCalendarId()).thenReturn(100L);
         
-        Event event1 = Event.builder()
-            .title("오늘 팀 회의")
-            .content("오늘 점심 팀 회의")
-            .startAt(LocalDateTime.now().withHour(12))
-            .endAt(LocalDateTime.now().withHour(13))
-            .state(EventState.CONFIRMED)
-            .isPrivate(false)
-            .build();
+        EventServiceDto event1 = new EventServiceDto(
+            1L,
+            "회의",
+            "주간 회의",
+            LocalDateTime.of(2025, 9, 10, 10, 0),
+            LocalDateTime.of(2025, 9, 10, 11, 0),
+            EventState.CONFIRMED,
+            true,
+            false
+        );
         
-        Event event2 = Event.builder()
-            .title("오늘 팀 스터디")
-            .content("오늘 저녁 팀 스터디")
-            .startAt(LocalDateTime.now().withHour(19))
-            .endAt(LocalDateTime.now().withHour(21))
-            .state(EventState.CONFIRMED)
-            .isPrivate(false)
-            .build();
+        EventServiceDto event2 = new EventServiceDto(
+            2L,
+            "워크샵",
+            "분기별 워크샵",
+            LocalDateTime.of(2025, 9, 15, 14, 0),
+            LocalDateTime.of(2025, 9, 15, 17, 0),
+            EventState.CONFIRMED,
+            false,
+            false
+        );
+        
+        LocalDateTime start = LocalDate.now().atStartOfDay();
+        LocalDateTime end = LocalDate.now().plusDays(1).atStartOfDay();
         
         when(memberRawService.findMemberByEmail(email)).thenReturn(member);
         when(teamRawService.findTeamById(teamId)).thenReturn(team);
         when(calendarRawService.getTeamCalendar(team)).thenReturn(teamCalendar);
         doNothing().when(teamMemberRawService).checkTeamAndMember(team, member);
-        when(eventRawService.findTodayEventsByCalendar(anyList())).thenReturn(List.of(event1, event2));
+        when(eventQueryService.getEvents(anyList(), eq(start), eq(end))).thenReturn(List.of(event1, event2));
         
         // when
         List<EventGetResponseDto> result = teamEventService.getTodayTeamEvents(email, teamId);
         
         // then
         assertThat(result).hasSize(2);
-        assertThat(result.get(0).title()).isEqualTo("오늘 팀 회의");
-        assertThat(result.get(1).title()).isEqualTo("오늘 팀 스터디");
+        assertThat(result.get(0).title()).isEqualTo("회의");
+        assertThat(result.get(1).title()).isEqualTo("워크샵");
         
         verify(memberRawService).findMemberByEmail(email);
         verify(teamRawService).findTeamById(teamId);
         verify(calendarRawService).getTeamCalendar(team);
         verify(teamMemberRawService).checkTeamAndMember(team, member);
-        verify(eventRawService).findTodayEventsByCalendar(anyList());
+        verify(eventQueryService).getEvents(anyList(), eq(start), eq(end));
     }
     
 }
