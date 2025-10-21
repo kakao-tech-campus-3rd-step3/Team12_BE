@@ -163,4 +163,8 @@ public class EventOverride {
                 this.isPrivate
         );
     }
+
+    public boolean isDeleteOverride() {
+        return this.title == null;
+    }
 }

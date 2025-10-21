@@ -6,7 +6,6 @@ import org.springframework.transaction.annotation.Transactional;
 import unischedule.events.domain.Event;
 import unischedule.events.dto.EventServiceDto;
 import unischedule.events.service.internal.EventRawService;
-import unischedule.events.util.DateTimeUtil;
 import unischedule.events.util.RRuleParser;
 import unischedule.exception.InvalidInputException;
 
@@ -22,7 +21,6 @@ public class EventQueryService {
     private final EventRawService eventRawService;
     private final RecurringEventService recurringEventService;
     private final RRuleParser rruleParser;
-    private final DateTimeUtil dateTimeUtil;
 
     @Transactional(readOnly = true)
     public List<EventServiceDto> getEvents(List<Long> calendarIds, LocalDateTime startAt, LocalDateTime endAt) {
@@ -64,10 +62,7 @@ public class EventQueryService {
             LocalDateTime firstEndTime,
             String rruleString
     ) {
-        List<LocalDateTime> eventStartTimes = rruleParser.calEventStartTimeListZdt(firstStartTime, rruleString)
-                .stream()
-                .map(dateTimeUtil::ZonedDateTimeToLdt)
-                .toList();
+        List<LocalDateTime> eventStartTimes = rruleParser.calEventStartTimeList(firstStartTime, rruleString);
 
         Duration duration = Duration.between(firstStartTime, firstEndTime);
 

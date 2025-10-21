@@ -16,14 +16,37 @@ import java.util.regex.Pattern;
 @Component
 @RequiredArgsConstructor
 public class RRuleParser {
-    private final DateTimeUtil zonedDateTimeUtil;
+    private final DateTimeUtil dateTimeUtil;
 
-    public List<ZonedDateTime> calEventStartTimeListZdt(LocalDateTime firstStartTime, String rruleString) {
+    public List<LocalDateTime> calEventStartTimeList(LocalDateTime firstStartTime, String rruleString) {
         Recur<ZonedDateTime> recur = getRecur(rruleString);
 
-        ZonedDateTime seed = zonedDateTimeUtil.localDateTimeToZdt(firstStartTime);
-        ZonedDateTime endBoundary = zonedDateTimeUtil.localDateTimeToZdt(getRepeatEndDate(firstStartTime, rruleString));
-        return recur.getDates(seed, endBoundary);
+        ZonedDateTime seed = dateTimeUtil.localDateTimeToZdt(firstStartTime);
+        ZonedDateTime endBoundary = dateTimeUtil.localDateTimeToZdt(getRepeatEndDate(firstStartTime, rruleString));
+        return recur.getDates(seed, endBoundary)
+                .stream()
+                .map(dateTimeUtil::ZonedDateTimeToLdt)
+                .toList();
+    }
+
+    public List<LocalDateTime> calEventStartTimeListRange(
+            String rruleString,
+            LocalDateTime originalStartAt,
+            LocalDateTime startAt,
+            LocalDateTime endAt
+    ) {
+        Recur<ZonedDateTime> recur = getRecur(rruleString);
+
+        ZonedDateTime seed = dateTimeUtil.localDateTimeToZdt(originalStartAt);
+        ZonedDateTime startZdt = dateTimeUtil.localDateTimeToZdt(startAt);
+        ZonedDateTime endZdt = dateTimeUtil.localDateTimeToZdt(endAt);
+
+        List<ZonedDateTime> dates = recur.getDates(seed, startZdt, endZdt);
+
+        return dates.stream()
+                .filter(eventStart -> !eventStart.isBefore(startZdt) && eventStart.isBefore(endZdt))
+                .map(dateTimeUtil::ZonedDateTimeToLdt)
+                .toList();
     }
 
     public Recur<ZonedDateTime> getRecur(String rruleString) {
