@@ -1,5 +1,6 @@
 package unischedule.events.service;
 
+import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,6 +13,7 @@ import unischedule.events.domain.RecurrenceRule;
 import unischedule.events.dto.EventCreateResponseDto;
 import unischedule.events.dto.EventGetResponseDto;
 import unischedule.events.dto.EventModifyRequestDto;
+import unischedule.events.dto.EventServiceDto;
 import unischedule.events.dto.RecurringEventCreateRequestDto;
 import unischedule.events.dto.RecurringInstanceDeleteRequestDto;
 import unischedule.events.dto.RecurringInstanceModifyRequestDto;
@@ -215,6 +217,20 @@ public class TeamEventService {
         validateTeamMember(team, member);
         eventRawService.deleteEvent(event);
     }
+    
+    @Transactional(readOnly = true)
+    public List<EventGetResponseDto> getTodayTeamEvents(String email, Long teamId) {
+        LocalDateTime start = LocalDate.now().atStartOfDay();
+        LocalDateTime end = LocalDate.now().plusDays(1).atStartOfDay();
+        return getTeamEventsForPeriod(email, teamId, start, end);
+    }
+    
+    @Transactional(readOnly = true)
+    public List<EventGetResponseDto> getUpcomingTeamEvents(String email, Long teamId) {
+        LocalDateTime start = LocalDate.now().plusDays(1).atStartOfDay();
+        LocalDateTime end = LocalDate.now().plusDays(8).atStartOfDay();
+        return getTeamEventsForPeriod(email, teamId, start, end);
+    }
 
     @Transactional
     public void deleteTeamRecurringEvent(String email, Long eventId) {
@@ -265,6 +281,21 @@ public class TeamEventService {
         }
         return new ArrayList<>(calendarIds);
     }
+    
+    private List<EventGetResponseDto> getTeamEventsForPeriod(String email, Long teamId, LocalDateTime start, LocalDateTime end) {
+        Member member = memberRawService.findMemberByEmail(email);
+        Team team = teamRawService.findTeamById(teamId);
+        
+        validateTeamMember(team, member);
+        
+        Long calendarId = calendarRawService.getTeamCalendar(team).getCalendarId();
+        List<EventServiceDto> events = eventQueryService.getEvents(List.of(calendarId), start, end);
+        
+        return events.stream()
+            .map(EventGetResponseDto::fromServiceDto)
+            .toList();
+    }
+    
     private List<Member> getAllTeamMember(Team team) {
         return teamMemberRawService.findByTeam(team)
                 .stream()

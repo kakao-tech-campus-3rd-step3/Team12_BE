@@ -10,6 +10,8 @@ import unischedule.calendar.entity.Calendar;
 import unischedule.calendar.service.internal.CalendarRawService;
 import unischedule.events.domain.Event;
 import unischedule.events.dto.EventGetResponseDto;
+import unischedule.events.dto.EventServiceDto;
+import unischedule.events.service.EventQueryService;
 import unischedule.events.service.internal.EventRawService;
 import unischedule.member.domain.Member;
 import unischedule.member.service.internal.MemberRawService;
@@ -24,7 +26,7 @@ public class WhenToMeetRawService {
     private final TeamMemberRawService teamMemberRawService;
     private final MemberRawService memberRawService;
     private final CalendarRawService calendarRawService;
-    private final EventRawService eventRawService;
+    private final EventQueryService eventQueryService;
     
     @Transactional(readOnly = true)
     public List<Member> findTeamMembers(Long teamId) {
@@ -45,25 +47,30 @@ public class WhenToMeetRawService {
             .map(TeamMember::getTeam)
             .toList();
         
+        List<Long> calendarIds = getMemberCalendarIds(teamList, findMember);
+        
+        // 해당 기간의 모든 일정 조회
+        List<EventServiceDto> events = eventQueryService.getEvents(calendarIds, start, end);
+        
+        return events.stream()
+            .map(EventGetResponseDto::fromServiceDto)
+            .toList();
+    }
+    
+    private List<Long> getMemberCalendarIds(List<Team> teamList, Member member) {
         List<Long> calendarIds = new ArrayList<>();
         
-        // 개인 캘린더 추가
-        calendarIds.add(calendarRawService.getMyPersonalCalendar(findMember).getCalendarId());
-        
-        // 팀 캘린더 추가
+        // 팀 캘린더
         List<Long> teamCalendarIds = teamList.stream()
             .map(calendarRawService::getTeamCalendar)
             .map(Calendar::getCalendarId)
             .toList();
         
+        // 개인 캘린더
+        calendarIds.add(calendarRawService.getMyPersonalCalendar(member).getCalendarId());
+        
         calendarIds.addAll(teamCalendarIds);
-        
-        // 해당 기간의 모든 일정 조회
-        List<Event> events = eventRawService.findSchedule(calendarIds, start, end);
-        
-        return events.stream()
-            .map(EventGetResponseDto::fromSingleEvent)
-            .toList();
+        return calendarIds;
     }
 }
 

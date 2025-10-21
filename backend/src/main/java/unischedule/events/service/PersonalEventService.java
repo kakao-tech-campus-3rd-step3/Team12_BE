@@ -1,5 +1,6 @@
 package unischedule.events.service;
 
+import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,6 +13,7 @@ import unischedule.events.domain.RecurrenceRule;
 import unischedule.events.dto.EventCreateResponseDto;
 import unischedule.events.dto.EventGetResponseDto;
 import unischedule.events.dto.EventModifyRequestDto;
+import unischedule.events.dto.EventServiceDto;
 import unischedule.events.dto.PersonalEventCreateRequestDto;
 import unischedule.events.dto.RecurringEventCreateRequestDto;
 import unischedule.events.dto.RecurringInstanceDeleteRequestDto;
@@ -230,23 +232,36 @@ public class PersonalEventService {
 
         recurringEventRawService.deleteRecurringEvent(event);
     }
-
-    @Transactional(readOnly = true)
-    public List<EventGetResponseDto> getUpcomingMyEvent(String email) {
-        Member member = memberRawService.findMemberByEmail(email);
-        
-        List<Event> upcomingEvents = eventRawService.findUpcomingEventsByMember(member);
-        
-        return upcomingEvents.stream().map(EventGetResponseDto::fromSingleEvent).toList();
-    }
-
+    
     @Transactional(readOnly = true)
     public List<EventGetResponseDto> getTodayMyEvent(String email) {
+        LocalDateTime start = LocalDate.now().atStartOfDay();
+        LocalDateTime end = LocalDate.now().plusDays(1).atStartOfDay();
+        return getEventsForPeriod(email, start, end);
+    }
+    
+    @Transactional(readOnly = true)
+    public List<EventGetResponseDto> getUpcomingMyEvent(String email) {
+        LocalDateTime start = LocalDate.now().plusDays(1).atStartOfDay();
+        LocalDateTime end = LocalDate.now().plusDays(8).atStartOfDay();
+        return getEventsForPeriod(email, start, end);
+    }
+    
+    private List<EventGetResponseDto> getEventsForPeriod(String email, LocalDateTime start, LocalDateTime end) {
         Member member = memberRawService.findMemberByEmail(email);
         
-        List<Event> todayEvents = eventRawService.findTodayEventsByMember(member);
+        List<Team> teamList = teamMemberRawService.findByMember(member)
+            .stream()
+            .map(TeamMember::getTeam)
+            .toList();
         
-        return todayEvents.stream().map(EventGetResponseDto::fromSingleEvent).toList();
+        List<Long> calendarIds = getMemberCalendarIds(teamList, member);
+        
+        List<EventServiceDto> events = eventQueryService.getEvents(calendarIds, start, end);
+        
+        return events.stream()
+            .map(EventGetResponseDto::fromServiceDto)
+            .toList();
     }
 
     private List<Long> getMemberCalendarIds(List<Team> teamList, Member member) {

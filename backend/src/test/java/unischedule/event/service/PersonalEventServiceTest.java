@@ -1,5 +1,6 @@
 package unischedule.event.service;
 
+import java.time.LocalDate;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -33,6 +34,7 @@ import unischedule.member.domain.Member;
 import unischedule.member.service.internal.MemberRawService;
 import unischedule.team.domain.Team;
 import unischedule.team.domain.TeamMember;
+import unischedule.team.domain.TeamRole;
 import unischedule.team.service.internal.TeamMemberRawService;
 import unischedule.util.TestUtil;
 
@@ -390,67 +392,126 @@ class PersonalEventServiceTest {
     @Test
     @DisplayName("다가오는 개인 일정 조회 성공")
     void getUpcomingMyEvent_success() {
-        // given
+        //given
         String email = "test@test.com";
-        Member member = new Member(email, "tester", "1234");
-        Event event1 = Event.builder()
-            .title("회의")
-            .content("팀 회의")
-            .startAt(LocalDateTime.now().plusHours(1))
-            .endAt(LocalDateTime.now().plusHours(2))
-            .state(EventState.CONFIRMED)
-            .isPrivate(false)
-            .build();
+        
+        Member member = owner;
+        Team team = TestUtil.makeTeam();
+        TeamMember teamMember = new TeamMember(team, member, TeamRole.LEADER);
+        
+        Calendar teamCalendar = spy(TestUtil.makeTeamCalendar(owner, team));
+        when(teamCalendar.getCalendarId()).thenReturn(100L);
+        
+        Calendar personalCalendar = spy(TestUtil.makePersonalCalendar(owner));
+        when(personalCalendar.getCalendarId()).thenReturn(200L);
         
         when(memberRawService.findMemberByEmail(email)).thenReturn(member);
-        when(eventRawService.findUpcomingEventsByMember(member)).thenReturn(List.of(event1));
+        when(teamMemberRawService.findByMember(member)).thenReturn(List.of(teamMember));
+        when(calendarRawService.getTeamCalendar(team)).thenReturn(teamCalendar);
+        when(calendarRawService.getMyPersonalCalendar(member)).thenReturn(personalCalendar);
+        
+        LocalDateTime start = LocalDate.now().plusDays(1).atStartOfDay();
+        LocalDateTime end = LocalDate.now().plusDays(8).atStartOfDay();
+        
+        EventServiceDto event1 = new EventServiceDto(
+            1L,
+            "회의",
+            "주간 회의",
+            LocalDateTime.of(2025, 9, 10, 10, 0),
+            LocalDateTime.of(2025, 9, 10, 11, 0),
+            EventState.CONFIRMED,
+            true,
+            false
+        );
+        
+        EventServiceDto event2 = new EventServiceDto(
+            2L,
+            "워크샵",
+            "분기별 워크샵",
+            LocalDateTime.of(2025, 9, 15, 14, 0),
+            LocalDateTime.of(2025, 9, 15, 17, 0),
+            EventState.CONFIRMED,
+            false,
+            false
+        );
+        
+        when(eventQueryService.getEvents(anyList(), eq(start), eq(end)))
+            .thenReturn(List.of(event1, event2));
         
         // when
         List<EventGetResponseDto> result = eventService.getUpcomingMyEvent(email);
         
         // then
-        verify(memberRawService, times(1)).findMemberByEmail(email);
-        verify(eventRawService, times(1)).findUpcomingEventsByMember(member);
+        assertThat(result).hasSize(2);
+        assertThat(result.get(0).title()).isEqualTo("회의");
         
-        assertThat(result).hasSize(1);
-        assertThat(result.getFirst().title()).isEqualTo("회의");
+        verify(memberRawService).findMemberByEmail(email);
+        verify(teamMemberRawService).findByMember(member);
+        verify(calendarRawService).getTeamCalendar(team);
+        verify(calendarRawService).getMyPersonalCalendar(member);
+        verify(eventQueryService).getEvents(anyList(), eq(start), eq(end));
     }
     
     @Test
     @DisplayName("오늘의 개인 일정 조회 성공")
     void getTodayMyEvent_success() {
-        // given
+        //given
         String email = "today@test.com";
-        Member member = new Member(email, "todayUser", "pw");
-        Event event1 = Event.builder()
-            .title("점심 회의")
-            .content("오늘 점심 회의")
-            .startAt(LocalDateTime.now().withHour(12))
-            .endAt(LocalDateTime.now().withHour(13))
-            .state(EventState.CONFIRMED)
-            .isPrivate(true)
-            .build();
-        Event event2 = Event.builder()
-            .title("스터디")
-            .content("오늘 저녁 스터디")
-            .startAt(LocalDateTime.now().withHour(19))
-            .endAt(LocalDateTime.now().withHour(21))
-            .state(EventState.CONFIRMED)
-            .isPrivate(false)
-            .build();
         
-        given(memberRawService.findMemberByEmail(email)).willReturn(member);
-        given(eventRawService.findTodayEventsByMember(member)).willReturn(List.of(event1, event2));
+        Member member = owner;
+        Team team = TestUtil.makeTeam();
+        TeamMember teamMember = TestUtil.makeTeamMember(team, member);
         
-        // when
+        Calendar teamCalendar = spy(TestUtil.makeTeamCalendar(owner, team));
+        when(teamCalendar.getCalendarId()).thenReturn(100L);
+        
+        Calendar personalCalendar = spy(TestUtil.makePersonalCalendar(owner));
+        when(personalCalendar.getCalendarId()).thenReturn(200L);
+        
+        LocalDateTime start = LocalDate.now().atStartOfDay();
+        LocalDateTime end = LocalDate.now().plusDays(1).atStartOfDay();
+        
+        EventServiceDto event1 = new EventServiceDto(
+            1L,
+            "회의",
+            "주간 회의",
+            LocalDateTime.of(2025, 9, 10, 10, 0),
+            LocalDateTime.of(2025, 9, 10, 11, 0),
+            EventState.CONFIRMED,
+            true,
+            false
+        );
+        
+        EventServiceDto event2 = new EventServiceDto(
+            2L,
+            "워크샵",
+            "분기별 워크샵",
+            LocalDateTime.of(2025, 9, 15, 14, 0),
+            LocalDateTime.of(2025, 9, 15, 17, 0),
+            EventState.CONFIRMED,
+            false,
+            false
+        );
+        
+        when(memberRawService.findMemberByEmail(email)).thenReturn(member);
+        when(teamMemberRawService.findByMember(member)).thenReturn(List.of(teamMember));
+        when(calendarRawService.getTeamCalendar(team)).thenReturn(teamCalendar);
+        when(calendarRawService.getMyPersonalCalendar(member)).thenReturn(personalCalendar);
+        
+        when(eventQueryService.getEvents(anyList(), eq(start), eq(end))).thenReturn(List.of(event1, event2));
+        
+        //when
         List<EventGetResponseDto> result = eventService.getTodayMyEvent(email);
         
-        // then
-        verify(memberRawService, times(1)).findMemberByEmail(email);
-        verify(eventRawService, times(1)).findTodayEventsByMember(member);
-        
+        //then
         assertThat(result).hasSize(2);
-        assertThat(result.get(0).title()).isEqualTo("점심 회의");
-        assertThat(result.get(1).title()).isEqualTo("스터디");
+        assertThat(result.get(0).title()).isEqualTo("회의");
+        assertThat(result.get(1).title()).isEqualTo("워크샵");
+        
+        verify(memberRawService).findMemberByEmail(email);
+        verify(teamMemberRawService).findByMember(member);
+        verify(calendarRawService).getTeamCalendar(team);
+        verify(calendarRawService).getMyPersonalCalendar(member);
+        verify(eventQueryService).getEvents(anyList(), eq(start), eq(end));
     }
 }

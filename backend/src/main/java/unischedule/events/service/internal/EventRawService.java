@@ -5,6 +5,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import unischedule.calendar.entity.Calendar;
 import unischedule.events.domain.Event;
 import unischedule.events.dto.EventServiceDto;
 import unischedule.events.dto.EventUpdateDto;
@@ -15,6 +16,7 @@ import unischedule.member.domain.Member;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import unischedule.team.domain.Team;
 
 @Service
 @RequiredArgsConstructor
@@ -66,20 +68,5 @@ public class EventRawService {
     @Transactional(readOnly = true)
     public boolean existsSingleSchedule(List<Long> calendarIds, LocalDateTime startTime, LocalDateTime endTime) {
         return eventRepository.existsSingleScheduleInPeriod(calendarIds, startTime, endTime);
-    }
-    
-    @Transactional(readOnly = true)
-    public List<Event> findUpcomingEventsByMember(Member member) {
-        LocalDateTime now = LocalDateTime.now();
-        Pageable pageable = PageRequest.of(0, 3); // 개수 제한
-        return eventRepository.findUpcomingEvents(member.getMemberId(), now, pageable);
-    }
-    
-    @Transactional(readOnly = true)
-    public List<Event> findTodayEventsByMember(Member member) {
-        LocalDate today = LocalDate.now();
-        LocalDateTime startOfDay = today.atStartOfDay();              // 오늘 00:00
-        LocalDateTime endOfDay = today.plusDays(1).atStartOfDay();    // 내일 00:00
-        return eventRepository.findPersonalScheduleInPeriod(member.getMemberId(), startOfDay, endOfDay);
     }
 }
