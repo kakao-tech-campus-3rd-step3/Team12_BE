@@ -127,10 +127,9 @@ public class TeamEventService {
 
         Calendar teamCalendar = calendarRawService.getTeamCalendar(team);
 
-        List<Event> events = eventRawService.findSchedule(List.of(teamCalendar.getCalendarId()), startAt, endAt);
-
-        return events.stream()
-                .map(EventGetResponseDto::fromSingleEvent)
+        return eventQueryService.getEvents(List.of(teamCalendar.getCalendarId()), startAt, endAt)
+                .stream()
+                .map(EventGetResponseDto::fromServiceDto)
                 .toList();
     }
 

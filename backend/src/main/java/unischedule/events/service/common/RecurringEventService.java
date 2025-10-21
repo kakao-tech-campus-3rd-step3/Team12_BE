@@ -26,7 +26,7 @@ public class RecurringEventService {
     private final RRuleParser rruleParser;
     private final DateTimeUtil dateTimeUtil;
 
-    private final Boolean fromRecurring = true;
+    private final static Boolean fromRecurring = true;
 
     @Transactional(readOnly = true)
     public List<EventServiceDto> expandRecurringEvents(List<Long> calendarIds, LocalDateTime startAt, LocalDateTime endAt) {

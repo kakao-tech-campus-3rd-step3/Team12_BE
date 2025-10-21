@@ -9,7 +9,6 @@ import unischedule.events.domain.Event;
 import unischedule.events.dto.EventServiceDto;
 import unischedule.events.dto.EventUpdateDto;
 import unischedule.events.repository.EventRepository;
-import unischedule.events.util.RRuleParser;
 import unischedule.exception.EntityNotFoundException;
 import unischedule.member.domain.Member;
 
@@ -21,9 +20,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class EventRawService {
     private final EventRepository eventRepository;
-    private final RRuleParser rruleParser;
 
-    private final Boolean fromRecurring = false;
+    private final static Boolean fromRecurring = false;
 
     @Transactional
     public Event saveEvent(Event event) {
