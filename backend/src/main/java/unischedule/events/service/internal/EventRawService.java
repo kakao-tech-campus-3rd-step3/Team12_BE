@@ -71,19 +71,4 @@ public class EventRawService {
     public boolean existsSingleSchedule(List<Long> calendarIds, LocalDateTime startTime, LocalDateTime endTime) {
         return eventRepository.existsSingleScheduleInPeriod(calendarIds, startTime, endTime);
     }
-    
-    @Transactional(readOnly = true)
-    public List<Event> findUpcomingEventsByCalendar(List<Long> calendarIds) {
-        LocalDateTime now = LocalDateTime.now();
-        Pageable pageable = PageRequest.of(0, 3); // 개수 제한
-        return eventRepository.findUpcomingEvents(calendarIds, now, pageable);
-    }
-    
-    @Transactional(readOnly = true)
-    public List<Event> findTodayEventsByCalendar(List<Long> calendarIds) {
-        LocalDate today = LocalDate.now();
-        LocalDateTime startOfDay = today.atStartOfDay();              // 오늘 00:00
-        LocalDateTime endOfDay = today.plusDays(1).atStartOfDay();    // 내일 00:00
-        return eventRepository.findEventsInCalendarsInPeriod(calendarIds, startOfDay, endOfDay);
-    }
 }

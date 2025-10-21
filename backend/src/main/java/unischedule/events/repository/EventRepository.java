@@ -174,23 +174,4 @@ public interface EventRepository extends JpaRepository<Event, Long> {
             @Param("eventId")
             Long eventId
     );
-
-    /**
-     * 다가오는 일정 페이지 단위로 조회
-     * @param memberId
-     * @param now
-     * @param pageable
-     * @return
-     */
-    @Query("""
-            SELECT e FROM Event e
-            WHERE e.calendar.owner.memberId = :memberId
-            AND e.startAt >= :now
-            ORDER BY e.startAt ASC
-    """)
-    List<Event> findUpcomingEvents(
-            @Param("memberId") Long memberId,
-            @Param("now") LocalDateTime now,
-            Pageable pageable
-    );
 }
