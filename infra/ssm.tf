@@ -28,3 +28,16 @@ data "aws_ssm_parameter" "openai_api_key" {
   name            = "/uni-schedule/config/openai_api_key"
   with_decryption = true
 }
+
+data "aws_ssm_parameter" "redis_host" {
+  name = "/uni-schedule/config/redis_host"
+}
+
+data "aws_ssm_parameter" "redis_password" {
+  name            = "/uni-schedule/config/redis_password"
+  with_decryption = true
+}
+
+data "aws_ssm_parameter" "redis_username" {
+  name = "/uni-schedule/config/redis_username"
+}

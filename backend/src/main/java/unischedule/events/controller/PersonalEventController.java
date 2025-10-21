@@ -20,6 +20,9 @@ import unischedule.events.dto.EventCreateResponseDto;
 import unischedule.events.dto.EventGetResponseDto;
 import unischedule.events.dto.EventModifyRequestDto;
 import unischedule.events.dto.PersonalEventCreateRequestDto;
+import unischedule.events.dto.RecurringEventCreateRequestDto;
+import unischedule.events.dto.RecurringInstanceDeleteRequestDto;
+import unischedule.events.dto.RecurringInstanceModifyRequestDto;
 import unischedule.events.service.PersonalEventService;
 
 import java.time.LocalDateTime;
@@ -38,8 +41,28 @@ public class PersonalEventController {
             @RequestBody @Valid
             PersonalEventCreateRequestDto requestDto
     ) {
-        EventCreateResponseDto responseDto = eventService.makePersonalEvent(userDetails.getUsername(), requestDto);
+        EventCreateResponseDto responseDto = eventService.makePersonalSingleEvent(userDetails.getUsername(), requestDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(responseDto);
+    }
+
+    @PostMapping("/recurring/add")
+    public ResponseEntity<EventCreateResponseDto> makeMyRecurringEvent(
+            @AuthenticationPrincipal
+            UserDetails userDetails,
+            @RequestBody @Valid
+            RecurringEventCreateRequestDto requestDto
+    ) {
+        EventCreateResponseDto responseDto = eventService.makePersonalRecurringEvent(userDetails.getUsername(), requestDto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(responseDto);
+    }
+
+    @GetMapping("/{eventId}")
+    public ResponseEntity<EventGetResponseDto> getMyEvent(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable Long eventId
+    ) {
+        EventGetResponseDto responseDto = eventService.getPersonalEvent(userDetails.getUsername(), eventId);
+        return ResponseEntity.ok(responseDto);
     }
 
     @GetMapping
@@ -53,18 +76,54 @@ public class PersonalEventController {
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
             LocalDateTime endAt
     ) {
-        List<EventGetResponseDto> responseDto = eventService.getPersonalEvents(userDetails.getUsername(), startAt, endAt);
+        List<EventGetResponseDto> responseDto = eventService.getPersonalEvents(
+                userDetails.getUsername(),
+                startAt,
+                endAt
+        );
         return ResponseEntity.ok(responseDto);
     }
     
-    @PatchMapping("/modify")
+    @PatchMapping("/modify/{eventId}")
     public ResponseEntity<EventGetResponseDto> modifyMyEvent(
             @AuthenticationPrincipal
             UserDetails userDetails,
+            @PathVariable
+            Long eventId,
             @RequestBody @Valid
             EventModifyRequestDto requestDto
     ) {
-        EventGetResponseDto responseDto = eventService.modifyPersonalEvent(userDetails.getUsername(), requestDto);
+        EventGetResponseDto responseDto = eventService.modifyPersonalEvent(userDetails.getUsername(), eventId, requestDto);
+        return ResponseEntity.ok(responseDto);
+    }
+
+    @PatchMapping("/recurring/modify/{eventId}")
+    public ResponseEntity<EventGetResponseDto> modifyMyRecurringEvent(
+            @AuthenticationPrincipal
+            UserDetails userDetails,
+            @PathVariable
+            Long eventId,
+            @RequestBody @Valid
+            EventModifyRequestDto requestDto
+    ) {
+        EventGetResponseDto responseDto = eventService.modifyRecurringEvent(userDetails.getUsername(), eventId, requestDto);
+        return ResponseEntity.ok(responseDto);
+    }
+
+    @PatchMapping("/recurring/instance/{eventId}")
+    public ResponseEntity<EventGetResponseDto> modifyMyRecurringInstance(
+            @AuthenticationPrincipal
+            UserDetails userDetails,
+            @PathVariable
+            Long eventId,
+            @RequestBody @Valid
+            RecurringInstanceModifyRequestDto requestDto
+    ) {
+        EventGetResponseDto responseDto = eventService.modifyPersonalRecurringInstance(
+                userDetails.getUsername(),
+                eventId,
+                requestDto
+        );
         return ResponseEntity.ok(responseDto);
     }
 
@@ -76,6 +135,34 @@ public class PersonalEventController {
             Long eventId
     ) {
         eventService.deletePersonalEvent(userDetails.getUsername(), eventId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/recurring/{eventId}")
+    public ResponseEntity<Void> deleteMyRecurringEvent(
+            @AuthenticationPrincipal
+            UserDetails userDetails,
+            @PathVariable
+            Long eventId
+    ) {
+        eventService.deleteRecurringEvent(userDetails.getUsername(), eventId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/recurring/instance/{eventId}")
+    public ResponseEntity<Void> deleteMyRecurringInstance(
+            @AuthenticationPrincipal
+            UserDetails userDetails,
+            @PathVariable
+            Long eventId,
+            @RequestBody @Valid
+            RecurringInstanceDeleteRequestDto requestDto
+    ) {
+        eventService.deletePersonalRecurringInstance(
+                userDetails.getUsername(),
+                eventId,
+                requestDto
+        );
         return ResponseEntity.noContent().build();
     }
     
