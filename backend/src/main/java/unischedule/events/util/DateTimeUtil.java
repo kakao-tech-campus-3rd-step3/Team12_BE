@@ -7,9 +7,13 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
 @Component
-public class ZonedDateTimeUtil {
+public class DateTimeUtil {
     public ZonedDateTime localDateTimeToZdt(LocalDateTime time) {
         ZoneId zone = ZoneId.systemDefault();
         return time.atZone(zone);
+    }
+
+    public LocalDateTime ZonedDateTimeToLdt(ZonedDateTime time) {
+        return time.toLocalDateTime();
     }
 }

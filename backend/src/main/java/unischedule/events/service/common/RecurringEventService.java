@@ -1,4 +1,4 @@
-package unischedule.events.service;
+package unischedule.events.service.common;
 
 import lombok.RequiredArgsConstructor;
 import net.fortuna.ical4j.model.Recur;
@@ -9,7 +9,7 @@ import unischedule.events.domain.EventOverride;
 import unischedule.events.dto.EventServiceDto;
 import unischedule.events.service.internal.RecurringEventRawService;
 import unischedule.events.util.RRuleParser;
-import unischedule.events.util.ZonedDateTimeUtil;
+import unischedule.events.util.DateTimeUtil;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 public class RecurringEventService {
     private final RecurringEventRawService recurringEventRawService;
     private final RRuleParser rruleParser;
-    private final ZonedDateTimeUtil zonedDateTimeUtil;
+    private final DateTimeUtil dateTimeUtil;
 
     private final Boolean fromRecurring = true;
 
@@ -52,9 +52,9 @@ public class RecurringEventService {
     private List<Event> expandRecurringEvent(Event recEvent, LocalDateTime startAt, LocalDateTime endAt) {
         Recur<ZonedDateTime> recur = rruleParser.getRecur(recEvent.getRecurrenceRule().getRruleString());
 
-        ZonedDateTime seed = zonedDateTimeUtil.localDateTimeToZdt(recEvent.getStartAt());
-        ZonedDateTime startZdt = zonedDateTimeUtil.localDateTimeToZdt(startAt);
-        ZonedDateTime endZdt = zonedDateTimeUtil.localDateTimeToZdt(endAt);
+        ZonedDateTime seed = dateTimeUtil.localDateTimeToZdt(recEvent.getStartAt());
+        ZonedDateTime startZdt = dateTimeUtil.localDateTimeToZdt(startAt);
+        ZonedDateTime endZdt = dateTimeUtil.localDateTimeToZdt(endAt);
 
         Duration duration = Duration.between(seed.toLocalDateTime(), recEvent.getEndAt());
 

@@ -18,7 +18,7 @@ import unischedule.events.dto.EventUpdateDto;
 import unischedule.events.dto.RecurringEventCreateRequestDto;
 import unischedule.events.dto.RecurringInstanceModifyRequestDto;
 import unischedule.events.dto.TeamEventCreateRequestDto;
-import unischedule.events.service.EventQueryService;
+import unischedule.events.service.common.EventQueryService;
 import unischedule.events.service.TeamEventService;
 import unischedule.events.service.internal.EventOverrideRawService;
 import unischedule.events.service.internal.EventRawService;

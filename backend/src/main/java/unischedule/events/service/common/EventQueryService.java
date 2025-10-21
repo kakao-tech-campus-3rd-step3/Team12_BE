@@ -1,4 +1,4 @@
-package unischedule.events.service;
+package unischedule.events.service.common;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -6,12 +6,12 @@ import org.springframework.transaction.annotation.Transactional;
 import unischedule.events.domain.Event;
 import unischedule.events.dto.EventServiceDto;
 import unischedule.events.service.internal.EventRawService;
+import unischedule.events.util.DateTimeUtil;
 import unischedule.events.util.RRuleParser;
 import unischedule.exception.InvalidInputException;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -22,6 +22,7 @@ public class EventQueryService {
     private final EventRawService eventRawService;
     private final RecurringEventService recurringEventService;
     private final RRuleParser rruleParser;
+    private final DateTimeUtil dateTimeUtil;
 
     @Transactional(readOnly = true)
     public List<EventServiceDto> getEvents(List<Long> calendarIds, LocalDateTime startAt, LocalDateTime endAt) {
@@ -63,12 +64,15 @@ public class EventQueryService {
             LocalDateTime firstEndTime,
             String rruleString
     ) {
-        List<ZonedDateTime> eventStartTimes = rruleParser.calEventStartTimeListZdt(firstStartTime, rruleString);
+        List<LocalDateTime> eventStartTimes = rruleParser.calEventStartTimeListZdt(firstStartTime, rruleString)
+                .stream()
+                .map(dateTimeUtil::ZonedDateTimeToLdt)
+                .toList();
+
         Duration duration = Duration.between(firstStartTime, firstEndTime);
 
-        for (ZonedDateTime eventStartZdt : eventStartTimes) {
-            LocalDateTime eventStartTime = eventStartZdt.toLocalDateTime();
-            LocalDateTime eventEndTime = eventStartZdt.plus(duration).toLocalDateTime();
+        for (LocalDateTime eventStartTime : eventStartTimes) {
+            LocalDateTime eventEndTime = eventStartTime.plus(duration);
 
             checkNewSingleEventOverlap(calendarIds, eventStartTime, eventEndTime);
         }

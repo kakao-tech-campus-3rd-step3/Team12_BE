@@ -16,7 +16,7 @@ import java.util.regex.Pattern;
 @Component
 @RequiredArgsConstructor
 public class RRuleParser {
-    private final ZonedDateTimeUtil zonedDateTimeUtil;
+    private final DateTimeUtil zonedDateTimeUtil;
 
     public List<ZonedDateTime> calEventStartTimeListZdt(LocalDateTime firstStartTime, String rruleString) {
         Recur<ZonedDateTime> recur = getRecur(rruleString);
