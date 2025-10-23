@@ -1,6 +1,5 @@
 package unischedule.events.service;
 
-import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +28,7 @@ import unischedule.team.domain.TeamMember;
 import unischedule.team.service.internal.TeamMemberRawService;
 import unischedule.team.service.internal.TeamRawService;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
