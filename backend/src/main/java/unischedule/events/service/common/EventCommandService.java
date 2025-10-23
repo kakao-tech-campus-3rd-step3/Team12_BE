@@ -8,7 +8,7 @@ import unischedule.events.domain.Event;
 import unischedule.events.domain.EventOverride;
 import unischedule.events.domain.RecurrenceRule;
 import unischedule.events.dto.EventCreateDto;
-import unischedule.events.dto.EventModifyDto;
+import unischedule.events.dto.EventUpdateDto;
 import unischedule.events.dto.RecurringEventCreateRequestDto;
 import unischedule.events.dto.RecurringInstanceDeleteRequestDto;
 import unischedule.events.dto.RecurringInstanceModifyRequestDto;
@@ -74,22 +74,22 @@ public class EventCommandService {
     }
 
     @Transactional
-    public Event modifySingleEvent(Event eventToModify, List<Long> conflictCheckCalendarIds, EventModifyDto modifyDto) {
+    public Event modifySingleEvent(Event eventToModify, List<Long> conflictCheckCalendarIds, EventUpdateDto updateDto) {
         if (eventToModify.getRecurrenceRule() != null) {
             throw new InvalidInputException("단일 일정이 아닙니다.");
         }
 
-        modifyEvent(eventToModify, conflictCheckCalendarIds, modifyDto);
+        modifyEvent(eventToModify, conflictCheckCalendarIds, updateDto);
         return eventToModify;
     }
 
     @Transactional
-    public Event modifyRecurringEvent(Event eventToModify, List<Long> conflictCheckCalendarIds, EventModifyDto modifyDto) {
+    public Event modifyRecurringEvent(Event eventToModify, List<Long> conflictCheckCalendarIds, EventUpdateDto updateDto) {
         if (eventToModify.getRecurrenceRule() == null) {
             throw new InvalidInputException("반복 일정이 아닙니다.");
         }
 
-        modifyEvent(eventToModify, conflictCheckCalendarIds, modifyDto);
+        modifyEvent(eventToModify, conflictCheckCalendarIds, updateDto);
         eventOverrideRawService.deleteAllEventOverrideByEvent(eventToModify);
 
         return eventToModify;
@@ -111,9 +111,9 @@ public class EventCommandService {
         return eventOverrideRawService.saveEventOverride(eventOverride);
     }
 
-    private void modifyEvent(Event eventToModify, List<Long> conflictCheckCalendarIds, EventModifyDto modifyDto) {
-        LocalDateTime newStartAt = getValueOrDefault(modifyDto.startTime(), eventToModify.getStartAt());
-        LocalDateTime newEndTime = getValueOrDefault(modifyDto.endTime(), eventToModify.getEndAt());
+    private void modifyEvent(Event eventToModify, List<Long> conflictCheckCalendarIds, EventUpdateDto updateDto) {
+        LocalDateTime newStartAt = getValueOrDefault(updateDto.startTime(), eventToModify.getStartAt());
+        LocalDateTime newEndTime = getValueOrDefault(updateDto.endTime(), eventToModify.getEndAt());
 
         eventQueryService.checkEventUpdateOverlap(
                 conflictCheckCalendarIds,
@@ -122,7 +122,7 @@ public class EventCommandService {
                 eventToModify
         );
 
-        eventRawService.updateEvent(eventToModify, EventModifyDto.toDto(modifyDto));
+        eventRawService.updateEvent(eventToModify, updateDto);
     }
 
     private static <T> T getValueOrDefault(T value, T defaultValue) {

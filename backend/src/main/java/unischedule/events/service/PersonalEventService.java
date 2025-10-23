@@ -1,6 +1,5 @@
 package unischedule.events.service;
 
-import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -8,8 +7,6 @@ import unischedule.calendar.entity.Calendar;
 import unischedule.calendar.service.internal.CalendarRawService;
 import unischedule.events.domain.Event;
 import unischedule.events.domain.EventOverride;
-import unischedule.events.domain.EventState;
-import unischedule.events.domain.RecurrenceRule;
 import unischedule.events.dto.EventCreateResponseDto;
 import unischedule.events.dto.EventGetResponseDto;
 import unischedule.events.dto.EventModifyRequestDto;
@@ -18,31 +15,31 @@ import unischedule.events.dto.PersonalEventCreateRequestDto;
 import unischedule.events.dto.RecurringEventCreateRequestDto;
 import unischedule.events.dto.RecurringInstanceDeleteRequestDto;
 import unischedule.events.dto.RecurringInstanceModifyRequestDto;
+import unischedule.events.service.common.EventCommandService;
 import unischedule.events.service.common.EventQueryService;
 import unischedule.events.service.internal.EventOverrideRawService;
 import unischedule.events.service.internal.EventRawService;
-import unischedule.events.service.internal.RecurringEventRawService;
 import unischedule.member.domain.Member;
 import unischedule.member.service.internal.MemberRawService;
 import unischedule.team.domain.Team;
 import unischedule.team.domain.TeamMember;
 import unischedule.team.service.internal.TeamMemberRawService;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class PersonalEventService {
     private final MemberRawService memberRawService;
     private final EventRawService eventRawService;
-    private final RecurringEventRawService recurringEventRawService;
     private final EventQueryService eventQueryService;
     private final TeamMemberRawService teamMemberRawService;
     private final CalendarRawService calendarRawService;
     private final EventOverrideRawService eventOverrideRawService;
+    private final EventCommandService eventCommandService;
 
     @Transactional
     public EventCreateResponseDto makePersonalSingleEvent(String email, PersonalEventCreateRequestDto requestDto) {
@@ -52,19 +49,7 @@ public class PersonalEventService {
 
         targetCalendar.validateOwner(member);
 
-        eventQueryService.checkNewSingleEventOverlap(List.of(targetCalendar.getCalendarId()), requestDto.startTime(), requestDto.endTime());
-
-        Event newEvent = Event.builder()
-                .title(requestDto.title())
-                .content(requestDto.description())
-                .startAt(requestDto.startTime())
-                .endAt(requestDto.endTime())
-                .state(EventState.CONFIRMED)
-                .isPrivate(requestDto.isPrivate())
-                .build();
-
-        newEvent.connectCalendar(targetCalendar);
-        Event saved = eventRawService.saveEvent(newEvent);
+        Event saved = eventCommandService.createSingleEvent(targetCalendar, List.of(targetCalendar.getCalendarId()), requestDto.toDto());
 
         return EventCreateResponseDto.from(saved);
     }
@@ -77,27 +62,7 @@ public class PersonalEventService {
 
         targetCalendar.validateOwner(member);
 
-        eventQueryService.checkNewRecurringEventOverlap(
-                List.of(targetCalendar.getCalendarId()),
-                requestDto.firstStartTime(),
-                requestDto.firstEndTime(),
-                requestDto.rrule()
-        );
-
-        Event newEvent = Event.builder()
-                .title(requestDto.title())
-                .content(requestDto.description())
-                .startAt(requestDto.firstStartTime())
-                .endAt(requestDto.firstEndTime())
-                .state(EventState.CONFIRMED)
-                .isPrivate(requestDto.isPrivate())
-                .build();
-
-        RecurrenceRule rule = new RecurrenceRule(requestDto.rrule());
-        newEvent.connectRecurrenceRule(rule);
-        newEvent.connectCalendar(targetCalendar);
-
-        Event saved = eventRawService.saveEvent(newEvent);
+        Event saved = eventCommandService.createRecurringEvent(targetCalendar, List.of(targetCalendar.getCalendarId()), requestDto);
 
         return EventCreateResponseDto.from(saved);
     }
@@ -142,7 +107,7 @@ public class PersonalEventService {
 
         findEvent.validateEventOwner(member);
 
-        modifyEvent(requestDto, findEvent);
+        eventCommandService.modifySingleEvent(findEvent, List.of(findEvent.getCalendar().getCalendarId()), requestDto.toDto());
 
         return EventGetResponseDto.fromSingleEvent(findEvent);
     }
@@ -153,29 +118,9 @@ public class PersonalEventService {
         Event foundEvent = eventRawService.findEventById(eventId);
         foundEvent.validateEventOwner(member);
 
-        modifyEvent(requestDto, foundEvent);
-        eventOverrideRawService.deleteAllEventOverrideByEvent(foundEvent);
+        eventCommandService.modifyRecurringEvent(foundEvent, List.of(foundEvent.getCalendar().getCalendarId()), requestDto.toDto());
 
         return EventGetResponseDto.fromRecurringEvent(foundEvent);
-    }
-
-    private void modifyEvent(EventModifyRequestDto requestDto, Event originalEvent) {
-
-        eventQueryService.checkEventUpdateOverlap(
-                List.of(originalEvent.getCalendar().getCalendarId()),
-                getValueOrDefault(requestDto.startTime(), originalEvent.getStartAt()),
-                getValueOrDefault(requestDto.endTime(), originalEvent.getEndAt()),
-                originalEvent
-        );
-
-        eventRawService.updateEvent(originalEvent, EventModifyRequestDto.toDto(requestDto));
-    }
-
-    private static <T> T getValueOrDefault(T value, T defaultValue) {
-        if (value != null) {
-            return value;
-        }
-        return defaultValue;
     }
 
     @Transactional
@@ -184,18 +129,7 @@ public class PersonalEventService {
         Event originalEvent = eventRawService.findEventById(eventId);
         originalEvent.validateEventOwner(member);
 
-        Optional<EventOverride> eventOverrideOpt = eventOverrideRawService.findEventOverride(originalEvent, requestDto.originalStartTime());
-
-        EventOverride eventOverride;
-        if (eventOverrideOpt.isPresent()) {
-            eventOverride = eventOverrideOpt.get();
-            eventOverrideRawService.updateEventOverride(eventOverride, requestDto.toEventOverrideDto());
-        }
-        else {
-            eventOverride = EventOverride.makeEventOverride(originalEvent, requestDto.toEventOverrideDto());
-        }
-
-        EventOverride savedOverride = eventOverrideRawService.saveEventOverride(eventOverride);
+        EventOverride savedOverride = eventCommandService.modifyRecurringInstance(originalEvent, requestDto);
 
         return EventGetResponseDto.fromEventOverride(savedOverride, originalEvent);
     }
@@ -219,7 +153,7 @@ public class PersonalEventService {
 
         event.validateEventOwner(member);
 
-        eventRawService.deleteEvent(event);
+        eventCommandService.deleteSingleEvent(event);
     }
 
     @Transactional
@@ -230,7 +164,7 @@ public class PersonalEventService {
 
         event.validateEventOwner(member);
 
-        recurringEventRawService.deleteRecurringEvent(event);
+        eventCommandService.deleteRecurringEvent(event);
     }
     
     @Transactional(readOnly = true)

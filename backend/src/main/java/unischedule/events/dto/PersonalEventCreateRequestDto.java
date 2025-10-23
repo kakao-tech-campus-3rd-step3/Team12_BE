@@ -20,5 +20,14 @@ public record PersonalEventCreateRequestDto(
         @NotNull(message = "공개 여부는 필수입니다.")
         Boolean isPrivate
 ) {
+        public EventCreateDto toDto() {
+                return new EventCreateDto(
+                        this.title,
+                        this.description,
+                        this.startTime,
+                        this.endTime,
+                        this.isPrivate
+                );
+        }
     
 }

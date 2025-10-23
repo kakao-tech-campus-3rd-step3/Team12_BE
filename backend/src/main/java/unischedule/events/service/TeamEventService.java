@@ -155,7 +155,7 @@ public class TeamEventService {
                 event
         );
 
-        eventRawService.updateEvent(event, EventModifyRequestDto.toDto(requestDto));
+        eventRawService.updateEvent(event, requestDto.toDto());
 
         return EventGetResponseDto.fromSingleEvent(event);
     }
@@ -177,7 +177,7 @@ public class TeamEventService {
                 event
         );
 
-        eventRawService.updateEvent(event, EventModifyRequestDto.toDto(requestDto));
+        eventRawService.updateEvent(event, requestDto.toDto());
         // 기존 예외 삭제
         eventOverrideRawService.deleteAllEventOverrideByEvent(event);
 
