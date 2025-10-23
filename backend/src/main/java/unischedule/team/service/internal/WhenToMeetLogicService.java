@@ -55,15 +55,14 @@ public class WhenToMeetLogicService {
         List<LocalDateTime> intervalEnds,
         WhenToMeetRawService rawService) {
         
+        LocalDateTime start = intervalStarts.get(0);
+        LocalDateTime end = intervalEnds.get(intervalEnds.size() - 1);
+        
         for (Member member : members) {
-            for (int i = 0; i < intervalStarts.size(); i++) {
-                LocalDateTime start = intervalStarts.get(i);
-                LocalDateTime end = intervalEnds.get(i);
-                List<EventGetResponseDto> events = rawService.findMemberEvents(member, start, end);
-                
-                for (EventGetResponseDto event : events) {
-                    applyOverlap(slots, event, start, end);
-                }
+            List<EventGetResponseDto> events = rawService.findMemberEvents(member, start, end);
+            
+            for (EventGetResponseDto event : events) {
+                applyOverlap(slots, event, start, end);
             }
         }
     }
@@ -72,6 +71,7 @@ public class WhenToMeetLogicService {
         EventGetResponseDto event,
         LocalDateTime intervalStart,
         LocalDateTime intervalEnd) {
+        
         LocalDateTime eventStart = event.startTime();
         LocalDateTime eventEnd = event.endTime();
         
