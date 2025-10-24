@@ -1,6 +1,5 @@
 package unischedule.events.repository;
 
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -77,30 +76,6 @@ public interface EventRepository extends JpaRepository<Event, Long> {
     List<Event> findRecurringEventsInPeriod(
             @Param("calendarIds")
             List<Long> calendarIds,
-            @Param("endAt")
-            LocalDateTime endAt
-    );
-
-    /**
-     * 여러 캘린더의 특정 기간동안의 모든 일정 조회
-     * @param calendarIds
-     * @param startAt
-     * @param endAt
-     * @return
-     */
-    @Query("""
-        SELECT e
-        FROM Event e
-        WHERE e.calendar.calendarId IN :calendarIds
-        AND e.endAt > :startAt
-        AND e.startAt < :endAt
-        
-    """)
-    List<Event> findEventsInCalendarsInPeriod(
-            @Param("calendarIds")
-            List<Long> calendarIds,
-            @Param("startAt")
-            LocalDateTime startAt,
             @Param("endAt")
             LocalDateTime endAt
     );

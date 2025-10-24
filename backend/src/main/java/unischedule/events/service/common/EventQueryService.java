@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import unischedule.events.domain.Event;
+import unischedule.events.domain.collection.SingleEventList;
 import unischedule.events.dto.EventServiceDto;
 import unischedule.events.service.internal.EventRawService;
 import unischedule.events.util.RRuleParser;
@@ -25,7 +26,10 @@ public class EventQueryService {
     @Transactional(readOnly = true)
     public List<EventServiceDto> getEvents(List<Long> calendarIds, LocalDateTime startAt, LocalDateTime endAt) {
         List<EventServiceDto> eventList = new ArrayList<>();
-        eventList.addAll(eventRawService.findSingleSchedule(calendarIds, startAt, endAt));
+
+        SingleEventList singleEvents = eventRawService.findSingleSchedule(calendarIds, startAt, endAt);
+
+        eventList.addAll(singleEvents.toServiceDtos());
         eventList.addAll(recurringEventService.expandRecurringEvents(calendarIds, startAt, endAt));
 
         return eventList;
@@ -92,7 +96,8 @@ public class EventQueryService {
 
     private boolean hasEvent(List<Long> calendarIds, LocalDateTime startAt, LocalDateTime endAt) {
 
-        if (eventRawService.existsSingleSchedule(calendarIds, startAt, endAt)) {
+        SingleEventList singleEvents = eventRawService.findSingleSchedule(calendarIds, startAt, endAt);
+        if (singleEvents.hasOverlap(startAt, endAt)) {
             return true;
         }
 

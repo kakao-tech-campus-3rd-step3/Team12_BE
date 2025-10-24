@@ -44,12 +44,11 @@ public class PersonalEventService {
     @Transactional
     public EventCreateResponseDto makePersonalSingleEvent(String email, PersonalEventCreateRequestDto requestDto) {
         Member member = memberRawService.findMemberByEmail(email);
-
         Calendar targetCalendar = calendarRawService.getMyPersonalCalendar(member);
-
         targetCalendar.validateOwner(member);
 
-        Event saved = eventCommandService.createSingleEvent(targetCalendar, List.of(targetCalendar.getCalendarId()), requestDto.toDto());
+        List<Long> conflictCheckCalendarIds = getMemberCalendarIds(member);
+        Event saved = eventCommandService.createSingleEvent(targetCalendar, conflictCheckCalendarIds, requestDto.toDto());
 
         return EventCreateResponseDto.from(saved);
     }
@@ -57,12 +56,11 @@ public class PersonalEventService {
     @Transactional
     public EventCreateResponseDto makePersonalRecurringEvent(String email, RecurringEventCreateRequestDto requestDto) {
         Member member = memberRawService.findMemberByEmail(email);
-
         Calendar targetCalendar = calendarRawService.getMyPersonalCalendar(member);
-
         targetCalendar.validateOwner(member);
 
-        Event saved = eventCommandService.createRecurringEvent(targetCalendar, List.of(targetCalendar.getCalendarId()), requestDto);
+        List<Long> conflictCheckCalendarIds = getMemberCalendarIds(member);
+        Event saved = eventCommandService.createRecurringEvent(targetCalendar, conflictCheckCalendarIds, requestDto);
 
         return EventCreateResponseDto.from(saved);
     }
@@ -86,12 +84,7 @@ public class PersonalEventService {
     public List<EventGetResponseDto> getPersonalEvents(String email, LocalDateTime startAt, LocalDateTime endAt) {
         Member member = memberRawService.findMemberByEmail(email);
 
-        List<Team> teamList = teamMemberRawService.findByMember(member)
-                .stream()
-                .map(TeamMember::getTeam)
-                .toList();
-
-        List<Long> calendarIds = getMemberCalendarIds(teamList, member);
+        List<Long> calendarIds = getMemberCalendarIds(member);
 
         return eventQueryService.getEvents(calendarIds, startAt, endAt)
                 .stream()
@@ -102,12 +95,11 @@ public class PersonalEventService {
     @Transactional
     public EventGetResponseDto modifyPersonalEvent(String email, Long eventId, EventModifyRequestDto requestDto) {
         Member member = memberRawService.findMemberByEmail(email);
-
         Event findEvent = eventRawService.findEventById(eventId);
-
         findEvent.validateEventOwner(member);
 
-        eventCommandService.modifySingleEvent(findEvent, List.of(findEvent.getCalendar().getCalendarId()), requestDto.toDto());
+        List<Long> conflictCheckCalendarIds = getMemberCalendarIds(member);
+        eventCommandService.modifySingleEvent(findEvent, conflictCheckCalendarIds, requestDto.toDto());
 
         return EventGetResponseDto.fromSingleEvent(findEvent);
     }
@@ -118,7 +110,8 @@ public class PersonalEventService {
         Event foundEvent = eventRawService.findEventById(eventId);
         foundEvent.validateEventOwner(member);
 
-        eventCommandService.modifyRecurringEvent(foundEvent, List.of(foundEvent.getCalendar().getCalendarId()), requestDto.toDto());
+        List<Long> conflictCheckCalendarIds = getMemberCalendarIds(member);
+        eventCommandService.modifyRecurringEvent(foundEvent, conflictCheckCalendarIds, requestDto.toDto());
 
         return EventGetResponseDto.fromRecurringEvent(foundEvent);
     }
@@ -184,12 +177,7 @@ public class PersonalEventService {
     private List<EventGetResponseDto> getEventsForPeriod(String email, LocalDateTime start, LocalDateTime end) {
         Member member = memberRawService.findMemberByEmail(email);
         
-        List<Team> teamList = teamMemberRawService.findByMember(member)
-            .stream()
-            .map(TeamMember::getTeam)
-            .toList();
-        
-        List<Long> calendarIds = getMemberCalendarIds(teamList, member);
+        List<Long> calendarIds = getMemberCalendarIds(member);
         
         List<EventServiceDto> events = eventQueryService.getEvents(calendarIds, start, end);
         
@@ -198,17 +186,22 @@ public class PersonalEventService {
             .toList();
     }
 
-    private List<Long> getMemberCalendarIds(List<Team> teamList, Member member) {
+    private List<Long> getMemberCalendarIds(Member member) {
+        List<Team> teamList = teamMemberRawService.findByMember(member)
+                .stream()
+                .map(TeamMember::getTeam)
+                .toList();
+
         List<Long> calendarIds = new ArrayList<>();
+
+        // 개인 캘린더
+        calendarIds.add(calendarRawService.getMyPersonalCalendar(member).getCalendarId());
 
         // 팀 캘린더
         List<Long> teamCalendarIds = teamList.stream()
                 .map(calendarRawService::getTeamCalendar)
                 .map(Calendar::getCalendarId)
                 .toList();
-
-        // 개인 캘린더
-        calendarIds.add(calendarRawService.getMyPersonalCalendar(member).getCalendarId());
 
         calendarIds.addAll(teamCalendarIds);
         return calendarIds;
