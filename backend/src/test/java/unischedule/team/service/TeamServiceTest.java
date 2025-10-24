@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -357,7 +358,9 @@ class TeamServiceTest {
 
         when(memberRawService.findMemberByEmail(anyString())).thenReturn(member1);
         when(teamRawService.findTeamById(any())).thenReturn(team);
-        when(teamMemberRawService.findByTeamAndMember(team, member1)).thenThrow(EntityNotFoundException.class);
+        doThrow(EntityNotFoundException.class)
+                .when(teamMemberRawService)
+                .validateMembership(team, member1);
 
         //when & then
         assertThatThrownBy(() -> teamService.getTeamMembers(member1.getEmail(), any(), paginationMeta))

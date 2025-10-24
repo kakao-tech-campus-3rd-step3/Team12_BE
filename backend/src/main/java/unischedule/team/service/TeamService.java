@@ -219,7 +219,7 @@ public class TeamService {
     public PageResponseDto<TeamMemberResponseDto> getTeamMembers(String email, Long teamId, PaginationRequestDto paginationMeta) {
         Member findMember = memberRawService.findMemberByEmail(email);
         Team findTeam = teamRawService.findTeamById(teamId);
-        TeamMember teamMember = teamMemberRawService.findByTeamAndMember(findTeam, findMember);
+        teamMemberRawService.validateMembership(findTeam, findMember);
         Page<TeamMember> members = teamMemberRawService.getTeamMembersByTeam(findTeam, paginationMeta);
         Page<TeamMemberResponseDto> responseDtos = members.map(TeamMemberResponseDto::from);
 
