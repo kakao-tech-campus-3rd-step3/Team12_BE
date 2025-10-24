@@ -26,7 +26,6 @@ import unischedule.events.dto.RecurringInstanceModifyRequestDto;
 import unischedule.events.service.PersonalEventService;
 import unischedule.events.service.common.EventCommandService;
 import unischedule.events.service.common.EventQueryService;
-import unischedule.events.service.internal.EventOverrideRawService;
 import unischedule.events.service.internal.EventRawService;
 import unischedule.exception.EntityNotFoundException;
 import unischedule.exception.InvalidInputException;
@@ -70,8 +69,6 @@ class PersonalEventServiceTest {
     private CalendarRawService calendarRawService;
     @Mock
     private TeamMemberRawService teamMemberRawService;
-    @Mock
-    private EventOverrideRawService eventOverrideRawService;
     @Mock
     private EventCommandService eventCommandService;
     @InjectMocks
