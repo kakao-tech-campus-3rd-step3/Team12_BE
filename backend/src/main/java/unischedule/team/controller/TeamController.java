@@ -24,6 +24,7 @@ import unischedule.team.dto.TeamCreateRequestDto;
 import unischedule.team.dto.TeamCreateResponseDto;
 import unischedule.team.dto.TeamJoinRequestDto;
 import unischedule.team.dto.TeamJoinResponseDto;
+import unischedule.team.dto.TeamMemberResponseDto;
 import unischedule.team.dto.TeamResponseDto;
 import unischedule.team.dto.WhenToMeetResponseDto;
 import unischedule.team.service.TeamService;
@@ -104,5 +105,19 @@ public class TeamController {
         teamService.removeMemberFromTeam(requestDto);
 
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    @GetMapping("/{teamId}/members")
+    public ResponseEntity<PageResponseDto<TeamMemberResponseDto>> getTeamMembers(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable Long teamId,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int limit,
+            @RequestParam(required = false) String search
+    ) {
+        PaginationRequestDto paginationRequestDto = new PaginationRequestDto(page, limit, search);
+        PageResponseDto<TeamMemberResponseDto> responseDto = teamService.getTeamMembers(userDetails.getUsername(), teamId, paginationRequestDto);
+
+        return new ResponseEntity<>(responseDto, HttpStatus.OK);
     }
 }
