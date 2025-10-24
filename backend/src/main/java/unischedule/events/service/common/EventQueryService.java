@@ -1,4 +1,4 @@
-package unischedule.events.service;
+package unischedule.events.service.common;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -11,7 +11,6 @@ import unischedule.exception.InvalidInputException;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -63,12 +62,12 @@ public class EventQueryService {
             LocalDateTime firstEndTime,
             String rruleString
     ) {
-        List<ZonedDateTime> eventStartTimes = rruleParser.calEventStartTimeListZdt(firstStartTime, rruleString);
+        List<LocalDateTime> eventStartTimes = rruleParser.calEventStartTimeList(firstStartTime, rruleString);
+
         Duration duration = Duration.between(firstStartTime, firstEndTime);
 
-        for (ZonedDateTime eventStartZdt : eventStartTimes) {
-            LocalDateTime eventStartTime = eventStartZdt.toLocalDateTime();
-            LocalDateTime eventEndTime = eventStartZdt.plus(duration).toLocalDateTime();
+        for (LocalDateTime eventStartTime : eventStartTimes) {
+            LocalDateTime eventEndTime = eventStartTime.plus(duration);
 
             checkNewSingleEventOverlap(calendarIds, eventStartTime, eventEndTime);
         }
