@@ -28,6 +28,7 @@ import unischedule.calendar.entity.Calendar;
 import unischedule.calendar.service.internal.CalendarRawService;
 import unischedule.common.dto.PageResponseDto;
 import unischedule.common.dto.PaginationRequestDto;
+import unischedule.exception.EntityNotFoundException;
 import unischedule.exception.NoPermissionException;
 import unischedule.member.domain.Member;
 import unischedule.member.service.internal.MemberRawService;
@@ -344,5 +345,22 @@ class TeamServiceTest {
                 .hasMessage("리더가 아닙니다.");
 
         verify(teamMemberRawService, never()).deleteTeamMember(any());
+    }
+
+    @Test
+    @DisplayName("해당 소속 팀의 멤버가 아닐 경우 예외 발생")
+    void 해당_소속팀이_아닐_경우_예외_발생() {
+        //given
+        Member member1 = new Member("member1@email.com", "nickname1", "1234");
+        Team team = new Team("TeamA", "설명", "CODE123");
+        PaginationRequestDto paginationMeta = new PaginationRequestDto(1, 10, null);
+
+        when(memberRawService.findMemberByEmail(anyString())).thenReturn(member1);
+        when(teamRawService.findTeamById(any())).thenReturn(team);
+        when(teamMemberRawService.findByTeamAndMember(team, member1)).thenThrow(EntityNotFoundException.class);
+
+        //when & then
+        assertThatThrownBy(() -> teamService.getTeamMembers(member1.getEmail(), any(), paginationMeta))
+                .isInstanceOf(EntityNotFoundException.class);
     }
 }
