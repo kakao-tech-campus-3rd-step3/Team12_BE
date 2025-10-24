@@ -363,7 +363,7 @@ class TeamServiceTest {
                 .validateMembership(team, member1);
 
         //when & then
-        assertThatThrownBy(() -> teamService.getTeamMembers(member1.getEmail(), any(), paginationMeta))
+        assertThatThrownBy(() -> teamService.getTeamMembers(member1.getEmail(), team.getTeamId(), paginationMeta))
                 .isInstanceOf(EntityNotFoundException.class);
     }
 }
