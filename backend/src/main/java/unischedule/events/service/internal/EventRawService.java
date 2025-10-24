@@ -1,22 +1,16 @@
 package unischedule.events.service.internal;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import unischedule.calendar.entity.Calendar;
 import unischedule.events.domain.Event;
-import unischedule.events.dto.EventServiceDto;
+import unischedule.events.domain.collection.SingleEventList;
 import unischedule.events.dto.EventUpdateDto;
 import unischedule.events.repository.EventRepository;
 import unischedule.exception.EntityNotFoundException;
-import unischedule.member.domain.Member;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import unischedule.team.domain.Team;
 
 @Service
 @RequiredArgsConstructor
@@ -53,16 +47,10 @@ public class EventRawService {
     }
 
     @Transactional(readOnly = true)
-    public List<Event> findSchedule(List<Long> calendarIds, LocalDateTime startTime, LocalDateTime endTime) {
-        return eventRepository.findEventsInCalendarsInPeriod(calendarIds, startTime, endTime);
-    }
+    public SingleEventList findSingleSchedule(List<Long> calendarIds, LocalDateTime startTime, LocalDateTime endTime) {
+        List<Event> singleEventList = eventRepository.findSingleEventsInPeriod(calendarIds, startTime, endTime);
 
-    @Transactional(readOnly = true)
-    public List<EventServiceDto> findSingleSchedule(List<Long> calendarIds, LocalDateTime startTime, LocalDateTime endTime) {
-        return eventRepository.findSingleEventsInPeriod(calendarIds, startTime, endTime)
-                .stream()
-                .map(event -> EventServiceDto.fromSingleEvent(event, fromRecurring))
-                .toList();
+        return new SingleEventList(singleEventList);
     }
 
     @Transactional(readOnly = true)

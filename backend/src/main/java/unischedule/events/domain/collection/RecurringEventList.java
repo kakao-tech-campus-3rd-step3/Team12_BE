@@ -7,7 +7,6 @@ import java.util.List;
 
 public class RecurringEventList {
     private final List<Event> eventList;
-
     public RecurringEventList(List<Event> eventList) {
         for (Event event : eventList) {
             if (event.getRecurrenceRule() == null) {

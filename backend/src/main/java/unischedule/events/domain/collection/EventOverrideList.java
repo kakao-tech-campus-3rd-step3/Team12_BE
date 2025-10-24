@@ -10,10 +10,18 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public class EventOverrideList {
-    private List<EventOverride> eventOverrideList;
+    private final List<EventOverride> eventOverrideList;
+    private final Map<LocalDateTime, EventOverride> overrideMap;
 
     public EventOverrideList(List<EventOverride> overrideList) {
         this.eventOverrideList = new ArrayList<>(overrideList);
+
+        this.overrideMap = this.eventOverrideList.stream()
+                .collect(Collectors.toUnmodifiableMap(EventOverride::getOriginalEventTime, ex -> ex));
+    }
+
+    public Map<LocalDateTime, EventOverride> getOverrideMap() {
+        return overrideMap;
     }
 
     public List<Event> applyEventOverrides(List<Event> expandedEventList) {
@@ -41,5 +49,9 @@ public class EventOverrideList {
         }
 
         return finalEventList;
+    }
+
+    public boolean isEmpty() {
+        return this.eventOverrideList.isEmpty();
     }
 }
