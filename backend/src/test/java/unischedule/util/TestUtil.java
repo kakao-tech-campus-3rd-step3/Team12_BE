@@ -2,7 +2,6 @@ package unischedule.util;
 
 import unischedule.calendar.entity.Calendar;
 import unischedule.events.domain.Event;
-import unischedule.events.domain.EventState;
 import unischedule.events.domain.RecurrenceRule;
 import unischedule.member.domain.Member;
 import unischedule.team.domain.Team;
@@ -27,7 +26,6 @@ public class TestUtil {
                 content,
                 LocalDateTime.now(),
                 LocalDateTime.now().plusHours(1),
-                EventState.CONFIRMED,
                 false
         );
     }
@@ -38,7 +36,6 @@ public class TestUtil {
                 content,
                 LocalDateTime.now(),
                 LocalDateTime.now().plusHours(1),
-                EventState.CONFIRMED,
                 false
         );
 

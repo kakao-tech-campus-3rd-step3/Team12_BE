@@ -13,7 +13,6 @@ import unischedule.calendar.entity.Calendar;
 import unischedule.calendar.service.internal.CalendarRawService;
 import unischedule.events.domain.Event;
 import unischedule.events.domain.EventOverride;
-import unischedule.events.domain.EventState;
 import unischedule.events.dto.EventCreateDto;
 import unischedule.events.dto.EventCreateResponseDto;
 import unischedule.events.dto.EventGetResponseDto;
@@ -110,7 +109,6 @@ class PersonalEventServiceTest {
                 "주간 회의",
                 requestDto.startTime(),
                 requestDto.endTime(),
-                EventState.CONFIRMED,
                 true
         );
 
@@ -212,7 +210,6 @@ class PersonalEventServiceTest {
                 "주간 회의",
                 LocalDateTime.of(2025, 9, 10, 10, 0),
                 LocalDateTime.of(2025, 9, 10, 11, 0),
-                EventState.CONFIRMED,
                 true,
                 false
         );
@@ -223,7 +220,6 @@ class PersonalEventServiceTest {
                 "분기별 워크샵",
                 LocalDateTime.of(2025, 9, 15, 14, 0),
                 LocalDateTime.of(2025, 9, 15, 17, 0),
-                EventState.CONFIRMED,
                 false,
                 false
         );
@@ -477,7 +473,6 @@ class PersonalEventServiceTest {
             "주간 회의",
             LocalDateTime.of(2025, 9, 10, 10, 0),
             LocalDateTime.of(2025, 9, 10, 11, 0),
-            EventState.CONFIRMED,
             true,
             false
         );
@@ -488,7 +483,6 @@ class PersonalEventServiceTest {
             "분기별 워크샵",
             LocalDateTime.of(2025, 9, 15, 14, 0),
             LocalDateTime.of(2025, 9, 15, 17, 0),
-            EventState.CONFIRMED,
             false,
             false
         );
@@ -535,7 +529,6 @@ class PersonalEventServiceTest {
             "주간 회의",
             LocalDateTime.of(2025, 9, 10, 10, 0),
             LocalDateTime.of(2025, 9, 10, 11, 0),
-            EventState.CONFIRMED,
             true,
             false
         );
@@ -546,7 +539,6 @@ class PersonalEventServiceTest {
             "분기별 워크샵",
             LocalDateTime.of(2025, 9, 15, 14, 0),
             LocalDateTime.of(2025, 9, 15, 17, 0),
-            EventState.CONFIRMED,
             false,
             false
         );

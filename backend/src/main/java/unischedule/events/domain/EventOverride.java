@@ -159,7 +159,6 @@ public class EventOverride {
                 this.content,
                 this.startAt,
                 this.endAt,
-                EventState.CONFIRMED,
                 this.isPrivate
         );
     }

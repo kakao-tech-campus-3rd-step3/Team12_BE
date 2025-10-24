@@ -25,8 +25,6 @@ public class RecurringEventService {
     private final RecurringEventRawService recurringEventRawService;
     private final RRuleParser rruleParser;
 
-    private final static Boolean fromRecurring = true;
-
     @Transactional(readOnly = true)
     public List<EventServiceDto> expandRecurringEvents(List<Long> calendarIds, LocalDateTime startAt, LocalDateTime endAt) {
         RecurringEventList recurringEvents = recurringEventRawService.findRecurringSchedule(calendarIds, endAt);
@@ -66,7 +64,6 @@ public class RecurringEventService {
                         .startAt(eventStart)
                         .endAt(eventStart.plus(duration))
                         .isPrivate(recEvent.getIsPrivate())
-                        .state(recEvent.getState())
                         .build())
                 .toList();
     }

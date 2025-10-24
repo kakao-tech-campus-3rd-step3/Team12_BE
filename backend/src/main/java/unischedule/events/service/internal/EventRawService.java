@@ -17,8 +17,6 @@ import java.util.List;
 public class EventRawService {
     private final EventRepository eventRepository;
 
-    private final static Boolean fromRecurring = false;
-
     @Transactional
     public Event saveEvent(Event event) {
         return eventRepository.save(event);
