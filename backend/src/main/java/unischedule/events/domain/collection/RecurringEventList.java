@@ -16,4 +16,12 @@ public class RecurringEventList {
 
         this.eventList = new ArrayList<>(eventList);
     }
+
+    public boolean isEmpty() {
+        return this.eventList.isEmpty();
+    }
+
+    public List<Event> getEvents() {
+        return this.eventList;
+    }
 }

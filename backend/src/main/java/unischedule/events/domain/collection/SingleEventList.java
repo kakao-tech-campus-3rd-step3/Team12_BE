@@ -30,7 +30,7 @@ public class SingleEventList {
 
     public List<EventServiceDto> toServiceDtos() {
         return eventList.stream()
-                .map(event -> EventServiceDto.fromSingleEvent(event, false))
+                .map(event -> EventServiceDto.fromSingleEvent(event, isRecurring))
                 .toList();
     }
 
