@@ -21,7 +21,6 @@ public class MockDataInitializer implements CommandLineRunner {
     private final MemberRepository memberRepository;
 
     public void run(String... args) {
-
     }
 
     public void createMockUsers() {
