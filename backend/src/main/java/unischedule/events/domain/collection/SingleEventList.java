@@ -4,7 +4,6 @@ import unischedule.events.domain.Event;
 import unischedule.events.dto.EventServiceDto;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 public class SingleEventList {
@@ -19,7 +18,7 @@ public class SingleEventList {
             }
         }
 
-        this.eventList = new ArrayList<>(eventList);
+        this.eventList = List.copyOf(eventList);
     }
 
     public boolean hasOverlap(LocalDateTime startAt, LocalDateTime endAt) {
@@ -39,6 +38,6 @@ public class SingleEventList {
     }
 
     public List<Event> getEvents() {
-        return eventList;
+        return List.copyOf(eventList);
     }
 }

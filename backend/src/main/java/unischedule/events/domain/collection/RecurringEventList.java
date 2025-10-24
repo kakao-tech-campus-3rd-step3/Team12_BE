@@ -2,7 +2,6 @@ package unischedule.events.domain.collection;
 
 import unischedule.events.domain.Event;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class RecurringEventList {
@@ -14,7 +13,7 @@ public class RecurringEventList {
             }
         }
 
-        this.eventList = new ArrayList<>(eventList);
+        this.eventList = List.copyOf(eventList);
     }
 
     public boolean isEmpty() {
