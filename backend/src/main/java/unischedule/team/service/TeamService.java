@@ -207,13 +207,23 @@ public class TeamService {
         return PageResponseDto.from(responseDtos);
     }
 
+    /**
+     * 팀의 멤버들을 페이징 처리하여 조회하는 메서드
+     *
+     * @param email          헤더에서 넘어온 유저 이메일
+     * @param teamId         팀 아이디
+     * @param paginationMeta 페이징 및 검색 정보
+     * @return 팀의 멤버들의 페이징된 결과
+     */
     @Transactional(readOnly = true)
     public PageResponseDto<TeamMemberResponseDto> getTeamMembers(String email, Long teamId, PaginationRequestDto paginationMeta) {
         Member findMember = memberRawService.findMemberByEmail(email);
         Team findTeam = teamRawService.findTeamById(teamId);
         TeamMember teamMember = teamMemberRawService.findByTeamAndMember(findTeam, findMember);
+        Page<TeamMember> members = teamMemberRawService.getTeamMembersByTeam(findTeam, paginationMeta);
+        Page<TeamMemberResponseDto> responseDtos = members.map(TeamMemberResponseDto::from);
 
-        return null;
+        return PageResponseDto.from(responseDtos);
     }
 
     /**

@@ -84,17 +84,23 @@ public class TeamMemberRawService {
         return teamMemberRepository.findByMember(member);
     }
 
+    /**
+     * 팀의 멤버들을 페이징 처리하여 조회하는 메서드
+     *
+     * @param team           팀 엔티티 (조회 대상)
+     * @param paginationInfo 페이징 및 검색 정보
+     * @return 팀의 멤버들의 페이징된 결과
+     */
     @Transactional(readOnly = true)
     public Page<TeamMember> getTeamMembersByTeam(Team team, PaginationRequestDto paginationInfo) {
-        Pageable pageable = PageRequest.of(paginationInfo.page() - 1, paginationInfo.limit(), Sort.by(Sort.Order.by("role"), Sort.Order.asc("name")));
+        Pageable pageable = PageRequest.of(paginationInfo.page() - 1, paginationInfo.limit(), Sort.by(Sort.Order.by("role")));
         String keyword = paginationInfo.search();
 
         if (keyword == null || keyword.isBlank()) {
-
-
+            return teamMemberRepository.findTeamMemberByTeam(team, pageable);
         }
 
-        return null;
+        return teamMemberRepository.findTeamMemberByTeamAndKeyword(team, pageable, keyword);
     }
 
     /**
