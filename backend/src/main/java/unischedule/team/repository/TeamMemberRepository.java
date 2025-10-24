@@ -23,13 +23,12 @@ public interface TeamMemberRepository extends JpaRepository<TeamMember, Long> {
     Boolean existsByTeamAndMember(Team findTeam, Member findMember);
 
     Page<TeamMember> findTeamMemberByTeam(Team findTeam, Pageable pageable);
-
+    
     @Query("""
             SELECT DISTINCT tm
             FROM TeamMember tm
-            JOIN Member m ON tm.member = m
             WHERE tm.team = :findTeam
-            AND (m.nickname LIKE %:keyword% OR m.email LIKE %:keyword%)
+            AND (tm.member.nickname LIKE %:keyword% OR tm.member.email LIKE %:keyword%)
             """)
     Page<TeamMember> findTeamMemberByTeamAndKeyword(Team findTeam, Pageable pageable, String keyword);
 }
