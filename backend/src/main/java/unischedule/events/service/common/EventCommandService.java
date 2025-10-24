@@ -14,6 +14,7 @@ import unischedule.events.dto.RecurringInstanceDeleteRequestDto;
 import unischedule.events.dto.RecurringInstanceModifyRequestDto;
 import unischedule.events.service.internal.EventOverrideRawService;
 import unischedule.events.service.internal.EventRawService;
+import unischedule.events.service.internal.RecurrenceRuleRawService;
 import unischedule.events.service.internal.RecurringEventRawService;
 import unischedule.exception.InvalidInputException;
 
@@ -28,6 +29,7 @@ public class EventCommandService {
     private final EventRawService eventRawService;
     private final EventOverrideRawService eventOverrideRawService;
     private final RecurringEventRawService recurringEventRawService;
+    private final RecurrenceRuleRawService recurrenceRuleRawService;
 
     @Transactional
     public Event createSingleEvent(
@@ -67,6 +69,8 @@ public class EventCommandService {
                 .build();
 
         RecurrenceRule rrule = new RecurrenceRule(requestDto.rrule());
+        recurrenceRuleRawService.saveRecurrenceRule(rrule);
+
         newEvent.connectRecurrenceRule(rrule);
         newEvent.connectCalendar(targetCalendar);
 
