@@ -114,6 +114,17 @@ public class TeamMemberRawService {
         return teamMemberRepository.findByTeam(team);
     }
 
+    /**
+     * 팀 멤버 수 조회
+     *
+     * @param team 팀 엔티티
+     * @return 팀 멤버 수
+     */
+    @Transactional(readOnly = true)
+    public int countTeamMemberByTeam(Team team) {
+        return teamMemberRepository.countTeamMemberByTeam(team);
+    }
+
     @Transactional
     public void deleteTeamMember(TeamMember teamMember) {
         teamMemberRepository.delete(teamMember);

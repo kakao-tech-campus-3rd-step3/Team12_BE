@@ -31,4 +31,6 @@ public interface TeamMemberRepository extends JpaRepository<TeamMember, Long> {
             AND (tm.member.nickname LIKE %:keyword% OR tm.member.email LIKE %:keyword%)
             """)
     Page<TeamMember> findTeamMemberByTeamAndKeyword(Team findTeam, Pageable pageable, String keyword);
+
+    int countTeamMemberByTeam(Team team);
 }

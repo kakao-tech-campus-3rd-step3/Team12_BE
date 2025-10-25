@@ -22,6 +22,7 @@ import unischedule.team.dto.MemberNameResponseDto;
 import unischedule.team.dto.RemoveMemberCommandDto;
 import unischedule.team.dto.TeamCreateRequestDto;
 import unischedule.team.dto.TeamCreateResponseDto;
+import unischedule.team.dto.TeamDetailResponseDto;
 import unischedule.team.dto.TeamJoinRequestDto;
 import unischedule.team.dto.TeamJoinResponseDto;
 import unischedule.team.dto.TeamMemberResponseDto;
@@ -255,5 +256,22 @@ public class TeamService {
         target.validateRemovable();
 
         teamMemberRawService.deleteTeamMember(target);
+    }
+
+    /**
+     * 팀 상세 정보를 조회하는 메서드
+     *
+     * @param email  헤더에서 넘어온 유저 이메일
+     * @param teamId 팀 아이디
+     * @return 팀 상세 정보 응답 Dto
+     */
+    @Transactional(readOnly = true)
+    public TeamDetailResponseDto getTeamDetail(String email, Long teamId) {
+        Team findTeam = teamRawService.findTeamById(teamId);
+        Member findMember = memberRawService.findMemberByEmail(email);
+        teamMemberRawService.checkTeamAndMember(findTeam, findMember);
+        int memberCount = teamMemberRawService.countTeamMemberByTeam(findTeam);
+
+        return TeamDetailResponseDto.of(findTeam, memberCount);
     }
 }
