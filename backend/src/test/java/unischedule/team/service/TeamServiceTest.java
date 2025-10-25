@@ -38,6 +38,7 @@ import unischedule.team.domain.TeamMember;
 import unischedule.team.domain.TeamRole;
 import unischedule.team.domain.WhenToMeet;
 import unischedule.team.dto.TeamCreateRequestDto;
+import unischedule.team.dto.TeamDetailResponseDto;
 import unischedule.team.dto.TeamJoinRequestDto;
 import unischedule.team.dto.TeamResponseDto;
 import unischedule.team.dto.WhenToMeetResponseDto;
@@ -364,6 +365,58 @@ class TeamServiceTest {
 
         //when & then
         assertThatThrownBy(() -> teamService.getTeamMembers(member1.getEmail(), team.getTeamId(), paginationMeta))
+                .isInstanceOf(EntityNotFoundException.class);
+    }
+
+    @Test
+    @DisplayName("팀 상세 정보를 정상적으로 조회한다")
+    void 팀_상세_정보를_정상적으로_조회한다() {
+        // given
+        String email = "test@kakao.com";
+        Long teamId = 1L;
+
+        Team team = new Team("카테캠 FE", "카카오 테크 캠퍼스 3단계 프로젝트", "WHFFU5");
+        Member member = new Member(email, "홍길동", "securePassword");
+        int memberCount = 5;
+        when(teamRawService.findTeamById(teamId)).thenReturn(team);
+        when(memberRawService.findMemberByEmail(email)).thenReturn(member);
+        doNothing().when(teamMemberRawService).checkTeamAndMember(team, member);
+        when(teamMemberRawService.countTeamMemberByTeam(team)).thenReturn(memberCount);
+
+        // when
+        TeamDetailResponseDto response = teamService.getTeamDetail(email, teamId);
+
+        // then
+        assertThat(response).isNotNull();
+        assertThat(response.name()).isEqualTo("카테캠 FE");
+        assertThat(response.description()).isEqualTo("카카오 테크 캠퍼스 3단계 프로젝트");
+        assertThat(response.count()).isEqualTo(5);
+        assertThat(response.code()).isEqualTo("WHFFU5");
+
+        // verify (Mock 호출 검증)
+        verify(teamRawService).findTeamById(teamId);
+        verify(memberRawService).findMemberByEmail(email);
+        verify(teamMemberRawService).checkTeamAndMember(team, member);
+        verify(teamMemberRawService).countTeamMemberByTeam(team);
+    }
+
+    @Test
+    @DisplayName("팀 상세 정보 조회 시, 팀에 속하지 않은 멤버는 예외가 발생한다")
+    void 팀_상세_정보_조회_시_팀에_속하지_않은_멤버는_예외가_발생한다() {
+        // given
+        String email = "test@kakao.com";
+        Long teamId = 1L;
+        Team team = new Team("카테캠 FE", "카카오 테크 캠퍼스 3단계 프로젝트", "WHFFU5");
+        Member member = new Member(email, "홍길동", "securePassword");
+
+        when(teamRawService.findTeamById(teamId)).thenReturn(team);
+        when(memberRawService.findMemberByEmail(email)).thenReturn(member);
+        doThrow(EntityNotFoundException.class)
+                .when(teamMemberRawService)
+                .checkTeamAndMember(team, member);
+
+        //when & then
+        assertThatThrownBy(() -> teamService.getTeamDetail(email, teamId))
                 .isInstanceOf(EntityNotFoundException.class);
     }
 }
