@@ -154,8 +154,32 @@ public class EventCommandService {
         recurringEventRawService.deleteRecurringEvent(eventToDelete);
     }
 
+
+    /**
+     * 반복 일정 단건 삭제 로직
+     * 기존 override가 있다면 markAsDeleted
+     * 기존 override가 없다면 eventDeleteOverride 생성
+     * @param originalEvent
+     * @param requestDto
+     */
     @Transactional
     public void deleteRecurringEventInstance(Event originalEvent, RecurringInstanceDeleteRequestDto requestDto) {
+
+        Optional<EventOverride> eventOverrideOpt = eventOverrideRawService.findEventOverride(originalEvent, requestDto.originalStartTime());
+
+        if (eventOverrideOpt.isPresent()) {
+            EventOverride targetOverride = eventOverrideOpt.get();
+            if (targetOverride.isDeleteOverride()) {
+                return;
+            }
+            targetOverride.markAsDeleted();
+            return;
+        }
+
+        if (eventOverrideRawService.existsDeleteEventOverride(originalEvent, requestDto.originalStartTime())) {
+            return;
+        }
+
         EventOverride eventOverride = EventOverride.makeEventDeleteOverride(originalEvent, requestDto.originalStartTime());
         eventOverrideRawService.saveEventOverride(eventOverride);
     }

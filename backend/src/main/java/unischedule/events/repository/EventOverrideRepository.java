@@ -26,6 +26,11 @@ public interface EventOverrideRepository extends JpaRepository<EventOverride, Lo
             LocalDateTime modifiedStartTime
     );
 
+    boolean existsByOriginalEventAndOriginalEventTimeAndTitleIsNull(
+            Event originalEvent,
+            LocalDateTime originalEventTime
+    );
+
     @Query("""
             SELECT eo
             FROM EventOverride eo

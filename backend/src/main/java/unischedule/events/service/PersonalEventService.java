@@ -134,8 +134,7 @@ public class PersonalEventService {
 
         originalEvent.validateEventOwner(member);
 
-        EventOverride eventOverride = EventOverride.makeEventDeleteOverride(originalEvent, requestDto.originalStartTime());
-        eventOverrideRawService.saveEventOverride(eventOverride);
+        eventCommandService.deleteRecurringEventInstance(originalEvent, requestDto);
     }
 
     @Transactional

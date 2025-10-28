@@ -21,6 +21,14 @@ public class EventOverrideRawService {
         return eventOverrideRepository.findByEventStartTime(originalEvent, modifiedStartTime);
     }
 
+    @Transactional(readOnly = true)
+    public boolean existsDeleteEventOverride(Event originalEvent, LocalDateTime originalEventTime) {
+        return eventOverrideRepository.existsByOriginalEventAndOriginalEventTimeAndTitleIsNull(
+                originalEvent,
+                originalEventTime
+        );
+    }
+
     @Transactional
     public EventOverride saveEventOverride(EventOverride eventOverride) {
         return eventOverrideRepository.save(eventOverride);
