@@ -9,6 +9,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.test.util.ReflectionTestUtils;
 import unischedule.calendar.entity.Calendar;
 import unischedule.calendar.service.internal.CalendarRawService;
 import unischedule.events.domain.Event;
@@ -21,6 +22,7 @@ import unischedule.events.dto.EventServiceDto;
 import unischedule.events.dto.EventUpdateDto;
 import unischedule.events.dto.PersonalEventCreateRequestDto;
 import unischedule.events.dto.RecurringEventCreateRequestDto;
+import unischedule.events.dto.RecurringInstanceDeleteRequestDto;
 import unischedule.events.dto.RecurringInstanceModifyRequestDto;
 import unischedule.events.service.PersonalEventService;
 import unischedule.events.service.common.EventCommandService;
@@ -348,7 +350,7 @@ class PersonalEventServiceTest {
     }
 
     @Test
-    @DisplayName("반복 일정의 특정 날짜(instance) 재수정 시 기존 EventOverride 업데이트")
+    @DisplayName("반복 일정의 특정 날짜(instance) 재수정 시 기존 EventOverride 업데이트 - 시간 변경 없음")
     void modifyRecurringInstance_UpdateExistingOverride() {
         // given
         Long eventId = 1L;
@@ -392,6 +394,68 @@ class PersonalEventServiceTest {
 
         assertThat(result.title()).isEqualTo("두 번째 수정");
         assertThat(result.description()).isEqualTo("내용도 수정");
+        assertThat(result.isRecurring()).isTrue();
+    }
+
+    @Test
+    @DisplayName("반복 일정의 특정 날짜(instance) 재수정 시 기존 EventOverride 업데이트 - 시간 변경")
+    void modifyRecurringInstance_re() {
+        Long eventId = 1L;
+        Event originalEvent = spy(TestUtil.makeRecurringEvent("주간 회의", "내용"));
+        originalEvent.connectCalendar(personalCalendar);
+        ReflectionTestUtils.setField(originalEvent, "eventId", eventId);
+        LocalDateTime originalOccurrence = originalEvent.getStartAt().plusWeeks(1);
+        LocalDateTime firstModifiedStartTime = originalOccurrence.plusDays(1);
+
+        EventOverride existingOverride = spy(new EventOverride(
+                originalEvent,
+                originalOccurrence,
+                "1차 수정",
+                null,
+                firstModifiedStartTime,
+                firstModifiedStartTime.plusHours(1),
+                false
+        ));
+        ReflectionTestUtils.setField(existingOverride, "id", 100L);
+
+        LocalDateTime secondModifiedStartTime = firstModifiedStartTime.plusDays(1);
+        RecurringInstanceModifyRequestDto secondRequestDto = new RecurringInstanceModifyRequestDto(
+                firstModifiedStartTime,
+                "회의 2차 변경",
+                "장소 B",
+                secondModifiedStartTime,
+                secondModifiedStartTime.plusHours(1),
+                true
+        );
+
+        EventOverride updatedOverride = spy(new EventOverride(
+                originalEvent,
+                originalOccurrence,
+                "회의 2차 변경",
+                "장소 B",
+                secondModifiedStartTime,
+                secondModifiedStartTime.plusHours(1),
+                true
+        ));
+        ReflectionTestUtils.setField(updatedOverride, "id", 100L);
+
+        given(memberRawService.findMemberByEmail(memberEmail)).willReturn(owner);
+        given(eventRawService.findEventById(eventId)).willReturn(originalEvent);
+        doNothing().when(originalEvent).validateEventOwner(owner);
+
+        given(eventCommandService.modifyRecurringInstance(eq(originalEvent), eq(secondRequestDto))).willReturn(updatedOverride);
+
+        EventGetResponseDto result = eventService.modifyPersonalRecurringInstance(memberEmail, eventId, secondRequestDto);
+
+        verify(memberRawService).findMemberByEmail(memberEmail);
+        verify(eventRawService).findEventById(eventId);
+        verify(originalEvent).validateEventOwner(owner);
+        verify(eventCommandService).modifyRecurringInstance(eq(originalEvent), eq(secondRequestDto));
+
+        assertThat(result.eventId()).isEqualTo(eventId);
+        assertThat(result.title()).isEqualTo("회의 2차 변경");
+        assertThat(result.startTime()).isEqualTo(secondModifiedStartTime);
+        assertThat(result.isPrivate()).isTrue();
         assertThat(result.isRecurring()).isTrue();
     }
 
@@ -442,6 +506,42 @@ class PersonalEventServiceTest {
         verify(eventRawService).findEventById(eventId);
         verify(eventToDelete).validateEventOwner(owner);
         verify(eventCommandService).deleteSingleEvent(eq(eventToDelete));
+    }
+
+    @Test
+    @DisplayName("수정된 반복 일정 특정 날짜 삭제 성공")
+    void deleteRecurringInstanceModified() {
+        Long eventId = 1L;
+        Event originalEvent = spy(TestUtil.makeRecurringEvent("주간 회의", "내용"));
+        originalEvent.connectCalendar(personalCalendar);
+        ReflectionTestUtils.setField(originalEvent, "eventId", eventId);
+        LocalDateTime originalOccurrence = originalEvent.getStartAt().plusWeeks(1);
+        LocalDateTime modifiedStartTime = originalOccurrence.plusDays(1);
+
+        EventOverride existingOverride = spy(new EventOverride(
+                originalEvent,
+                originalOccurrence,
+                "수정됨",
+                null,
+                modifiedStartTime,
+                modifiedStartTime.plusHours(1),
+                false
+        ));
+        ReflectionTestUtils.setField(existingOverride, "id", 100L);
+
+        RecurringInstanceDeleteRequestDto requestDto = new RecurringInstanceDeleteRequestDto(modifiedStartTime);
+
+        given(memberRawService.findMemberByEmail(memberEmail)).willReturn(owner);
+        given(eventRawService.findEventById(eventId)).willReturn(originalEvent);
+        doNothing().when(originalEvent).validateEventOwner(owner);
+        doNothing().when(eventCommandService).deleteRecurringEventInstance(eq(originalEvent), eq(requestDto));
+
+        eventService.deletePersonalRecurringInstance(memberEmail, eventId, requestDto);
+
+        verify(memberRawService).findMemberByEmail(memberEmail);
+        verify(eventRawService).findEventById(eventId);
+        verify(originalEvent).validateEventOwner(owner);
+        verify(eventCommandService).deleteRecurringEventInstance(eq(originalEvent), eq(requestDto));
     }
 
     @Test
