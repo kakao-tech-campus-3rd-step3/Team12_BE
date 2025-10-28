@@ -54,6 +54,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -89,7 +90,14 @@ class PersonalEventServiceTest {
 
     @AfterEach
     void tearDown() {
-        //verifyNoMoreInteractions(memberRawService, eventRawService, calendarRawService, teamMemberRawService);
+        verifyNoMoreInteractions(
+                memberRawService,
+                eventRawService,
+                calendarRawService,
+                teamMemberRawService,
+                eventQueryService,
+                eventCommandService
+        );
     }
     
     @Test
@@ -116,8 +124,9 @@ class PersonalEventServiceTest {
         given(calendarRawService.getMyPersonalCalendar(owner)).willReturn(personalCalendar);
 
         given(personalCalendar.getCalendarId()).willReturn(calendarId);
+        given(teamMemberRawService.findByMember(owner)).willReturn(List.of());
 
-        given(eventCommandService.createSingleEvent(eq(personalCalendar), eq(List.of(calendarId)), any(EventCreateDto.class)))
+        given(eventCommandService.createSingleEvent(eq(personalCalendar), anyList(), any(EventCreateDto.class)))
                 .willReturn(event);
         
         // when
@@ -129,6 +138,7 @@ class PersonalEventServiceTest {
         assertThat(result.description()).isEqualTo("주간 회의");
         verify(memberRawService).findMemberByEmail(memberEmail);
         verify(calendarRawService, times(2)).getMyPersonalCalendar(owner);
+        verify(teamMemberRawService).findByMember(owner);
         verify(eventCommandService).createSingleEvent(eq(personalCalendar), anyList(), any(EventCreateDto.class));
     }
 
@@ -145,6 +155,7 @@ class PersonalEventServiceTest {
         given(personalCalendar.getCalendarId()).willReturn(calendarId);
         doNothing().when(personalCalendar).validateOwner(owner);
 
+        given(teamMemberRawService.findByMember(owner)).willReturn(List.of());
         given(eventCommandService.createRecurringEvent(eq(personalCalendar), eq(List.of(calendarId)), eq(requestDto)))
                 .willReturn(savedEvent);
 
@@ -157,6 +168,7 @@ class PersonalEventServiceTest {
         verify(memberRawService).findMemberByEmail(memberEmail);
         verify(calendarRawService, times(2)).getMyPersonalCalendar(owner);
         verify(personalCalendar).validateOwner(owner);
+        verify(teamMemberRawService).findByMember(owner);
         verify(eventCommandService).createRecurringEvent(eq(personalCalendar), eq(List.of(calendarId)), eq(requestDto));
         verify(eventQueryService, never()).checkNewRecurringEventOverlap(anyList(), any(), any(), any()); // Not called directly
     }
@@ -177,6 +189,7 @@ class PersonalEventServiceTest {
         given(calendarRawService.getMyPersonalCalendar(owner)).willReturn(personalCalendar);
         given(personalCalendar.getCalendarId()).willReturn(calendarId);
 
+        given(teamMemberRawService.findByMember(owner)).willReturn(List.of());
         given(eventCommandService.createSingleEvent(eq(personalCalendar), eq(List.of(calendarId)), any(EventCreateDto.class)))
                 .willThrow(new InvalidInputException("겹치는 일정이 있어 등록할 수 없습니다."));
         // when & then
@@ -184,6 +197,9 @@ class PersonalEventServiceTest {
                 .isInstanceOf(InvalidInputException.class)
                 .hasMessage("겹치는 일정이 있어 등록할 수 없습니다.");
 
+        verify(memberRawService).findMemberByEmail(memberEmail);
+        verify(calendarRawService, times(2)).getMyPersonalCalendar(owner);
+        verify(teamMemberRawService).findByMember(owner);
         verify(eventCommandService).createSingleEvent(eq(personalCalendar), eq(List.of(calendarId)), any(EventCreateDto.class));
     }
 
@@ -496,7 +512,7 @@ class PersonalEventServiceTest {
         
         // then
         assertThat(result).hasSize(2);
-        assertThat(result.get(0).title()).isEqualTo("회의");
+        assertThat(result.getFirst().title()).isEqualTo("회의");
         
         verify(memberRawService).findMemberByEmail(email);
         verify(teamMemberRawService).findByMember(member);
