@@ -102,25 +102,17 @@ public class EventOverride {
     }
 
     public void update(
-            LocalDateTime originalEventTime,
             String title,
             String content,
             LocalDateTime startAt,
             LocalDateTime endAt,
             Boolean isPrivate
     ) {
-        updateOriginalEventTime(originalEventTime);
         updateTitle(title);
         updateContent(content);
         updateStartAt(startAt);
         updateEndAt(endAt);
         updateIsPrivate(isPrivate);
-    }
-
-    private void updateOriginalEventTime(LocalDateTime originalEventTime) {
-        if (originalEventTime != null) {
-            this.originalEventTime = originalEventTime;
-        }
     }
 
     private void updateTitle(String title) {
@@ -161,6 +153,14 @@ public class EventOverride {
                 this.endAt,
                 this.isPrivate
         );
+    }
+
+    public void markAsDeleted() {
+        this.title = null;
+        this.content = null;
+        this.startAt = null;
+        this.endAt = null;
+        this.isPrivate = null;
     }
 
     public boolean isDeleteOverride() {

@@ -13,24 +13,25 @@ import java.util.Optional;
 public interface EventOverrideRepository extends JpaRepository<EventOverride, Long> {
 
     @Query("""
-            SELECT ex
-            FROM EventOverride ex
-            WHERE ex.originalEvent = :originalEvent
-            AND ex.originalEventTime = :originalEventTime
+            SELECT eo
+            FROM EventOverride eo
+            WHERE eo.originalEvent = :originalEvent
+            AND eo.startAt = :modifiedStartTime
+            AND eo.title IS NOT NULL
     """)
-    Optional<EventOverride> findByOriginEventTime(
+    Optional<EventOverride> findByEventStartTime(
             @Param("originalEvent")
             Event originalEvent,
-            @Param("originalEventTime")
-            LocalDateTime originalEventTime
+            @Param("modifiedStartTime")
+            LocalDateTime modifiedStartTime
     );
 
     @Query("""
-            SELECT ex
-            FROM EventOverride ex
-            WHERE ex.originalEvent IN :originalEvents
-            AND ex.originalEventTime >= :startAt
-            AND ex.originalEventTime < :endAt
+            SELECT eo
+            FROM EventOverride eo
+            WHERE eo.originalEvent IN :originalEvents
+            AND eo.originalEventTime >= :startAt
+            AND eo.originalEventTime < :endAt
     """)
     List<EventOverride> findEventOverridesForEvents(
             @Param("originalEvents")

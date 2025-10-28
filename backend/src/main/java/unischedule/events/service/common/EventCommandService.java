@@ -106,7 +106,7 @@ public class EventCommandService {
         EventOverride eventOverride;
         if (eventOverrideOpt.isPresent()) {
             eventOverride = eventOverrideOpt.get();
-            eventOverrideRawService.updateEventOverride(eventOverride, requestDto.toEventOverrideDto());
+            eventOverrideRawService.updateEventOverride(eventOverride, requestDto.toEventOverrideUpdateDto());
         }
         else {
             eventOverride = EventOverride.makeEventOverride(originalEvent, requestDto.toEventOverrideDto());
