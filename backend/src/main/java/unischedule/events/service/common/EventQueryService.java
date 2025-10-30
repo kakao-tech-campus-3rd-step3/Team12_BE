@@ -127,4 +127,73 @@ public class EventQueryService {
         return false;
     }
 
+    @Transactional(readOnly = true)
+    public void checkNewSingleEventOverlapForMember(
+            Member member,
+            List<Long> calendarIds,
+            LocalDateTime startAt,
+            LocalDateTime endAt
+    ) {
+        if (hasEventForMember(member, calendarIds, startAt, endAt)) {
+            throw new InvalidInputException("겹치는 일정이 있어 등록할 수 없습니다.");
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public void checkNewRecurringEventOverlapForMember(
+            Member member,
+            List<Long> calendarIds,
+            LocalDateTime firstStartTime,
+            LocalDateTime firstEndTime,
+            String rruleString
+    ) {
+        List<LocalDateTime> eventStartTimes = rruleParser.calEventStartTimeList(firstStartTime, rruleString);
+
+        Duration duration = Duration.between(firstStartTime, firstEndTime);
+
+        for (LocalDateTime eventStartTime : eventStartTimes) {
+            LocalDateTime eventEndTime = eventStartTime.plus(duration);
+
+            checkNewSingleEventOverlapForMember(member, calendarIds, eventStartTime, eventEndTime);
+        }
+    }
+
+    /**
+     * 특정 멤버 기준 일정 수정 시 시간 중복 체크
+     * @param member
+     * @param calendarIds
+     * @param startTime
+     * @param endTime
+     * @param excludeEvent
+     */
+    @Transactional(readOnly = true)
+    public void checkEventUpdateOverlapForMember(
+            Member member,
+            List<Long> calendarIds,
+            LocalDateTime startTime,
+            LocalDateTime endTime,
+            Event excludeEvent
+    ) {
+        List<EventServiceDto> overlappingEvents = getEventsForMember(member, calendarIds, startTime, endTime);
+
+        boolean isOverlapping = overlappingEvents.stream()
+                .anyMatch(event -> !Objects.equals(event.eventId(), excludeEvent.getEventId()));
+
+        if (isOverlapping) {
+            throw new InvalidInputException("해당 시간에 겹치는 일정이 있어 수정할 수 없습니다.");
+        }
+    }
+
+    private boolean hasEventForMember(Member member, List<Long> calendarIds, LocalDateTime startAt, LocalDateTime endAt) {
+        SingleEventList singleEventList = eventRawService.findSingleScheduleForMember(member, calendarIds, startAt, endAt);
+        if (singleEventList.hasOverlap(startAt, endAt)) {
+            return true;
+        }
+
+        if (!recurringEventService.expandRecurringEventsForMember(member, calendarIds, startAt, endAt).isEmpty()) {
+            return true;
+        }
+        return false;
+    }
+
 }

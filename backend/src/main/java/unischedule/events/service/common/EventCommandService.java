@@ -17,6 +17,7 @@ import unischedule.events.service.internal.EventRawService;
 import unischedule.events.service.internal.RecurrenceRuleRawService;
 import unischedule.events.service.internal.RecurringEventRawService;
 import unischedule.exception.InvalidInputException;
+import unischedule.member.domain.Member;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -182,5 +183,110 @@ public class EventCommandService {
 
         EventOverride eventOverride = EventOverride.makeEventDeleteOverride(originalEvent, requestDto.originalStartTime());
         eventOverrideRawService.saveEventOverride(eventOverride);
+    }
+
+    @Transactional
+    public Event createSingleEventForMember(
+            Member member,
+            Calendar targetCalendar,
+            List<Long> conflictCheckCalendarIds,
+            EventCreateDto createDto
+    ) {
+        eventQueryService.checkNewSingleEventOverlapForMember(member, conflictCheckCalendarIds, createDto.startTime(), createDto.endTime());
+
+        Event newEvent = Event.builder()
+                .title(createDto.title())
+                .content(createDto.description())
+                .startAt(createDto.startTime())
+                .endAt(createDto.endTime())
+                .isPrivate(createDto.isPrivate())
+                .isSelective(false)
+                .build();
+
+        newEvent.connectCalendar(targetCalendar);
+        return eventRawService.saveEvent(newEvent);
+    }
+
+    @Transactional
+    public Event createRecurringEventForMember(
+            Member member,
+            Calendar targetCalendar,
+            List<Long> conflictCheckCalendarIds,
+            RecurringEventCreateRequestDto requestDto
+    ) {
+        eventQueryService.checkNewRecurringEventOverlapForMember(
+                member,
+                conflictCheckCalendarIds,
+                requestDto.firstStartTime(),
+                requestDto.firstEndTime(),
+                requestDto.rrule()
+        );
+
+        Event newEvent = Event.builder()
+                .title(requestDto.title())
+                .content(requestDto.description())
+                .startAt(requestDto.firstStartTime())
+                .endAt(requestDto.firstEndTime())
+                .isPrivate(requestDto.isPrivate())
+                .build();
+
+        RecurrenceRule rrule = new RecurrenceRule(requestDto.rrule());
+        recurrenceRuleRawService.saveRecurrenceRule(rrule);
+
+        newEvent.connectRecurrenceRule(rrule);
+        newEvent.connectCalendar(targetCalendar);
+
+        return eventRawService.saveEvent(newEvent);
+    }
+
+    @Transactional
+    public Event modifySingleEventForMember(
+            Member member,
+            Event eventToModify,
+            List<Long> conflictCheckCalendarIds,
+            EventUpdateDto updateDto
+    ) {
+        if (eventToModify.getRecurrenceRule() != null) {
+            throw new IllegalArgumentException("단일 일정이 아닙니다.");
+        }
+
+        modifyEventForMember(member, eventToModify, conflictCheckCalendarIds, updateDto);
+        return eventToModify;
+    }
+
+    @Transactional
+    public Event modifyRecurringEventForMember(
+            Member member,
+            Event eventToModify,
+            List<Long> conflictCheckCalendarIds,
+            EventUpdateDto updateDto
+    ) {
+        if (eventToModify.getRecurrenceRule() == null) {
+            throw new InvalidInputException("반복 일정이 아닙니다.");
+        }
+
+        modifyEventForMember(member, eventToModify, conflictCheckCalendarIds, updateDto);
+        eventOverrideRawService.deleteAllEventOverrideByEvent(eventToModify);
+        return eventToModify;
+    }
+
+    private void modifyEventForMember(
+            Member member,
+            Event eventToModify,
+            List<Long> conflictCheckCalendarIds,
+            EventUpdateDto updateDto
+    ) {
+        LocalDateTime newStartTime = getValueOrDefault(updateDto.startTime(), eventToModify.getStartAt());
+        LocalDateTime newEndTime = getValueOrDefault(updateDto.endTime(), eventToModify.getEndAt());
+
+        eventQueryService.checkEventUpdateOverlapForMember(
+                member,
+                conflictCheckCalendarIds,
+                newStartTime,
+                newEndTime,
+                eventToModify
+        );
+
+        eventRawService.updateEvent(eventToModify, updateDto);
     }
 }
