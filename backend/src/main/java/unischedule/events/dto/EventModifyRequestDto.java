@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import unischedule.events.validation.ValidEventTime;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @ValidEventTime
 public record EventModifyRequestDto(
@@ -14,7 +15,10 @@ public record EventModifyRequestDto(
         @JsonProperty("end_time")
         LocalDateTime endTime,
         @JsonProperty("is_private")
-        Boolean isPrivate
+        Boolean isPrivate,
+
+        @JsonProperty("event_participants")
+        List<Long> eventParticipants
 ) {
         public EventUpdateDto toDto() {
                 return new EventUpdateDto(

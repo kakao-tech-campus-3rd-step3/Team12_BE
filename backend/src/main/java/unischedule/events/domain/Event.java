@@ -44,8 +44,13 @@ public class Event extends BaseEntity {
     @Column(nullable = false)
     private Boolean isPrivate;
 
+    /**
+     * 일정 참여자 범위
+     * false, null : 멤버 전체
+     * true : EventParticipant 등록된 멤버만 참여
+     */
     @Column
-    private Boolean isForAllMembers;
+    private Boolean isSelective;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = true)
     @JoinColumn(name = "recurrence_rule_id", nullable = true)
@@ -62,14 +67,14 @@ public class Event extends BaseEntity {
             LocalDateTime startAt,
             LocalDateTime endAt,
             Boolean isPrivate,
-            Boolean isForAllMembers
+            Boolean isSelective
     ) {
         this.title = title;
         this.content = content;
         this.startAt = startAt;
         this.endAt = endAt;
         this.isPrivate = isPrivate;
-        this.isForAllMembers = isForAllMembers;
+        this.isSelective = isSelective;
     }
     
     public void modifyEvent(String title, String content, LocalDateTime startAt, LocalDateTime endAt, Boolean isPrivate) {
