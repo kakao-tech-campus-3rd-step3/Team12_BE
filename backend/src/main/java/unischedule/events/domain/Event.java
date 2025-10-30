@@ -44,6 +44,9 @@ public class Event extends BaseEntity {
     @Column(nullable = false)
     private Boolean isPrivate;
 
+    @Column
+    private Boolean isForAllMembers;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = true)
     @JoinColumn(name = "recurrence_rule_id", nullable = true)
     private RecurrenceRule recurrenceRule;
@@ -58,13 +61,15 @@ public class Event extends BaseEntity {
             String content,
             LocalDateTime startAt,
             LocalDateTime endAt,
-            Boolean isPrivate
+            Boolean isPrivate,
+            Boolean isForAllMembers
     ) {
         this.title = title;
         this.content = content;
         this.startAt = startAt;
         this.endAt = endAt;
         this.isPrivate = isPrivate;
+        this.isForAllMembers = isForAllMembers;
     }
     
     public void modifyEvent(String title, String content, LocalDateTime startAt, LocalDateTime endAt, Boolean isPrivate) {
