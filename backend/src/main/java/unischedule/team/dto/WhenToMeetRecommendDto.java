@@ -41,12 +41,25 @@ public record WhenToMeetRecommendDto(
     }
     
     private static String calculateStatus(long available, long totalMembers) {
-        if (available <= 0) {
+        // 0명 불참
+        if (available == totalMembers) {
+            return "최적";
+        }
+        // 1명 불참
+        else if (available == totalMembers - 1) {
+            return "좋음";
+        }
+        // 2명 불참
+        else if (available == totalMembers - 2) {
+            return "보통";
+        }
+        // 3명 이상 불참 (단, 1명이라도 가능한 경우)
+        else if (available > 0) {
+            return "나쁨";
+        }
+        // 0명 이하 (아무도 참여 불가능한 경우)
+        else {
             return "불가능";
-        } else if (available == totalMembers) {
-            return "모두 가능";
-        } else {
-            return "부분 가능";
         }
     }
 }
