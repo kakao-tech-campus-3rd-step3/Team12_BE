@@ -1,15 +1,15 @@
 package unischedule.external;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
-import unischedule.everytime.dto.TimetableDetailDto;
+import unischedule.lecture.everytime.dto.TimetableDetailDto;
 import unischedule.exception.ExternalApiException;
-import unischedule.external.dto.OpenAiChatCompletionResponseDto;
 
 import java.util.Base64;
 import java.util.List;
@@ -26,18 +26,25 @@ public class OpenAiClient {
         try {
             String base64Image = Base64.getEncoder().encodeToString(file.getBytes());
             Map<String, Object> request = Map.of(
-                    "model", "gpt-4.1-nano",
-                    "messages", List.of(
+                    "model", "gpt-5-nano",
+                    "reasoning", Map.of("effort", "low"),
+                    "input", List.of(
                             Map.of("role", "user", "content", List.of(
-                                    Map.of("type", "text", "text",
-                                            "이 시간표 이미지를 JSON으로 변환해줘. 과목명, 교수, 요일, 시작/끝 시간, 장소 포함. 시작 시간, 끝 시간은 정각이 아닐 수도 있어. dayOfWeek는 월요일이 0임."),
-                                    Map.of("type", "image_url", "image_url",
-                                            Map.of("url", "data:image/png;base64," + base64Image))
-                            ))
+                                    Map.of("type", "input_text", "text",
+                                                """
+                                                      이 시간표 이미지를 표에 표시된 시간과 요일에 유의하여 JSON으로 변환해줘.
+                                                      과목명, 교수, 요일, 시작/끝 시간, 장소 포함. 수업 시작 시간, 끝 시간은 정각이 아닐 수도 있어.
+                                                      보이는 그대로 작성할 것. dayOfWeek는 월요일이 0임.
+                                                      시간은 01:01 형식 유지. 시간 분 모두 2자리로 고정할 것. 24시간제 사용.
+                                                      동일 수업(동일 색상)에 시간이 여러개 있는 경우도 있어. 해당 경우 하나의 수업에 시간 list를 추가하는 방식으로 응답해야함.
+                                                    """),
+                                    Map.of("type", "input_image", "image_url",
+                                            "data:image/png;base64," + base64Image))
+                            )
                     ),
-                    "response_format", Map.of(
-                            "type", "json_schema",
-                            "json_schema", Map.of(
+                    "text", Map.of("format",
+                            Map.of(
+                                    "type", "json_schema",
                                     "name", "timetable_schema",
                                     "schema", createTimetableScheme(),
                                     "strict", true
@@ -46,13 +53,13 @@ public class OpenAiClient {
             );
 
             return openAiWebClient.post()
-                    .uri("/chat/completions")
+                    .uri("/responses")
                     .bodyValue(request)
                     .retrieve()
-                    .bodyToMono(OpenAiChatCompletionResponseDto.class)
+                    .bodyToMono(JsonNode.class)
                     .handle((resp, sink) -> {
                         try {
-                            String content = resp.choices().getFirst().message().content();
+                            String content = resp.get("output").get(1).get("content").get(0).get("text").textValue();
                             TimetableDetailDto result = objectMapper.readValue(content, TimetableDetailDto.class);
                             sink.next(result);
                         } catch (JsonProcessingException e) {
