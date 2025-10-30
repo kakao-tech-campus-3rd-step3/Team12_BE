@@ -74,7 +74,7 @@ public class Event extends BaseEntity {
         this.startAt = startAt;
         this.endAt = endAt;
         this.isPrivate = isPrivate;
-        this.isSelective = isSelective;
+        this.isSelective = (isSelective != null) ? isSelective : false;
     }
     
     public void modifyEvent(String title, String content, LocalDateTime startAt, LocalDateTime endAt, Boolean isPrivate) {
@@ -105,6 +105,10 @@ public class Event extends BaseEntity {
         this.isPrivate = isPrivate;
     }
 
+    public void updateIsSelective(Boolean isSelective) {
+        this.isSelective = isSelective;
+    }
+
     public void connectCalendar(Calendar calendar) {
         this.calendar = calendar;
     }
@@ -123,5 +127,9 @@ public class Event extends BaseEntity {
         if (!this.calendar.hasTeam()) {
             throw new InvalidInputException("팀 일정이 아닙니다.");
         }
+    }
+
+    public boolean isForAllMembers() {
+        return isSelective == null || !isSelective;
     }
 }

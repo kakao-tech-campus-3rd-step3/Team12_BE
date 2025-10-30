@@ -7,6 +7,7 @@ import unischedule.calendar.entity.Calendar;
 import unischedule.calendar.service.internal.CalendarRawService;
 import unischedule.events.domain.Event;
 import unischedule.events.domain.EventOverride;
+import unischedule.events.domain.EventParticipant;
 import unischedule.events.dto.EventCreateResponseDto;
 import unischedule.events.dto.EventGetResponseDto;
 import unischedule.events.dto.EventModifyRequestDto;
@@ -15,6 +16,7 @@ import unischedule.events.dto.RecurringEventCreateRequestDto;
 import unischedule.events.dto.RecurringInstanceDeleteRequestDto;
 import unischedule.events.dto.RecurringInstanceModifyRequestDto;
 import unischedule.events.dto.TeamEventCreateRequestDto;
+import unischedule.events.repository.EventParticipantRepository;
 import unischedule.events.service.common.EventCommandService;
 import unischedule.events.service.common.EventQueryService;
 import unischedule.events.service.internal.EventRawService;
@@ -42,6 +44,7 @@ public class TeamEventService {
     private final TeamMemberRawService teamMemberRawService;
     private final EventQueryService eventQueryService;
     private final EventCommandService eventCommandService;
+    private final EventParticipantRepository eventParticipantRepository;
 
     @Transactional
     public EventCreateResponseDto createTeamSingleEvent(String email, TeamEventCreateRequestDto requestDto) {
@@ -50,9 +53,13 @@ public class TeamEventService {
         validateTeamMember(team, member);
         Calendar calendar = calendarRawService.getTeamCalendar(team);
 
-        List<Long> calendarIdsToValidate = getAllRelatedCalendarIds(team);
+        List<Member> participants = getParticipants(team, requestDto.eventParticipants());
+
+        List<Long> calendarIdsToValidate = getCalendarIdsForMembers(participants);
 
         Event savedEvent = eventCommandService.createSingleEvent(calendar, calendarIdsToValidate, requestDto.toDto());
+
+        handleEventParticipants(savedEvent, participants, requestDto.eventParticipants());
 
         return EventCreateResponseDto.from(savedEvent);
     }
@@ -64,9 +71,12 @@ public class TeamEventService {
         validateTeamMember(team, member);
         Calendar calendar = calendarRawService.getTeamCalendar(team);
 
-        List<Long> calendarIdsToValidate = getAllRelatedCalendarIds(team);
+        List<Member> participants = getParticipants(team, requestDto.eventParticipants());
+        List<Long> calendarIdsToValidate = getCalendarIdsForMembers(participants);
 
         Event savedEvent = eventCommandService.createRecurringEvent(calendar, calendarIdsToValidate, requestDto);
+
+        handleEventParticipants(savedEvent, participants, requestDto.eventParticipants());
 
         return EventCreateResponseDto.from(savedEvent);
     }
@@ -107,17 +117,19 @@ public class TeamEventService {
     @Transactional
     public EventGetResponseDto modifyTeamEvent(String email, Long eventId, EventModifyRequestDto requestDto) {
         Member member = memberRawService.findMemberByEmail(email);
-
         Event event = eventRawService.findEventById(eventId);
-
         Team team = event.getCalendar().getTeam();
         event.validateIsTeamEvent();
-
         validateTeamMember(team, member);
 
-        List<Long> calendarIdsToValidate = getAllRelatedCalendarIds(team);
+        List<Long> calendarIdsToValidate = getCalendarIdsForModification(event, team, requestDto);
 
-        eventCommandService.modifySingleEvent(event, calendarIdsToValidate, requestDto.toDto());
+        Event modifiedEvent = eventCommandService.modifySingleEvent(event, calendarIdsToValidate, requestDto.toDto());
+
+        if (requestDto.eventParticipants() != null) {
+            List<Member> participants = getParticipants(team, requestDto.eventParticipants());
+            handleEventParticipants(modifiedEvent, participants, requestDto.eventParticipants());
+        }
 
         return EventGetResponseDto.fromSingleEvent(event);
     }
@@ -131,9 +143,18 @@ public class TeamEventService {
         Team team = event.getCalendar().getTeam();
         validateTeamMember(team, member);
 
-        List<Long> calendarIdsToValidate = getAllRelatedCalendarIds(team);
+        List<Long> calendarIdsToValidate = getCalendarIdsForModification(event, team, requestDto);
 
-        eventCommandService.modifyRecurringEvent(event, calendarIdsToValidate, requestDto.toDto());
+        Event modifiedEvent = eventCommandService.modifyRecurringEvent(
+                event,
+                calendarIdsToValidate,
+                requestDto.toDto()
+        );
+
+        if (requestDto.eventParticipants() != null) {
+            List<Member> participants = getParticipants(team, requestDto.eventParticipants());
+            handleEventParticipants(modifiedEvent, participants, requestDto.eventParticipants());
+        }
 
         return EventGetResponseDto.fromRecurringEvent(event);
     }
@@ -203,17 +224,10 @@ public class TeamEventService {
         teamMemberRawService.checkTeamAndMember(team, member);
     }
 
-
-    /**
-     * 현재 팀에 속해있는 모든 멤버에 대해 해당 멤버가 속한 모든 캘린더 id 조회
-     * @param currentTeam
-     * @return
-     */
-    private List<Long> getAllRelatedCalendarIds(Team currentTeam) {
-        List<Member> teamMembers = getAllTeamMember(currentTeam);
+    private List<Long> getCalendarIdsForMembers(List<Member> members) {
         Set<Long> calendarIds = new HashSet<>();
+        for (Member member : members) {
 
-        for (Member member : teamMembers) {
             calendarIds.add(calendarRawService.getMyPersonalCalendar(member).getCalendarId());
 
             List<TeamMember> memberships = teamMemberRawService.findByMember(member);
@@ -223,6 +237,87 @@ public class TeamEventService {
             }
         }
         return new ArrayList<>(calendarIds);
+    }
+
+    /**
+     * 팀 이벤트 참여자 검증 및 반환
+     * @param team
+     * @param participantMemberIds
+     * @return
+     */
+    private List<Member> getParticipants(Team team, List<Long> participantMemberIds) {
+        if (participantMemberIds == null || participantMemberIds.isEmpty()) {
+            return getAllTeamMember(team);
+        }
+
+        Set<Long> memberIdSet = new HashSet<>(participantMemberIds);
+        List<Member> participants = new ArrayList<>();
+
+        for (Long memberid : memberIdSet) {
+            Member member = memberRawService.findMemberById(memberid);
+
+            teamMemberRawService.checkTeamAndMember(team, member);
+            participants.add(member);
+        }
+        return participants;
+    }
+
+    /**
+     * 수정 시 일정 충돌 검사가 필요한 캘린더 목록 반환
+     * @param event
+     * @param team
+     * @param requestDto
+     * @return
+     */
+    private List<Long> getCalendarIdsForModification(Event event, Team team, EventModifyRequestDto requestDto) {
+        boolean timeChanged = (requestDto.startTime() != null || requestDto.endTime() != null);
+
+        // 참여자 변경 없을 시
+        if (requestDto.eventParticipants() == null) {
+            if (!timeChanged) {
+                return List.of();
+            }
+
+            List<Member> currentParticipants = getCurrentParticipants(event, team);
+            return getCalendarIdsForMembers(currentParticipants);
+        }
+
+        // 참여자 변경 시
+        List<Member> newParticipants = getParticipants(team, requestDto.eventParticipants());
+        return getCalendarIdsForMembers(newParticipants);
+    }
+
+    private List<Member> getCurrentParticipants(Event event, Team team) {
+        if (event.isForAllMembers()) {
+            return getAllTeamMember(team);
+        }
+        else {
+            return eventParticipantRepository.findByEvent(event)
+                    .stream()
+                    .map(EventParticipant::getMember)
+                    .toList();
+        }
+    }
+
+    private void handleEventParticipants(Event event, List<Member> allParticipants, List<Long> newParticipantIds) {
+        if (newParticipantIds == null) {
+            return;
+        }
+
+        eventParticipantRepository.deleteAllByEvent(event);
+
+        if (newParticipantIds.isEmpty()) {
+            event.updateIsSelective(false);
+        }
+        else {
+            event.updateIsSelective(true);
+
+            List<EventParticipant> newParticipants = allParticipants.stream()
+                    .map(member -> new EventParticipant(event, member))
+                    .toList();
+
+            eventParticipantRepository.saveAll(newParticipants);
+        }
     }
     
     private List<EventGetResponseDto> getTeamEventsForPeriod(String email, Long teamId, LocalDateTime start, LocalDateTime end) {
