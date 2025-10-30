@@ -1,6 +1,5 @@
 package unischedule.events.service;
 
-import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -8,8 +7,6 @@ import unischedule.calendar.entity.Calendar;
 import unischedule.calendar.service.internal.CalendarRawService;
 import unischedule.events.domain.Event;
 import unischedule.events.domain.EventOverride;
-import unischedule.events.domain.EventState;
-import unischedule.events.domain.RecurrenceRule;
 import unischedule.events.dto.EventCreateResponseDto;
 import unischedule.events.dto.EventGetResponseDto;
 import unischedule.events.dto.EventModifyRequestDto;
@@ -18,9 +15,9 @@ import unischedule.events.dto.RecurringEventCreateRequestDto;
 import unischedule.events.dto.RecurringInstanceDeleteRequestDto;
 import unischedule.events.dto.RecurringInstanceModifyRequestDto;
 import unischedule.events.dto.TeamEventCreateRequestDto;
-import unischedule.events.service.internal.EventOverrideRawService;
+import unischedule.events.service.common.EventCommandService;
+import unischedule.events.service.common.EventQueryService;
 import unischedule.events.service.internal.EventRawService;
-import unischedule.events.service.internal.RecurringEventRawService;
 import unischedule.member.domain.Member;
 import unischedule.member.service.internal.MemberRawService;
 import unischedule.team.domain.Team;
@@ -28,11 +25,11 @@ import unischedule.team.domain.TeamMember;
 import unischedule.team.service.internal.TeamMemberRawService;
 import unischedule.team.service.internal.TeamRawService;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 @Service
@@ -40,34 +37,24 @@ import java.util.Set;
 public class TeamEventService {
     private final MemberRawService memberRawService;
     private final EventRawService eventRawService;
-    private final RecurringEventRawService recurringEventRawService;
     private final CalendarRawService calendarRawService;
     private final TeamRawService teamRawService;
     private final TeamMemberRawService teamMemberRawService;
     private final EventQueryService eventQueryService;
-    private final EventOverrideRawService eventOverrideRawService;
+    private final EventCommandService eventCommandService;
 
     @Transactional
     public EventCreateResponseDto createTeamSingleEvent(String email, TeamEventCreateRequestDto requestDto) {
         Member member = memberRawService.findMemberByEmail(email);
         Team team = teamRawService.findTeamById(requestDto.teamId());
         validateTeamMember(team, member);
+        Calendar calendar = calendarRawService.getTeamCalendar(team);
 
         List<Long> calendarIdsToValidate = getAllRelatedCalendarIds(team);
-        eventQueryService.checkNewSingleEventOverlap(calendarIdsToValidate, requestDto.startTime(), requestDto.endTime());
 
-        Calendar calendar = calendarRawService.getTeamCalendar(team);
-        Event event = new Event(
-                requestDto.title(),
-                requestDto.description(),
-                requestDto.startTime(),
-                requestDto.endTime(),
-                EventState.CONFIRMED,
-                requestDto.isPrivate()
-        );
-        event.connectCalendar(calendar);
+        Event savedEvent = eventCommandService.createSingleEvent(calendar, calendarIdsToValidate, requestDto.toDto());
 
-        return EventCreateResponseDto.from(eventRawService.saveEvent(event));
+        return EventCreateResponseDto.from(savedEvent);
     }
 
     @Transactional
@@ -75,30 +62,13 @@ public class TeamEventService {
         Member member = memberRawService.findMemberByEmail(email);
         Team team = teamRawService.findTeamById(teamId);
         validateTeamMember(team, member);
+        Calendar calendar = calendarRawService.getTeamCalendar(team);
 
         List<Long> calendarIdsToValidate = getAllRelatedCalendarIds(team);
-        eventQueryService.checkNewRecurringEventOverlap(
-                calendarIdsToValidate,
-                requestDto.firstStartTime(),
-                requestDto.firstEndTime(),
-                requestDto.rrule()
-        );
 
-        Calendar calendar = calendarRawService.getTeamCalendar(team);
-        Event event = new Event(
-                requestDto.title(),
-                requestDto.description(),
-                requestDto.firstStartTime(),
-                requestDto.firstEndTime(),
-                EventState.CONFIRMED,
-                requestDto.isPrivate()
-        );
+        Event savedEvent = eventCommandService.createRecurringEvent(calendar, calendarIdsToValidate, requestDto);
 
-        RecurrenceRule recurrenceRule = new RecurrenceRule(requestDto.rrule());
-        event.connectCalendar(calendar);
-        event.connectRecurrenceRule(recurrenceRule);
-
-        return EventCreateResponseDto.from(eventRawService.saveEvent(event));
+        return EventCreateResponseDto.from(savedEvent);
     }
 
     @Transactional(readOnly = true)
@@ -128,10 +98,9 @@ public class TeamEventService {
 
         Calendar teamCalendar = calendarRawService.getTeamCalendar(team);
 
-        List<Event> events = eventRawService.findSchedule(List.of(teamCalendar.getCalendarId()), startAt, endAt);
-
-        return events.stream()
-                .map(EventGetResponseDto::fromSingleEvent)
+        return eventQueryService.getEvents(List.of(teamCalendar.getCalendarId()), startAt, endAt)
+                .stream()
+                .map(EventGetResponseDto::fromServiceDto)
                 .toList();
     }
 
@@ -148,14 +117,7 @@ public class TeamEventService {
 
         List<Long> calendarIdsToValidate = getAllRelatedCalendarIds(team);
 
-        eventQueryService.checkEventUpdateOverlap(
-                calendarIdsToValidate,
-                requestDto.startTime(),
-                requestDto.endTime(),
-                event
-        );
-
-        eventRawService.updateEvent(event, EventModifyRequestDto.toDto(requestDto));
+        eventCommandService.modifySingleEvent(event, calendarIdsToValidate, requestDto.toDto());
 
         return EventGetResponseDto.fromSingleEvent(event);
     }
@@ -170,16 +132,8 @@ public class TeamEventService {
         validateTeamMember(team, member);
 
         List<Long> calendarIdsToValidate = getAllRelatedCalendarIds(team);
-        eventQueryService.checkEventUpdateOverlap(
-                calendarIdsToValidate,
-                requestDto.startTime(),
-                requestDto.endTime(),
-                event
-        );
 
-        eventRawService.updateEvent(event, EventModifyRequestDto.toDto(requestDto));
-        // 기존 예외 삭제
-        eventOverrideRawService.deleteAllEventOverrideByEvent(event);
+        eventCommandService.modifyRecurringEvent(event, calendarIdsToValidate, requestDto.toDto());
 
         return EventGetResponseDto.fromRecurringEvent(event);
     }
@@ -192,19 +146,9 @@ public class TeamEventService {
         Team team = originalEvent.getCalendar().getTeam();
         validateTeamMember(team, member);
 
-        Optional<EventOverride> eventOverrideOpt = eventOverrideRawService.findEventOverride(originalEvent, requestDto.originalStartTime());
+        EventOverride eventOverride = eventCommandService.modifyRecurringInstance(originalEvent, requestDto);
 
-        EventOverride eventOverride;
-        if (eventOverrideOpt.isPresent()) {
-            eventOverride = eventOverrideOpt.get();
-            eventOverrideRawService.updateEventOverride(eventOverride, requestDto.toEventOverrideDto());
-        }
-        else {
-            eventOverride = EventOverride.makeEventOverride(originalEvent, requestDto.toEventOverrideDto());
-        }
-        EventOverride savedException = eventOverrideRawService.saveEventOverride(eventOverride);
-
-        return EventGetResponseDto.fromEventOverride(savedException, originalEvent);
+        return EventGetResponseDto.fromEventOverride(eventOverride, originalEvent);
     }
 
     @Transactional
@@ -215,7 +159,7 @@ public class TeamEventService {
         Team team = event.getCalendar().getTeam();
         event.validateIsTeamEvent();
         validateTeamMember(team, member);
-        eventRawService.deleteEvent(event);
+        eventCommandService.deleteSingleEvent(event);
     }
     
     @Transactional(readOnly = true)
@@ -240,7 +184,7 @@ public class TeamEventService {
         Team team = event.getCalendar().getTeam();
         validateTeamMember(team, member);
 
-        recurringEventRawService.deleteRecurringEvent(event);
+        eventCommandService.deleteRecurringEvent(event);
     }
 
     @Transactional
@@ -252,8 +196,7 @@ public class TeamEventService {
 
         validateTeamMember(team, member);
 
-        EventOverride eventOverride = EventOverride.makeEventDeleteOverride(originalEvent, requestDto.originalStartTime());
-        eventOverrideRawService.saveEventOverride(eventOverride);
+        eventCommandService.deleteRecurringEventInstance(originalEvent, requestDto);
     }
 
     private void validateTeamMember(Team team, Member member) {

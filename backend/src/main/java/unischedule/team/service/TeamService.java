@@ -28,8 +28,10 @@ import unischedule.team.dto.MemberNameResponseDto;
 import unischedule.team.dto.RemoveMemberCommandDto;
 import unischedule.team.dto.TeamCreateRequestDto;
 import unischedule.team.dto.TeamCreateResponseDto;
+import unischedule.team.dto.TeamDetailResponseDto;
 import unischedule.team.dto.TeamJoinRequestDto;
 import unischedule.team.dto.TeamJoinResponseDto;
+import unischedule.team.dto.TeamMemberResponseDto;
 import unischedule.team.dto.TeamResponseDto;
 import unischedule.team.dto.WhenToMeetRecommendDto;
 import unischedule.team.dto.WhenToMeetResponseDto;
@@ -214,6 +216,25 @@ public class TeamService {
     }
 
     /**
+     * 팀의 멤버들을 페이징 처리하여 조회하는 메서드
+     *
+     * @param email          헤더에서 넘어온 유저 이메일
+     * @param teamId         팀 아이디
+     * @param paginationMeta 페이징 및 검색 정보
+     * @return 팀의 멤버들의 페이징된 결과
+     */
+    @Transactional(readOnly = true)
+    public PageResponseDto<TeamMemberResponseDto> getTeamMembers(String email, Long teamId, PaginationRequestDto paginationMeta) {
+        Member findMember = memberRawService.findMemberByEmail(email);
+        Team findTeam = teamRawService.findTeamById(teamId);
+        teamMemberRawService.validateMembership(findTeam, findMember);
+        Page<TeamMember> members = teamMemberRawService.getTeamMembersByTeam(findTeam, paginationMeta);
+        Page<TeamMemberResponseDto> responseDtos = members.map(TeamMemberResponseDto::from);
+
+        return PageResponseDto.from(responseDtos);
+    }
+
+    /**
      * TeamMember 리스트를 MemberNameResponseDto 리스트로 변환하는 메서드
      *
      * @param teamMembers 팀 멤버 엔티티 리스트
@@ -301,5 +322,22 @@ public class TeamService {
             .limit(topN)
             .map(window -> WhenToMeetRecommendDto.from(window, memberCnt)) // DTO.from 호출
             .toList();
+    }
+  
+    /**
+     * 팀 상세 정보를 조회하는 메서드
+     *
+     * @param email  헤더에서 넘어온 유저 이메일
+     * @param teamId 팀 아이디
+     * @return 팀 상세 정보 응답 Dto
+     */
+    @Transactional(readOnly = true)
+    public TeamDetailResponseDto getTeamDetail(String email, Long teamId) {
+        Team findTeam = teamRawService.findTeamById(teamId);
+        Member findMember = memberRawService.findMemberByEmail(email);
+        teamMemberRawService.checkTeamAndMember(findTeam, findMember);
+        int memberCount = teamMemberRawService.countTeamMemberByTeam(findTeam);
+
+        return TeamDetailResponseDto.of(findTeam, memberCount);
     }
 }

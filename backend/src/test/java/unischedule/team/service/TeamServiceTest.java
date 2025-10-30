@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -29,6 +30,7 @@ import unischedule.calendar.entity.Calendar;
 import unischedule.calendar.service.internal.CalendarRawService;
 import unischedule.common.dto.PageResponseDto;
 import unischedule.common.dto.PaginationRequestDto;
+import unischedule.exception.EntityNotFoundException;
 import unischedule.exception.NoPermissionException;
 import unischedule.member.domain.Member;
 import unischedule.member.service.internal.MemberRawService;
@@ -37,6 +39,7 @@ import unischedule.team.domain.TeamMember;
 import unischedule.team.domain.TeamRole;
 import unischedule.team.domain.WhenToMeet;
 import unischedule.team.dto.TeamCreateRequestDto;
+import unischedule.team.dto.TeamDetailResponseDto;
 import unischedule.team.dto.TeamJoinRequestDto;
 import unischedule.team.dto.TeamResponseDto;
 import unischedule.team.dto.WhenToMeetRecommendDto;
@@ -506,5 +509,76 @@ class TeamServiceTest {
         verify(whenToMeetRawService).findTeamMembers(teamId);
         verify(whenToMeetLogicService).generateSlots(any(), any(), any());
         verify(whenToMeetLogicService).applyMemberEvents(any(), any(), any(), any(), any());
+    }
+  
+    @Test
+    @DisplayName("해당 소속 팀의 멤버가 아닐 경우 예외 발생")
+    void 해당_소속팀이_아닐_경우_예외_발생() {
+        //given
+        Member member1 = new Member("member1@email.com", "nickname1", "1234");
+        Team team = new Team("TeamA", "설명", "CODE123");
+        PaginationRequestDto paginationMeta = new PaginationRequestDto(1, 10, null);
+
+        when(memberRawService.findMemberByEmail(anyString())).thenReturn(member1);
+        when(teamRawService.findTeamById(any())).thenReturn(team);
+        doThrow(EntityNotFoundException.class)
+                .when(teamMemberRawService)
+                .validateMembership(team, member1);
+
+        //when & then
+        assertThatThrownBy(() -> teamService.getTeamMembers(member1.getEmail(), team.getTeamId(), paginationMeta))
+                .isInstanceOf(EntityNotFoundException.class);
+    }
+
+    @Test
+    @DisplayName("팀 상세 정보를 정상적으로 조회한다")
+    void 팀_상세_정보를_정상적으로_조회한다() {
+        // given
+        String email = "test@kakao.com";
+        Long teamId = 1L;
+
+        Team team = new Team("카테캠 FE", "카카오 테크 캠퍼스 3단계 프로젝트", "WHFFU5");
+        Member member = new Member(email, "홍길동", "securePassword");
+        int memberCount = 5;
+        when(teamRawService.findTeamById(teamId)).thenReturn(team);
+        when(memberRawService.findMemberByEmail(email)).thenReturn(member);
+        doNothing().when(teamMemberRawService).checkTeamAndMember(team, member);
+        when(teamMemberRawService.countTeamMemberByTeam(team)).thenReturn(memberCount);
+
+        // when
+        TeamDetailResponseDto response = teamService.getTeamDetail(email, teamId);
+
+        // then
+        assertThat(response).isNotNull();
+        assertThat(response.name()).isEqualTo("카테캠 FE");
+        assertThat(response.description()).isEqualTo("카카오 테크 캠퍼스 3단계 프로젝트");
+        assertThat(response.count()).isEqualTo(5);
+        assertThat(response.code()).isEqualTo("WHFFU5");
+
+        // verify (Mock 호출 검증)
+        verify(teamRawService).findTeamById(teamId);
+        verify(memberRawService).findMemberByEmail(email);
+        verify(teamMemberRawService).checkTeamAndMember(team, member);
+        verify(teamMemberRawService).countTeamMemberByTeam(team);
+    }
+
+    @Test
+    @DisplayName("팀 상세 정보 조회 시, 팀에 속하지 않은 멤버는 예외가 발생한다")
+    void 팀_상세_정보_조회_시_팀에_속하지_않은_멤버는_예외가_발생한다() {
+        // given
+        String email = "test@kakao.com";
+        Long teamId = 1L;
+        Team team = new Team("카테캠 FE", "카카오 테크 캠퍼스 3단계 프로젝트", "WHFFU5");
+        Member member = new Member(email, "홍길동", "securePassword");
+
+        when(teamRawService.findTeamById(teamId)).thenReturn(team);
+        when(memberRawService.findMemberByEmail(email)).thenReturn(member);
+        doThrow(EntityNotFoundException.class)
+                .when(teamMemberRawService)
+                .checkTeamAndMember(team, member);
+
+        //when & then
+        assertThatThrownBy(() -> teamService.getTeamDetail(email, teamId))
+                .isInstanceOf(EntityNotFoundException.class);
     }
 }
