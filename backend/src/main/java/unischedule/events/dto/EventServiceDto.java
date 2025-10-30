@@ -1,7 +1,6 @@
 package unischedule.events.dto;
 
 import unischedule.events.domain.Event;
-import unischedule.events.domain.EventState;
 
 import java.time.LocalDateTime;
 
@@ -11,7 +10,6 @@ public record EventServiceDto(
         String content,
         LocalDateTime startAt,
         LocalDateTime endAt,
-        EventState state,
         Boolean isPrivate,
         Boolean fromRecurring
 ) {
@@ -22,7 +20,6 @@ public record EventServiceDto(
                 event.getContent(),
                 event.getStartAt(),
                 event.getEndAt(),
-                event.getState(),
                 event.getIsPrivate(),
                 fromRecurring
         );
@@ -35,7 +32,6 @@ public record EventServiceDto(
                 event.getContent(),
                 event.getStartAt(),
                 event.getEndAt(),
-                event.getState(),
                 event.getIsPrivate(),
                 fromRecurring
         );

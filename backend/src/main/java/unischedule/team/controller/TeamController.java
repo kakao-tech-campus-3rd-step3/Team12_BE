@@ -23,8 +23,10 @@ import unischedule.common.dto.PaginationRequestDto;
 import unischedule.team.dto.RemoveMemberCommandDto;
 import unischedule.team.dto.TeamCreateRequestDto;
 import unischedule.team.dto.TeamCreateResponseDto;
+import unischedule.team.dto.TeamDetailResponseDto;
 import unischedule.team.dto.TeamJoinRequestDto;
 import unischedule.team.dto.TeamJoinResponseDto;
+import unischedule.team.dto.TeamMemberResponseDto;
 import unischedule.team.dto.TeamResponseDto;
 import unischedule.team.dto.WhenToMeetRecommendDto;
 import unischedule.team.dto.WhenToMeetResponseDto;
@@ -120,5 +122,29 @@ public class TeamController {
         teamService.removeMemberFromTeam(requestDto);
 
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    @GetMapping("/{teamId}/members")
+    public ResponseEntity<PageResponseDto<TeamMemberResponseDto>> getTeamMembers(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable Long teamId,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int limit,
+            @RequestParam(required = false) String search
+    ) {
+        PaginationRequestDto paginationRequestDto = new PaginationRequestDto(page, limit, search);
+        PageResponseDto<TeamMemberResponseDto> responseDto = teamService.getTeamMembers(userDetails.getUsername(), teamId, paginationRequestDto);
+
+        return new ResponseEntity<>(responseDto, HttpStatus.OK);
+    }
+
+    @GetMapping("/{teamId}")
+    public ResponseEntity<TeamDetailResponseDto> getTeamDetail(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable Long teamId
+    ) {
+        TeamDetailResponseDto responseDto = teamService.getTeamDetail(userDetails.getUsername(), teamId);
+
+        return new ResponseEntity<>(responseDto, HttpStatus.OK);
     }
 }

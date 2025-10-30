@@ -1,22 +1,21 @@
 package unischedule.team.service.internal;
 
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import unischedule.calendar.entity.Calendar;
 import unischedule.calendar.service.internal.CalendarRawService;
-import unischedule.events.domain.Event;
 import unischedule.events.dto.EventGetResponseDto;
 import unischedule.events.dto.EventServiceDto;
-import unischedule.events.service.EventQueryService;
-import unischedule.events.service.internal.EventRawService;
+import unischedule.events.service.common.EventQueryService;
 import unischedule.member.domain.Member;
 import unischedule.member.service.internal.MemberRawService;
 import unischedule.team.domain.Team;
 import unischedule.team.domain.TeamMember;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
