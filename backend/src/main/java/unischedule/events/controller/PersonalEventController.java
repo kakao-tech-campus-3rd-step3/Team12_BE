@@ -106,7 +106,7 @@ public class PersonalEventController {
             @RequestBody @Valid
             EventModifyRequestDto requestDto
     ) {
-        EventGetResponseDto responseDto = eventService.modifyRecurringEvent(userDetails.getUsername(), eventId, requestDto);
+        EventGetResponseDto responseDto = eventService.modifyPersonalRecurringEvent(userDetails.getUsername(), eventId, requestDto);
         return ResponseEntity.ok(responseDto);
     }
 

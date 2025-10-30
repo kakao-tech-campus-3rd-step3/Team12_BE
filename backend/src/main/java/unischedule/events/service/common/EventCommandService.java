@@ -17,7 +17,6 @@ import unischedule.events.service.internal.EventRawService;
 import unischedule.events.service.internal.RecurrenceRuleRawService;
 import unischedule.events.service.internal.RecurringEventRawService;
 import unischedule.exception.InvalidInputException;
-import unischedule.member.domain.Member;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -186,14 +185,10 @@ public class EventCommandService {
     }
 
     @Transactional
-    public Event createSingleEventForMember(
-            Member member,
+    public Event createSinglePersonalEvent(
             Calendar targetCalendar,
-            List<Long> conflictCheckCalendarIds,
             EventCreateDto createDto
     ) {
-        eventQueryService.checkNewSingleEventOverlapForMember(member, conflictCheckCalendarIds, createDto.startTime(), createDto.endTime());
-
         Event newEvent = Event.builder()
                 .title(createDto.title())
                 .content(createDto.description())
@@ -208,26 +203,17 @@ public class EventCommandService {
     }
 
     @Transactional
-    public Event createRecurringEventForMember(
-            Member member,
+    public Event createPersonalRecurringEvent(
             Calendar targetCalendar,
-            List<Long> conflictCheckCalendarIds,
             RecurringEventCreateRequestDto requestDto
     ) {
-        eventQueryService.checkNewRecurringEventOverlapForMember(
-                member,
-                conflictCheckCalendarIds,
-                requestDto.firstStartTime(),
-                requestDto.firstEndTime(),
-                requestDto.rrule()
-        );
-
         Event newEvent = Event.builder()
                 .title(requestDto.title())
                 .content(requestDto.description())
                 .startAt(requestDto.firstStartTime())
                 .endAt(requestDto.firstEndTime())
                 .isPrivate(requestDto.isPrivate())
+                .isSelective(false)
                 .build();
 
         RecurrenceRule rrule = new RecurrenceRule(requestDto.rrule());
@@ -240,53 +226,36 @@ public class EventCommandService {
     }
 
     @Transactional
-    public Event modifySingleEventForMember(
-            Member member,
+    public Event modifyPersonalSingleEvent(
             Event eventToModify,
-            List<Long> conflictCheckCalendarIds,
             EventUpdateDto updateDto
     ) {
         if (eventToModify.getRecurrenceRule() != null) {
             throw new IllegalArgumentException("단일 일정이 아닙니다.");
         }
 
-        modifyEventForMember(member, eventToModify, conflictCheckCalendarIds, updateDto);
+        modifyEvent(eventToModify, updateDto);
         return eventToModify;
     }
 
     @Transactional
-    public Event modifyRecurringEventForMember(
-            Member member,
+    public Event modifyRecurringEvent(
             Event eventToModify,
-            List<Long> conflictCheckCalendarIds,
             EventUpdateDto updateDto
     ) {
         if (eventToModify.getRecurrenceRule() == null) {
             throw new InvalidInputException("반복 일정이 아닙니다.");
         }
 
-        modifyEventForMember(member, eventToModify, conflictCheckCalendarIds, updateDto);
+        modifyEvent(eventToModify, updateDto);
         eventOverrideRawService.deleteAllEventOverrideByEvent(eventToModify);
         return eventToModify;
     }
 
-    private void modifyEventForMember(
-            Member member,
+    private void modifyEvent(
             Event eventToModify,
-            List<Long> conflictCheckCalendarIds,
             EventUpdateDto updateDto
     ) {
-        LocalDateTime newStartTime = getValueOrDefault(updateDto.startTime(), eventToModify.getStartAt());
-        LocalDateTime newEndTime = getValueOrDefault(updateDto.endTime(), eventToModify.getEndAt());
-
-        eventQueryService.checkEventUpdateOverlapForMember(
-                member,
-                conflictCheckCalendarIds,
-                newStartTime,
-                newEndTime,
-                eventToModify
-        );
-
         eventRawService.updateEvent(eventToModify, updateDto);
     }
 }

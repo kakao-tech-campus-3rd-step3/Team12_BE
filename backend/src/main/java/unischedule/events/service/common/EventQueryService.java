@@ -184,6 +184,14 @@ public class EventQueryService {
         }
     }
 
+    /**
+     * 해당 시간에 참여하는 일정이 있는지 확인
+     * @param member
+     * @param calendarIds
+     * @param startAt
+     * @param endAt
+     * @return
+     */
     private boolean hasEventForMember(Member member, List<Long> calendarIds, LocalDateTime startAt, LocalDateTime endAt) {
         SingleEventList singleEventList = eventRawService.findSingleScheduleForMember(member, calendarIds, startAt, endAt);
         if (singleEventList.hasOverlap(startAt, endAt)) {

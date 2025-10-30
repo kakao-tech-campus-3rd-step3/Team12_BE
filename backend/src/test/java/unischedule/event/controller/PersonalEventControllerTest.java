@@ -190,7 +190,7 @@ public class PersonalEventControllerTest {
         EventGetResponseDto responseDto = new EventGetResponseDto(eventId, "수정된 반복 일정", "설명",
                 LocalDateTime.now(), LocalDateTime.now().plusHours(1), false, true);
 
-        given(eventService.modifyRecurringEvent(anyString(), anyLong(), any(EventModifyRequestDto.class))).willReturn(responseDto);
+        given(eventService.modifyPersonalRecurringEvent(anyString(), anyLong(), any(EventModifyRequestDto.class))).willReturn(responseDto);
 
         // when & then
         mockMvc.perform(patch("/api/events/recurring/modify/{eventId}", eventId)
