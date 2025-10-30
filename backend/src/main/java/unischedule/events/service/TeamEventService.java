@@ -7,7 +7,6 @@ import unischedule.calendar.entity.Calendar;
 import unischedule.calendar.service.internal.CalendarRawService;
 import unischedule.events.domain.Event;
 import unischedule.events.domain.EventOverride;
-import unischedule.events.domain.EventParticipant;
 import unischedule.events.dto.EventCreateResponseDto;
 import unischedule.events.dto.EventGetResponseDto;
 import unischedule.events.dto.EventModifyRequestDto;
@@ -16,9 +15,9 @@ import unischedule.events.dto.RecurringEventCreateRequestDto;
 import unischedule.events.dto.RecurringInstanceDeleteRequestDto;
 import unischedule.events.dto.RecurringInstanceModifyRequestDto;
 import unischedule.events.dto.TeamEventCreateRequestDto;
-import unischedule.events.repository.EventParticipantRepository;
 import unischedule.events.service.common.EventCommandService;
 import unischedule.events.service.common.EventQueryService;
+import unischedule.events.service.internal.EventParticipantRawService;
 import unischedule.events.service.internal.EventRawService;
 import unischedule.member.domain.Member;
 import unischedule.member.service.internal.MemberRawService;
@@ -44,7 +43,7 @@ public class TeamEventService {
     private final TeamMemberRawService teamMemberRawService;
     private final EventQueryService eventQueryService;
     private final EventCommandService eventCommandService;
-    private final EventParticipantRepository eventParticipantRepository;
+    private final EventParticipantRawService eventParticipantRawService;
 
     @Transactional
     public EventCreateResponseDto createTeamSingleEvent(String email, TeamEventCreateRequestDto requestDto) {
@@ -292,10 +291,7 @@ public class TeamEventService {
             return getAllTeamMember(team);
         }
         else {
-            return eventParticipantRepository.findByEvent(event)
-                    .stream()
-                    .map(EventParticipant::getMember)
-                    .toList();
+            return eventParticipantRawService.getParticipantsForEvent(event);
         }
     }
 
@@ -304,7 +300,7 @@ public class TeamEventService {
             return;
         }
 
-        eventParticipantRepository.deleteAllByEvent(event);
+        eventParticipantRawService.deleteAllParticipantsByEvent(event);
 
         if (newParticipantIds.isEmpty()) {
             event.updateIsSelective(false);
@@ -312,11 +308,7 @@ public class TeamEventService {
         else {
             event.updateIsSelective(true);
 
-            List<EventParticipant> newParticipants = allParticipants.stream()
-                    .map(member -> new EventParticipant(event, member))
-                    .toList();
-
-            eventParticipantRepository.saveAll(newParticipants);
+            eventParticipantRawService.saveAllParticipantsForEvent(event, allParticipants);
         }
     }
     
