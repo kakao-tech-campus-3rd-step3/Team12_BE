@@ -17,7 +17,6 @@ import unischedule.events.dto.RecurringInstanceDeleteRequestDto;
 import unischedule.events.dto.RecurringInstanceModifyRequestDto;
 import unischedule.events.service.common.EventCommandService;
 import unischedule.events.service.common.EventQueryService;
-import unischedule.events.service.internal.EventOverrideRawService;
 import unischedule.events.service.internal.EventRawService;
 import unischedule.member.domain.Member;
 import unischedule.member.service.internal.MemberRawService;
@@ -38,7 +37,6 @@ public class PersonalEventService {
     private final EventQueryService eventQueryService;
     private final TeamMemberRawService teamMemberRawService;
     private final CalendarRawService calendarRawService;
-    private final EventOverrideRawService eventOverrideRawService;
     private final EventCommandService eventCommandService;
 
     @Transactional
@@ -86,7 +84,7 @@ public class PersonalEventService {
 
         List<Long> calendarIds = getMemberCalendarIds(member);
 
-        return eventQueryService.getEvents(calendarIds, startAt, endAt)
+        return eventQueryService.getEventsForMember(member, calendarIds, startAt, endAt)
                 .stream()
                 .map(EventGetResponseDto::fromServiceDto)
                 .toList();
@@ -178,7 +176,7 @@ public class PersonalEventService {
         
         List<Long> calendarIds = getMemberCalendarIds(member);
         
-        List<EventServiceDto> events = eventQueryService.getEvents(calendarIds, start, end);
+        List<EventServiceDto> events = eventQueryService.getEventsForMember(member, calendarIds, start, end);
         
         return events.stream()
             .map(EventGetResponseDto::fromServiceDto)

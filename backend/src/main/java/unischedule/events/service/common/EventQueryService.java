@@ -9,6 +9,7 @@ import unischedule.events.dto.EventServiceDto;
 import unischedule.events.service.internal.EventRawService;
 import unischedule.events.util.RRuleParser;
 import unischedule.exception.InvalidInputException;
+import unischedule.member.domain.Member;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -31,6 +32,25 @@ public class EventQueryService {
 
         eventList.addAll(singleEvents.toServiceDtos());
         eventList.addAll(recurringEventService.expandRecurringEvents(calendarIds, startAt, endAt));
+
+        return eventList;
+    }
+
+    /**
+     * 특정 멤버의 일정 조회
+     * @param member
+     * @param calendarIds
+     * @param startAt
+     * @param endAt
+     * @return
+     */
+    @Transactional(readOnly = true)
+    public List<EventServiceDto> getEventsForMember(Member member, List<Long> calendarIds, LocalDateTime startAt, LocalDateTime endAt) {
+        List<EventServiceDto> eventList = new ArrayList<>();
+
+        SingleEventList singleEvents = eventRawService.findSingleScheduleForMember(member, calendarIds, startAt, endAt);
+        eventList.addAll(singleEvents.toServiceDtos());
+        eventList.addAll(recurringEventService.expandRecurringEventsForMember(member, calendarIds, startAt, endAt));
 
         return eventList;
     }
