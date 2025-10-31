@@ -35,15 +35,15 @@ public class WhenToMeetLogicService {
     public List<LocalDateTime> generateIntervalStarts(LocalDateTime start, LocalDateTime end) {
         return generateDailyIntervals(start, end)
             .stream()
-            .map(DailyInterval::start) // .map(interval -> interval.start())
-            .toList(); // Java 16+
+            .map(DailyInterval::start)
+            .toList();
     }
     
     public List<LocalDateTime> generateIntervalEnds(LocalDateTime start, LocalDateTime end) {
         return generateDailyIntervals(start, end)
             .stream()
-            .map(DailyInterval::end) // .map(interval -> interval.end())
-            .toList(); // Java 16+
+            .map(DailyInterval::end)
+            .toList();
     }
     
     public List<WhenToMeet> generateSlots(List<Member> members,
