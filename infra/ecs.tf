@@ -39,7 +39,9 @@ resource "aws_ecs_task_definition" "this" {
         { name = "SPRING_DATASOURCE_PASSWORD", valueFrom = data.aws_ssm_parameter.db_password.arn },
         { name = "JWT_SECRET", valueFrom = data.aws_ssm_parameter.jwt_secret.arn },
         { name = "OPENAI_API_KEY", valueFrom = data.aws_ssm_parameter.openai_api_key.arn },
-        { name = "REDIS_PASSWORD", valueFrom = data.aws_ssm_parameter.redis_password.arn }
+        { name = "REDIS_PASSWORD", valueFrom = data.aws_ssm_parameter.redis_password.arn },
+        { name = "MAIL_USERNAME", valueFrom = data.aws_ssm_parameter.mail_username.arn },
+        { name = "MAIL_PASSWORD", valueFrom = data.aws_ssm_parameter.mail_password.arn }
       ]
 
       logConfiguration = {

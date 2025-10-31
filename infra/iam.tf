@@ -31,9 +31,9 @@ resource "aws_iam_role" "ecs_task" {
     Version = "2012-10-17",
     Statement = [
       {
-        Effect = "Allow",
+        Effect    = "Allow",
         Principal = { Service = "ecs-tasks.amazonaws.com" },
-        Action = "sts:AssumeRole"
+        Action    = "sts:AssumeRole"
       }
     ]
   })
@@ -58,6 +58,8 @@ resource "aws_iam_role_policy" "ecs_task_execution_ssm" {
           data.aws_ssm_parameter.jwt_secret.arn,
           data.aws_ssm_parameter.openai_api_key.arn,
           data.aws_ssm_parameter.redis_password.arn,
+          data.aws_ssm_parameter.mail_username.arn,
+          data.aws_ssm_parameter.mail_password.arn,
         ]
       }
     ]
