@@ -1,8 +1,12 @@
 package unischedule.team.service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
+import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
@@ -22,10 +26,12 @@ import unischedule.team.dto.MemberNameResponseDto;
 import unischedule.team.dto.RemoveMemberCommandDto;
 import unischedule.team.dto.TeamCreateRequestDto;
 import unischedule.team.dto.TeamCreateResponseDto;
+import unischedule.team.dto.TeamDetailResponseDto;
 import unischedule.team.dto.TeamJoinRequestDto;
 import unischedule.team.dto.TeamJoinResponseDto;
 import unischedule.team.dto.TeamMemberResponseDto;
 import unischedule.team.dto.TeamResponseDto;
+import unischedule.team.dto.WhenToMeetRecommendResponseDto;
 import unischedule.team.dto.WhenToMeetResponseDto;
 import unischedule.team.service.internal.TeamCodeGenerator;
 import unischedule.team.service.internal.TeamMemberRawService;
@@ -255,5 +261,81 @@ public class TeamService {
         target.validateRemovable();
 
         teamMemberRawService.deleteTeamMember(target);
+    }
+    
+    public List<WhenToMeetRecommendResponseDto> getOptimalTimeWhenToMeet(LocalDateTime startTime, LocalDateTime endTime, Long requiredTime, Long requiredCnt, Long teamId) {
+        // 팀 멤버 조회
+        List<Member> members = whenToMeetRawService.findTeamMembers(teamId);
+        
+        // 일주일 슬롯 생성
+        List<LocalDateTime> intervalStarts = whenToMeetLogicService.generateIntervalStarts(startTime, endTime);
+        List<LocalDateTime> intervalEnds = whenToMeetLogicService.generateIntervalEnds(startTime, endTime);
+        List<WhenToMeet> slots = whenToMeetLogicService.generateSlots(members, intervalStarts, intervalEnds);
+        
+        // 멤버 이벤트 반영
+        whenToMeetLogicService.applyMemberEvents(slots, members, intervalStarts, intervalEnds, whenToMeetRawService);
+        
+        // 추천 N개 계산
+        return recommendBestSlots(slots, requiredTime, requiredCnt, Long.valueOf(members.size()));
+    }
+    
+    public List<WhenToMeetRecommendResponseDto> recommendBestSlots(
+        List<WhenToMeet> slots,
+        Long durationMinutes,
+        Long topN,
+        Long memberCnt) {
+        
+        int requiredSlots = (int) ((durationMinutes + 14) / 15);
+        
+        List<WhenToMeet> recommendedWindows = new ArrayList<>();
+        
+        // 하루별로 슬롯 그룹화
+        Map<LocalDate, List<WhenToMeet>> slotsByDate = slots.stream()
+            .collect(Collectors.groupingBy(s -> s.getStartTime().toLocalDate()));
+        
+        // 하루 단위 연속 슬롯 탐색
+        for (List<WhenToMeet> daySlots : slotsByDate.values()) {
+            for (int i = 0; i <= daySlots.size() - requiredSlots; i++) {
+                List<WhenToMeet> windowSlots = daySlots.subList(i, i + requiredSlots);
+                
+                long minAvailable = windowSlots.stream()
+                    .mapToLong(WhenToMeet::getAvailableMember)
+                    .min()
+                    .orElse(0);
+                
+                recommendedWindows.add(new WhenToMeet(
+                    windowSlots.get(0).getStartTime(),
+                    windowSlots.get(windowSlots.size() - 1).getEndTime(),
+                    minAvailable
+                ));
+            }
+        }
+        
+        return recommendedWindows.stream()
+            .sorted((a, b) -> {
+                int cmp = Long.compare(b.getAvailableMember(), a.getAvailableMember());
+                if (cmp != 0) return cmp;
+                return a.getStartTime().compareTo(b.getStartTime());
+            })
+            .limit(topN)
+            .map(window -> WhenToMeetRecommendResponseDto.from(window, memberCnt)) // DTO.from 호출
+            .toList();
+    }
+  
+    /**
+     * 팀 상세 정보를 조회하는 메서드
+     *
+     * @param email  헤더에서 넘어온 유저 이메일
+     * @param teamId 팀 아이디
+     * @return 팀 상세 정보 응답 Dto
+     */
+    @Transactional(readOnly = true)
+    public TeamDetailResponseDto getTeamDetail(String email, Long teamId) {
+        Team findTeam = teamRawService.findTeamById(teamId);
+        Member findMember = memberRawService.findMemberByEmail(email);
+        teamMemberRawService.checkTeamAndMember(findTeam, findMember);
+        int memberCount = teamMemberRawService.countTeamMemberByTeam(findTeam);
+
+        return TeamDetailResponseDto.of(findTeam, memberCount);
     }
 }
