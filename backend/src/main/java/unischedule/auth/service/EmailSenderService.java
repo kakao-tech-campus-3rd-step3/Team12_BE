@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+import unischedule.exception.EmailSendFailedException;
 
 @Service
 @RequiredArgsConstructor
@@ -41,7 +42,7 @@ public class EmailSenderService {
             mailSender.send(message);
 
         } catch (MessagingException e) {
-            throw new RuntimeException("이메일 전송 중 오류가 발생했습니다.", e);
+            throw new EmailSendFailedException("이메일 전송 중 오류가 발생했습니다.");
         }
     }
 }
