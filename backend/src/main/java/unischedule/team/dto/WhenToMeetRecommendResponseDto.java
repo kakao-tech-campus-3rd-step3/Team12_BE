@@ -6,7 +6,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 import unischedule.team.domain.WhenToMeet;
 
-public record WhenToMeetRecommendDto(
+public record WhenToMeetRecommendResponseDto(
     String week,
     String status,
     @JsonProperty("start_time")
@@ -24,14 +24,14 @@ public record WhenToMeetRecommendDto(
      *
      * @param window 추천된 시간대 (시작, 끝, 참여 가능 인원)
      * @param totalMembers 팀의 총 인원
-     * @return WhenToMeetRecommendDto
+     * @return WhenToMeetRecommendResponseDto
      */
-    public static WhenToMeetRecommendDto from(WhenToMeet window, long totalMembers) {
+    public static WhenToMeetRecommendResponseDto from(WhenToMeet window, long totalMembers) {
         
         String week = window.getStartTime().format(DAY_OF_WEEK_FORMATTER);
         String status = calculateStatus(window.getAvailableMember(), totalMembers);
         
-        return new WhenToMeetRecommendDto(
+        return new WhenToMeetRecommendResponseDto(
             week,
             status,
             window.getStartTime(),

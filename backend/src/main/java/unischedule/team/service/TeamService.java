@@ -3,11 +3,9 @@ package unischedule.team.service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 
 import java.util.Map;
-import java.util.PriorityQueue;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -33,7 +31,7 @@ import unischedule.team.dto.TeamJoinRequestDto;
 import unischedule.team.dto.TeamJoinResponseDto;
 import unischedule.team.dto.TeamMemberResponseDto;
 import unischedule.team.dto.TeamResponseDto;
-import unischedule.team.dto.WhenToMeetRecommendDto;
+import unischedule.team.dto.WhenToMeetRecommendResponseDto;
 import unischedule.team.dto.WhenToMeetResponseDto;
 import unischedule.team.service.internal.TeamCodeGenerator;
 import unischedule.team.service.internal.TeamMemberRawService;
@@ -265,7 +263,7 @@ public class TeamService {
         teamMemberRawService.deleteTeamMember(target);
     }
     
-    public List<WhenToMeetRecommendDto> getOptimalTimeWhenToMeet(LocalDateTime startTime, LocalDateTime endTime, Long requiredTime, Long requiredCnt, Long teamId) {
+    public List<WhenToMeetRecommendResponseDto> getOptimalTimeWhenToMeet(LocalDateTime startTime, LocalDateTime endTime, Long requiredTime, Long requiredCnt, Long teamId) {
         // 팀 멤버 조회
         List<Member> members = whenToMeetRawService.findTeamMembers(teamId);
         
@@ -281,7 +279,7 @@ public class TeamService {
         return recommendBestSlots(slots, requiredTime, requiredCnt, Long.valueOf(members.size()));
     }
     
-    public List<WhenToMeetRecommendDto> recommendBestSlots(
+    public List<WhenToMeetRecommendResponseDto> recommendBestSlots(
         List<WhenToMeet> slots,
         Long durationMinutes,
         Long topN,
@@ -320,7 +318,7 @@ public class TeamService {
                 return a.getStartTime().compareTo(b.getStartTime());
             })
             .limit(topN)
-            .map(window -> WhenToMeetRecommendDto.from(window, memberCnt)) // DTO.from 호출
+            .map(window -> WhenToMeetRecommendResponseDto.from(window, memberCnt)) // DTO.from 호출
             .toList();
     }
   

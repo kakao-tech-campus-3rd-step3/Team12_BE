@@ -28,7 +28,7 @@ import unischedule.team.dto.TeamJoinRequestDto;
 import unischedule.team.dto.TeamJoinResponseDto;
 import unischedule.team.dto.TeamMemberResponseDto;
 import unischedule.team.dto.TeamResponseDto;
-import unischedule.team.dto.WhenToMeetRecommendDto;
+import unischedule.team.dto.WhenToMeetRecommendResponseDto;
 import unischedule.team.dto.WhenToMeetResponseDto;
 import unischedule.team.service.TeamService;
 
@@ -86,14 +86,14 @@ public class TeamController {
     }
     
     @GetMapping("/{teamId}/when-to-meet/recommend")
-    public ResponseEntity<List<WhenToMeetRecommendDto>> getOptimalTimeWhenToMeet(
+    public ResponseEntity<List<WhenToMeetRecommendResponseDto>> getOptimalTimeWhenToMeet(
         @RequestParam("start_time") LocalDateTime startTime,
         @RequestParam("end_time") LocalDateTime endTime,
         @RequestParam("required_time") Long requiredTime,
         @RequestParam("N") Long requiredCnt,
         @PathVariable Long teamId
     ) {
-        List<WhenToMeetRecommendDto> result = teamService.getOptimalTimeWhenToMeet(
+        List<WhenToMeetRecommendResponseDto> result = teamService.getOptimalTimeWhenToMeet(
             startTime, endTime, requiredTime, requiredCnt, teamId
         );
         

@@ -42,7 +42,7 @@ import unischedule.team.dto.TeamCreateRequestDto;
 import unischedule.team.dto.TeamDetailResponseDto;
 import unischedule.team.dto.TeamJoinRequestDto;
 import unischedule.team.dto.TeamResponseDto;
-import unischedule.team.dto.WhenToMeetRecommendDto;
+import unischedule.team.dto.WhenToMeetRecommendResponseDto;
 import unischedule.team.dto.WhenToMeetResponseDto;
 import unischedule.team.dto.RemoveMemberCommandDto;
 import unischedule.team.service.internal.TeamMemberRawService;
@@ -388,7 +388,7 @@ class TeamServiceTest {
         );
         
         // WHEN
-        List<WhenToMeetRecommendDto> result = teamService.getOptimalTimeWhenToMeet(
+        List<WhenToMeetRecommendResponseDto> result = teamService.getOptimalTimeWhenToMeet(
             startTime, endTime, requiredTime, requiredCnt, teamId
         );
         
@@ -407,7 +407,7 @@ class TeamServiceTest {
         assertThat(result).isNotNull();
         assertThat(result).hasSize(1); // requiredCnt = 1
         
-        WhenToMeetRecommendDto topPick = result.get(0);
+        WhenToMeetRecommendResponseDto topPick = result.get(0);
         assertThat(topPick.available()).isEqualTo(2L);
         assertThat(topPick.status()).isEqualTo("최적");
         assertThat(topPick.week()).isEqualTo("토"); // 2025-11-01은 토요일
@@ -456,7 +456,7 @@ class TeamServiceTest {
         );
         
         // WHEN
-        List<WhenToMeetRecommendDto> result = teamService.getOptimalTimeWhenToMeet(
+        List<WhenToMeetRecommendResponseDto> result = teamService.getOptimalTimeWhenToMeet(
             startTime, endTime, requiredTime, requiredCnt, teamId
         );
         
@@ -482,7 +482,7 @@ class TeamServiceTest {
         assertThat(result).hasSize(3); // 3개 반환 확인
         
         // 1순위 검증
-        WhenToMeetRecommendDto top1 = result.get(0);
+        WhenToMeetRecommendResponseDto top1 = result.get(0);
         assertThat(top1.available()).isEqualTo(2L);
         assertThat(top1.status()).isEqualTo("최적");
         assertThat(top1.week()).isEqualTo("목"); // 2025-10-30은 목요일
@@ -490,7 +490,7 @@ class TeamServiceTest {
         assertThat(top1.endTime()).isEqualTo(LocalDateTime.of(2025, 10, 30, 10, 0));
         
         // 2순위 검증
-        WhenToMeetRecommendDto top2 = result.get(1);
+        WhenToMeetRecommendResponseDto top2 = result.get(1);
         assertThat(top2.available()).isEqualTo(2L);
         assertThat(top2.status()).isEqualTo("최적");
         assertThat(top2.week()).isEqualTo("목");
@@ -498,7 +498,7 @@ class TeamServiceTest {
         assertThat(top2.endTime()).isEqualTo(LocalDateTime.of(2025, 10, 30, 12, 0));
         
         // 3순위 검증
-        WhenToMeetRecommendDto top3 = result.get(2);
+        WhenToMeetRecommendResponseDto top3 = result.get(2);
         assertThat(top3.available()).isEqualTo(1L);
         assertThat(top3.status()).isEqualTo("보통"); // (2명 중 1명 가능 = 1명 불참)
         assertThat(top3.week()).isEqualTo("목");
