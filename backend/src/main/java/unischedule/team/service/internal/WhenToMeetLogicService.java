@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,77 +16,39 @@ import unischedule.team.dto.WhenToMeetResponseDto;
 
 @Service
 public class WhenToMeetLogicService {
+    
+    private record DailyInterval(LocalDateTime start, LocalDateTime end) {}
+    
     public List<LocalDateTime> generateIntervalStarts() {
-        return IntStream.rangeClosed(1, 7)
-            .mapToObj(i -> LocalDate.now().plusDays(i).atTime(9, 0))
-            .toList();
+        LocalDate today = LocalDate.now();
+        LocalDateTime effectiveStart = today.plusDays(1).atTime(9, 0);
+        LocalDateTime effectiveEnd = today.plusDays(8).atStartOfDay();
+        
+        return generateIntervalStarts(effectiveStart, effectiveEnd);
     }
     
     public List<LocalDateTime> generateIntervalEnds() {
-        return IntStream.rangeClosed(1, 7)
-            .mapToObj(i -> LocalDate.now().plusDays(i).plusDays(1).atStartOfDay())
-            .toList();
+        LocalDate today = LocalDate.now();
+        LocalDateTime effectiveStart = today.plusDays(1).atTime(9, 0);
+        LocalDateTime effectiveEnd = today.plusDays(8).atStartOfDay();
+        
+        return generateIntervalEnds(effectiveStart, effectiveEnd);
     }
     
     public List<LocalDateTime> generateIntervalStarts(LocalDateTime start, LocalDateTime end) {
-        List<LocalDateTime> starts = new ArrayList<>();
-        LocalDate current = start.toLocalDate();
-        LocalDate endDate = end.toLocalDate();
-        
-        while (!current.isAfter(endDate)) {
-            LocalDateTime dayStart = current.atTime(9, 0);
-            LocalDateTime dayEnd = current.plusDays(1).atTime(0, 0);
-            
-            // 시작일이면 start와 09:00 중 늦은 시간
-            if (current.equals(start.toLocalDate())) {
-                dayStart = start.isAfter(dayStart) ? start : dayStart;
-            }
-            
-            // 종료일이면 24:00와 end 중 빠른 시간
-            if (current.equals(end.toLocalDate())) {
-                dayEnd = end.isBefore(dayEnd) ? end : dayEnd;
-            }
-            
-            // 시작 < 종료인 경우만 추가 (교집합)
-            if (!dayStart.isAfter(dayEnd)) {
-                starts.add(dayStart);
-            }
-            
-            current = current.plusDays(1);
-        }
-        
-        return starts;
+        // 공통 헬퍼 메서드를 호출한 뒤, Stream API를 사용해 'start'만 추출합니다.
+        return generateDailyIntervals(start, end)
+            .stream()
+            .map(DailyInterval::start) // .map(interval -> interval.start())
+            .toList(); // Java 16+
     }
     
     public List<LocalDateTime> generateIntervalEnds(LocalDateTime start, LocalDateTime end) {
-        List<LocalDateTime> ends = new ArrayList<>();
-        LocalDate current = start.toLocalDate();
-        LocalDate endDate = end.toLocalDate();
-        
-        while (!current.isAfter(endDate)) {
-            // 하루 09:00~24:00 기준
-            LocalDateTime dayStart = current.atTime(9, 0);
-            LocalDateTime dayEnd = current.plusDays(1).atTime(0, 0);
-            
-            // 시작일이면 start와 09:00 중 늦은 시간
-            if (current.equals(start.toLocalDate())) {
-                dayStart = start.isAfter(dayStart) ? start : dayStart;
-            }
-            
-            // 종료일이면 24:00와 end 중 빠른 시간
-            if (current.equals(end.toLocalDate())) {
-                dayEnd = end.isBefore(dayEnd) ? end : dayEnd;
-            }
-            
-            // 시작 < 종료인 경우만 추가
-            if (!dayStart.isAfter(dayEnd)) {
-                ends.add(dayEnd);
-            }
-            
-            current = current.plusDays(1);
-        }
-        
-        return ends;
+        // 공통 헬퍼 메서드를 호출한 뒤, Stream API를 사용해 'end'만 추출합니다.
+        return generateDailyIntervals(start, end)
+            .stream()
+            .map(DailyInterval::end) // .map(interval -> interval.end())
+            .toList(); // Java 16+
     }
     
     public List<WhenToMeet> generateSlots(List<Member> members,
@@ -129,6 +92,16 @@ public class WhenToMeetLogicService {
         }
     }
     
+    public List<WhenToMeetResponseDto> toResponse(List<WhenToMeet> slots) {
+        return slots.stream()
+            .map(slot -> new WhenToMeetResponseDto(
+                slot.getStartTime(),
+                slot.getEndTime(),
+                slot.getAvailableMember()
+            ))
+            .toList();
+    }
+    
     private void applyOverlap(List<WhenToMeet> slots,
         EventGetResponseDto event,
         LocalDateTime intervalStart,
@@ -147,13 +120,32 @@ public class WhenToMeetLogicService {
         }
     }
     
-    public List<WhenToMeetResponseDto> toResponse(List<WhenToMeet> slots) {
-        return slots.stream()
-            .map(slot -> new WhenToMeetResponseDto(
-                slot.getStartTime(),
-                slot.getEndTime(),
-                slot.getAvailableMember()
-            ))
-            .toList();
+    private List<DailyInterval> generateDailyIntervals(LocalDateTime start, LocalDateTime end) {
+        List<DailyInterval> intervals = new ArrayList<>();
+        LocalDate current = start.toLocalDate();
+        LocalDate endDate = end.toLocalDate();
+        
+        while (!current.isAfter(endDate)) {
+            LocalDateTime dayStart = current.atTime(9, 0);
+            LocalDateTime dayEnd = current.plusDays(1).atTime(0, 0);
+            
+            // 시작일이면 start와 09:00 중 늦은 시간
+            if (current.equals(start.toLocalDate())) {
+                dayStart = start.isAfter(dayStart) ? start : dayStart;
+            }
+            
+            // 종료일이면 24:00와 end 중 빠른 시간
+            if (current.equals(end.toLocalDate())) {
+                dayEnd = end.isBefore(dayEnd) ? end : dayEnd;
+            }
+            
+            // 시작 < 종료인 경우만 (유효한 교집합이 있는 경우)
+            if (!dayStart.isAfter(dayEnd)) {
+                intervals.add(new DailyInterval(dayStart, dayEnd));
+            }
+            
+            current = current.plusDays(1);
+        }
+        return intervals;
     }
 }
