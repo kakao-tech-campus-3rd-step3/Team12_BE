@@ -72,48 +72,6 @@ public class EventQueryService {
         }
     }
 
-    /**
-     * 새 반복 일정 시간 중복 체크
-     * @param calendarIds
-     * @param firstStartTime
-     * @param firstEndTime
-     * @param rruleString
-     */
-    @Transactional(readOnly = true)
-    public void checkNewRecurringEventOverlap(
-            List<Long> calendarIds,
-            LocalDateTime firstStartTime,
-            LocalDateTime firstEndTime,
-            String rruleString
-    ) {
-        List<LocalDateTime> eventStartTimes = rruleParser.calEventStartTimeList(firstStartTime, rruleString);
-
-        Duration duration = Duration.between(firstStartTime, firstEndTime);
-
-        for (LocalDateTime eventStartTime : eventStartTimes) {
-            LocalDateTime eventEndTime = eventStartTime.plus(duration);
-
-            checkNewSingleEventOverlap(calendarIds, eventStartTime, eventEndTime);
-        }
-    }
-
-    @Transactional(readOnly = true)
-    public void checkEventUpdateOverlap(
-            List<Long> calendarIds,
-            LocalDateTime startTime,
-            LocalDateTime endTime,
-            Event excludeEvent
-    ) {
-        List<EventServiceDto> overlappingEvents = getEvents(calendarIds, startTime, endTime);
-
-        boolean isOverlapping = overlappingEvents.stream()
-                .anyMatch(event -> !Objects.equals(event.eventId(), excludeEvent.getEventId()));
-
-        if (isOverlapping) {
-            throw new InvalidInputException("해당 시간에 겹치는 일정이 있어 수정할 수 없습니다.");
-        }
-    }
-
     private boolean hasEvent(List<Long> calendarIds, LocalDateTime startAt, LocalDateTime endAt) {
 
         SingleEventList singleEvents = eventRawService.findSingleSchedule(calendarIds, startAt, endAt);
