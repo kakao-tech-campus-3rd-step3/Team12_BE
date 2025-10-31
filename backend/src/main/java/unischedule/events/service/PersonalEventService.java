@@ -54,7 +54,7 @@ public class PersonalEventService {
                 requestDto.endTime()
         );
 
-        Event saved = eventCommandService.createSinglePersonalEvent(targetCalendar, requestDto.toDto());
+        Event saved = eventCommandService.createSingleEvent(targetCalendar, requestDto.toDto());
 
         return EventCreateResponseDto.from(saved);
     }
@@ -75,7 +75,7 @@ public class PersonalEventService {
                 requestDto.rrule()
         );
 
-        Event saved = eventCommandService.createPersonalRecurringEvent(targetCalendar, requestDto);
+        Event saved = eventCommandService.createRecurringEvent(targetCalendar, requestDto);
 
         return EventCreateResponseDto.from(saved);
     }
@@ -124,7 +124,7 @@ public class PersonalEventService {
                 newEndTime,
                 findEvent
         );
-        eventCommandService.modifyPersonalSingleEvent(findEvent, requestDto.toDto());
+        eventCommandService.modifySingleEvent(findEvent, requestDto.toDto());
 
         return EventGetResponseDto.fromSingleEvent(findEvent);
     }

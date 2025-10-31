@@ -29,47 +29,6 @@ public class EventCommandService {
     private final RecurrenceRuleRawService recurrenceRuleRawService;
 
     @Transactional
-    public Event createSinglePersonalEvent(
-            Calendar targetCalendar,
-            EventCreateDto createDto
-    ) {
-        Event newEvent = Event.builder()
-                .title(createDto.title())
-                .content(createDto.description())
-                .startAt(createDto.startTime())
-                .endAt(createDto.endTime())
-                .isPrivate(createDto.isPrivate())
-                .isSelective(false)
-                .build();
-
-        newEvent.connectCalendar(targetCalendar);
-        return eventRawService.saveEvent(newEvent);
-    }
-
-    @Transactional
-    public Event createPersonalRecurringEvent(
-            Calendar targetCalendar,
-            RecurringEventCreateRequestDto requestDto
-    ) {
-        Event newEvent = Event.builder()
-                .title(requestDto.title())
-                .content(requestDto.description())
-                .startAt(requestDto.firstStartTime())
-                .endAt(requestDto.firstEndTime())
-                .isPrivate(requestDto.isPrivate())
-                .isSelective(false)
-                .build();
-
-        RecurrenceRule rrule = new RecurrenceRule(requestDto.rrule());
-        recurrenceRuleRawService.saveRecurrenceRule(rrule);
-
-        newEvent.connectRecurrenceRule(rrule);
-        newEvent.connectCalendar(targetCalendar);
-
-        return eventRawService.saveEvent(newEvent);
-    }
-
-    @Transactional
     public Event createSingleEvent(
             Calendar targetCalendar,
             EventCreateDto createDto
@@ -80,6 +39,7 @@ public class EventCommandService {
                    .startAt(createDto.startTime())
                    .endAt(createDto.endTime())
                    .isPrivate(createDto.isPrivate())
+                   .isSelective(false)
                    .build();
 
            newEvent.connectCalendar(targetCalendar);
@@ -95,6 +55,7 @@ public class EventCommandService {
                 .startAt(requestDto.firstStartTime())
                 .endAt(requestDto.firstEndTime())
                 .isPrivate(requestDto.isPrivate())
+                .isSelective(false)
                 .build();
 
         RecurrenceRule rrule = new RecurrenceRule(requestDto.rrule());
@@ -112,7 +73,7 @@ public class EventCommandService {
             throw new InvalidInputException("단일 일정이 아닙니다.");
         }
 
-        eventRawService.updateEvent(eventToModify, updateDto);
+        modifyEvent(eventToModify, updateDto);
         return eventToModify;
     }
 
@@ -130,19 +91,6 @@ public class EventCommandService {
         }
 
         return eventOverrideRawService.saveEventOverride(eventOverride);
-    }
-
-    @Transactional
-    public Event modifyPersonalSingleEvent(
-            Event eventToModify,
-            EventUpdateDto updateDto
-    ) {
-        if (eventToModify.getRecurrenceRule() != null) {
-            throw new IllegalArgumentException("단일 일정이 아닙니다.");
-        }
-
-        modifyEvent(eventToModify, updateDto);
-        return eventToModify;
     }
 
     @Transactional
