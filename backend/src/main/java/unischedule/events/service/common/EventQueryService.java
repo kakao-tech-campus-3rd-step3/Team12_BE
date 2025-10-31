@@ -55,36 +55,6 @@ public class EventQueryService {
         return eventList;
     }
 
-    /**
-     * 새 단일 일정 시간 중복 체크
-     * @param calendarIds
-     * @param startAt
-     * @param endAt
-     */
-    @Transactional(readOnly = true)
-    public void checkNewSingleEventOverlap(
-            List<Long> calendarIds,
-            LocalDateTime startAt,
-            LocalDateTime endAt
-    ) {
-        if (hasEvent(calendarIds, startAt, endAt)) {
-            throw new InvalidInputException("겹치는 일정이 있어 등록할 수 없습니다.");
-        }
-    }
-
-    private boolean hasEvent(List<Long> calendarIds, LocalDateTime startAt, LocalDateTime endAt) {
-
-        SingleEventList singleEvents = eventRawService.findSingleSchedule(calendarIds, startAt, endAt);
-        if (singleEvents.hasOverlap(startAt, endAt)) {
-            return true;
-        }
-
-        if (!recurringEventService.expandRecurringEvents(calendarIds, startAt, endAt).isEmpty()) {
-            return true;
-        }
-        return false;
-    }
-
     @Transactional(readOnly = true)
     public void checkNewSingleEventOverlapForMember(
             Member member,
