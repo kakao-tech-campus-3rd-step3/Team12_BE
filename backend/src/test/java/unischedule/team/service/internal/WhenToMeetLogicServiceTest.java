@@ -61,7 +61,7 @@ class WhenToMeetLogicServiceTest {
     @Test
     @DisplayName("applyMemberEvents: 멤버 1명이 9:00~9:30에 일정이 있으면 해당 슬롯 2개의 카운트가 1 감소해야 한다")
     void applyMemberEvents_Success() {
-        // --- Given (준비) ---
+        //Given
         Member member1 = TestUtil.makeMember();
         Member member2 = TestUtil.makeMember();
         List<Member> members = List.of(member1, member2); // 총 2명
@@ -88,10 +88,10 @@ class WhenToMeetLogicServiceTest {
         // Bob(member2)는 일정이 없다.
         when(whenToMeetRawService.findMemberEvents(member2, dayStart, dayEnd)).thenReturn(List.of());
         
-        // --- When (실행) ---
+        //When
         whenToMeetLogicService.applyMemberEvents(slots, members, intervalStarts, intervalEnds, whenToMeetRawService);
         
-        // --- Then (검증) ---
+        //Then
         // Alice의 일정(9:00~9:30)과 겹치는 슬롯
         assertThat(slots.get(0).getAvailableMember()).isEqualTo(1L); // 9:00~9:15
         assertThat(slots.get(1).getAvailableMember()).isEqualTo(1L); // 9:15~9:30
