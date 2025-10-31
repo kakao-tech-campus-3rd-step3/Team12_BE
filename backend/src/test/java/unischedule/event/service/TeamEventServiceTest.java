@@ -122,7 +122,7 @@ class TeamEventServiceTest {
         verify(memberRawService).findMemberByEmail(email);
         verify(teamRawService).findTeamById(teamId);
         verify(teamMemberRawService).checkTeamAndMember(team, member);
-        verify(calendarRawService).getTeamCalendar(team);
+        verify(calendarRawService, times(2)).getTeamCalendar(team);
         verify(teamMemberRawService).findByTeam(team);
         verify(calendarRawService).getMyPersonalCalendar(member);
         verify(teamMemberRawService).findByMember(member);
@@ -155,7 +155,6 @@ class TeamEventServiceTest {
 
         given(memberRawService.findMemberByEmail(email)).willReturn(member);
         given(teamRawService.findTeamById(teamId)).willReturn(team);
-        doNothing().when(teamMemberRawService).checkTeamAndMember(team, member);
         given(calendarRawService.getTeamCalendar(team)).willReturn(teamCalendar);
 
         given(memberRawService.findMemberById(1L)).willReturn(member);
@@ -180,7 +179,7 @@ class TeamEventServiceTest {
         verify(memberRawService).findMemberByEmail(email);
         verify(teamRawService).findTeamById(teamId);
         verify(teamMemberRawService, times(2)).checkTeamAndMember(team, member);
-        verify(calendarRawService).getTeamCalendar(team);
+        verify(calendarRawService, times(2)).getTeamCalendar(team);
         verify(memberRawService).findMemberById(1L);
         verify(calendarRawService).getMyPersonalCalendar(member);
         verify(teamMemberRawService).findByMember(member);
@@ -345,7 +344,7 @@ class TeamEventServiceTest {
         verify(memberRawService).findMemberByEmail(email);
         verify(teamRawService).findTeamById(teamId);
         verify(teamMemberRawService).checkTeamAndMember(team, member);
-        verify(calendarRawService).getTeamCalendar(team);
+        verify(calendarRawService, times(2)).getTeamCalendar(team);
         verify(teamMemberRawService).findByTeam(team);
         verify(calendarRawService).getMyPersonalCalendar(member);
         verify(teamMemberRawService).findByMember(member);
@@ -403,7 +402,7 @@ class TeamEventServiceTest {
         verify(event).validateIsTeamEvent();
         verify(teamMemberRawService).checkTeamAndMember(team, member);
 
-        verify(teamMemberRawService).findByTeam(team);
+        verify(teamMemberRawService, times(2)).findByTeam(team);
         verify(calendarRawService).getMyPersonalCalendar(member);
         verify(calendarRawService).getTeamCalendar(any(Team.class));
         verify(teamMemberRawService).findByMember(member);
