@@ -8,7 +8,7 @@ import org.springframework.web.server.ResponseStatusException;
 import unischedule.auth.dto.SendEmailResponseDto;
 import unischedule.auth.dto.VerifyEmailResponseDto;
 import unischedule.exception.EmailAuthAlreadySentException;
-import unischedule.exception.EmailAuthCodeMissMatchException;
+import unischedule.exception.EmailAuthCodeMismatchException;
 import unischedule.exception.EmailDuplicateException;
 import unischedule.member.service.internal.MemberRawService;
 
@@ -58,7 +58,7 @@ public class EmailAuthService {
         String redisValue = srt.opsForValue().get(redisKey);
 
         if (redisValue == null || !redisValue.equals(code)) {
-            throw new EmailAuthCodeMissMatchException();
+            throw new EmailAuthCodeMismatchException();
         }
 
         return new VerifyEmailResponseDto(true);

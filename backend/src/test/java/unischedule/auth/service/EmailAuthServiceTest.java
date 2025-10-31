@@ -8,7 +8,9 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import unischedule.auth.dto.SendEmailResponseDto;
+import unischedule.auth.dto.VerifyEmailResponseDto;
 import unischedule.exception.EmailAuthAlreadySentException;
+import unischedule.exception.EmailAuthCodeMismatchException;
 import unischedule.exception.EmailDuplicateException;
 import unischedule.member.service.internal.MemberRawService;
 
@@ -75,5 +77,46 @@ class EmailAuthServiceTest {
         // when & then
         assertThatThrownBy(() -> emailAuthService.sendAuthEmail(email))
                 .isInstanceOf(EmailAuthAlreadySentException.class);
+    }
+
+    @Test
+    void Redis에_저장된_인증_코드와_입력_코드가_일치하면_검증_성공() {
+        // given
+        String email = "test@example.com";
+        String code = "123456";
+        when(valueOperations.get("email:auth:" + email)).thenReturn(code);
+
+        // when
+        VerifyEmailResponseDto response = emailAuthService.verifyAuthCode(email, code);
+
+        // then
+        assertThat(response).isNotNull();
+        assertThat(response.verified()).isTrue();
+        verify(valueOperations, times(1)).get("email:auth:" + email);
+    }
+
+    @Test
+    void Redis에_인증_코드가_존재하지_않으면_에러를_던진다() {
+        // given
+        String email = "notfound@example.com";
+        String code = "111111";
+        when(valueOperations.get("email:auth:" + email)).thenReturn(null);
+
+        // when & then
+        assertThatThrownBy(() -> emailAuthService.verifyAuthCode(email, code))
+                .isInstanceOf(EmailAuthCodeMismatchException.class);
+    }
+
+    @Test
+    void 입력한_코드가_일치하지_않으면_에러를_던진다() {
+        // given
+        String email = "mismatch@example.com";
+        String savedCode = "654321";
+        String wrongCode = "111111";
+        when(valueOperations.get("email:auth:" + email)).thenReturn(savedCode);
+
+        // when & then
+        assertThatThrownBy(() -> emailAuthService.verifyAuthCode(email, wrongCode))
+                .isInstanceOf(EmailAuthCodeMismatchException.class);
     }
 }

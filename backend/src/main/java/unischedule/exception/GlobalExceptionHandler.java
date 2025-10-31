@@ -78,8 +78,8 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(ErrorResponseDto.of(ex.getMessage()));
     }
 
-    @ExceptionHandler(EmailAuthCodeMissMatchException.class)
-    public ResponseEntity<ErrorResponseDto> EmailAuthCodeMissMatchException(EmailAuthCodeMissMatchException ex) {
+    @ExceptionHandler(EmailAuthCodeMismatchException.class)
+    public ResponseEntity<ErrorResponseDto> EmailAuthCodeMissMatchException(EmailAuthCodeMismatchException ex) {
         return ResponseEntity.badRequest().body(ErrorResponseDto.of(ex.getMessage()));
     }
 }
