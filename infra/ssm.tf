@@ -41,3 +41,13 @@ data "aws_ssm_parameter" "redis_password" {
 data "aws_ssm_parameter" "redis_username" {
   name = "/uni-schedule/config/redis_username"
 }
+
+data "aws_ssm_parameter" "mail_username" {
+  name            = "/uni-schedule/mail/username"
+  with_decryption = true
+}
+
+data "aws_ssm_parameter" "mail_password" {
+  name            = "/uni-schedule/mail/password"
+  with_decryption = true
+}

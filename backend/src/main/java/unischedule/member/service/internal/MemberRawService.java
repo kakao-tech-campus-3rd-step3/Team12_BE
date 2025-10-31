@@ -23,4 +23,9 @@ public class MemberRawService {
         return memberRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
     }
+
+    @Transactional(readOnly = true)
+    public boolean existsByEmail(String email) {
+        return memberRepository.existsByEmail(email);
+    }
 }
