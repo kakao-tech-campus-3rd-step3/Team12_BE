@@ -421,7 +421,7 @@ class TeamServiceTest {
     }
     
     @Test
-    @DisplayName("팀 일정 추천 시, 최적(2명) 2개, 좋음(1명) 1개를 순서대로 반환한다")
+    @DisplayName("팀 일정 추천 시, 최적(2명) 2개, 보통(1명) 1개를 순서대로 반환한다")
     void getOptimalTimeWhenToMeet_Success_Top3() {
         // GIVEN
         Long teamId = 1L;
@@ -464,14 +464,14 @@ class TeamServiceTest {
         
         // [시나리오 분석 (60분/4슬롯 윈도우)]
         // (0) 09:00~10:00 (슬롯 0,1,2,3) : minAvailable = 2 ("최적")
-        // (1) 09:15~10:15 (슬롯 1,2,3,4) : minAvailable = 1 ("좋음") - 4번 슬롯(1)
-        // (2) 09:30~10:30 (슬롯 2,3,4,5) : minAvailable = 1 ("좋음") - 4,5번 슬롯(1)
-        // (3) 09:45~10:45 (슬롯 3,4,5,6) : minAvailable = 1 ("좋음") - 4,5,6번 슬롯(1)
-        // (4) 10:00~11:00 (슬롯 4,5,6,7) : minAvailable = 1 ("좋음") - 4,5,6,7번 슬롯(1)
-        // (5) 10:15~11:15 (슬롯 5,6,7,8) : minAvailable = 1 ("좋음") - 5,6,7번 슬롯(1)
-        // (6) 10:30~11:30 (슬롯 6,7,8,9) : minAvailable = 1 ("좋음") - 6,7번 슬롯(1)
-        // (7) 10:45~11:45 (슬롯 7,8,9,10): minAvailable = 1 ("좋음") - 7번 슬롯(1)
-        // (8) 11:00~12:00 (슬롯 8,9,10,11): minAvailable = 2 ("최적")
+        // (1) 09:15~10:15 (슬롯 1,2,3,4) : minAvailable = 1 ("보통") - 4번 슬롯(1)
+        // (2) 09:30~10:30 (슬롯 2,3,4,5) : minAvailable = 1 ("보통") - 4,5번 슬롯(1)
+        // (3) 09:45~10:45 (슬롯 3,4,5,6) : minAvailable = 1 ("보통") - 4,5,6번 슬롯(1)
+        // (4) 10:00~11:00 (슬롯 4,5,6,7) : minAvailable = 1 ("보통") - 4,5,6,7번 슬롯(1)
+        // (5) 10:15~11:15 (슬롯 5,6,7,8) : minAvailable = 1 ("보통") - 5,6,7번 슬롯(1)
+        // (6) 10:30~11:30 (슬롯 6,7,8,9) : minAvailable = 1 ("보통") - 6,7번 슬롯(1)
+        // (7) 10:45~11:45 (슬롯 7,8,9,10): minAvailable = 1 ("보통") - 7번 슬롯(1)
+        // (8) 11:00~12:00 (슬롯 8,9,10,11): minAvailable = 2 ("보통")
         
         // [정렬 후 Top 3]
         // 1. 09:00~10:00 (available=2, status="최적")
@@ -500,7 +500,7 @@ class TeamServiceTest {
         // 3순위 검증
         WhenToMeetRecommendDto top3 = result.get(2);
         assertThat(top3.available()).isEqualTo(1L);
-        assertThat(top3.status()).isEqualTo("좋음"); // (2명 중 1명 가능 = 1명 불참)
+        assertThat(top3.status()).isEqualTo("보통"); // (2명 중 1명 가능 = 1명 불참)
         assertThat(top3.week()).isEqualTo("목");
         assertThat(top3.startTime()).isEqualTo(LocalDateTime.of(2025, 10, 30, 9, 15));
         assertThat(top3.endTime()).isEqualTo(LocalDateTime.of(2025, 10, 30, 10, 15));
