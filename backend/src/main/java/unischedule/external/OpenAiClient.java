@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
-import unischedule.lecture.everytime.dto.TimetableDetailDto;
+import unischedule.everytime.dto.TimetableDetailDto;
 import unischedule.exception.ExternalApiException;
 
 import java.util.Base64;
