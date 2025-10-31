@@ -1,12 +1,9 @@
 package unischedule.team.service.internal;
 
-import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import unischedule.events.dto.EventGetResponseDto;
@@ -36,7 +33,6 @@ public class WhenToMeetLogicService {
     }
     
     public List<LocalDateTime> generateIntervalStarts(LocalDateTime start, LocalDateTime end) {
-        // 공통 헬퍼 메서드를 호출한 뒤, Stream API를 사용해 'start'만 추출합니다.
         return generateDailyIntervals(start, end)
             .stream()
             .map(DailyInterval::start) // .map(interval -> interval.start())
@@ -44,7 +40,6 @@ public class WhenToMeetLogicService {
     }
     
     public List<LocalDateTime> generateIntervalEnds(LocalDateTime start, LocalDateTime end) {
-        // 공통 헬퍼 메서드를 호출한 뒤, Stream API를 사용해 'end'만 추출합니다.
         return generateDailyIntervals(start, end)
             .stream()
             .map(DailyInterval::end) // .map(interval -> interval.end())
