@@ -40,26 +40,31 @@ public record WhenToMeetRecommendDto(
         );
     }
     
+    /**
+     * 참여 가능 인원 비율에 따라 슬롯의 상태를 계산합니다.
+     *
+     * @param available    참여 가능한 인원 수
+     * @param totalMembers 전체 인원 수
+     * @return 상태 문자열 ("최적", "좋음", "보통", "불가능")
+     */
     private static String calculateStatus(long available, long totalMembers) {
-        // 0명 불참
+        
+        if (totalMembers <= 0 || available <= 0) {
+            return "불가능";
+        }
+        
         if (available == totalMembers) {
             return "최적";
         }
-        // 1명 불참
-        else if (available == totalMembers - 1) {
+        
+        double ratio = (double) available / totalMembers;
+        
+        if (ratio >= 0.75) {
             return "좋음";
         }
-        // 2명 불참
-        else if (available == totalMembers - 2) {
-            return "보통";
-        }
-        // 3명 이상 불참 (단, 1명이라도 가능한 경우)
-        else if (available > 0) {
-            return "나쁨";
-        }
-        // 0명 이하 (아무도 참여 불가능한 경우)
+        
         else {
-            return "불가능";
+            return "보통";
         }
     }
 }
