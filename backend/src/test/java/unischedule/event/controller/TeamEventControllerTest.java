@@ -61,7 +61,8 @@ public class TeamEventControllerTest {
                 "Description",
                 LocalDateTime.of(2025, 10, 1, 10, 0),
                 LocalDateTime.of(2025, 10, 1, 11, 0),
-                false
+                false,
+                null
         );
         EventCreateResponseDto responseDto = new EventCreateResponseDto(
                 1L,
@@ -91,8 +92,14 @@ public class TeamEventControllerTest {
         // given
         Long teamId = 1L;
         RecurringEventCreateRequestDto requestDto = new RecurringEventCreateRequestDto(
-                "팀 반복 회의", "매주",
-                LocalDateTime.now(), LocalDateTime.now().plusHours(1), false, "FREQ=WEEKLY");
+                "팀 반복 회의",
+                "매주",
+                LocalDateTime.now(),
+                LocalDateTime.now().plusHours(1),
+                false,
+                "FREQ=WEEKLY",
+                null
+        );
         EventCreateResponseDto responseDto = new EventCreateResponseDto(1L, "팀 반복 회의", null, null, null, false);
         given(teamEventService.createTeamRecurringEvent(anyString(), anyLong(), any(RecurringEventCreateRequestDto.class))).willReturn(responseDto);
 
@@ -146,7 +153,7 @@ public class TeamEventControllerTest {
     void modifyTeamEvent() throws Exception {
         // given
         Long eventId = 1L;
-        EventModifyRequestDto requestDto = new EventModifyRequestDto("Updated Title", null, null, null, null);
+        EventModifyRequestDto requestDto = new EventModifyRequestDto("Updated Title", null, null, null, null, null);
         EventGetResponseDto responseDto = new EventGetResponseDto(
                 eventId,
                 "Updated Title",
@@ -175,7 +182,7 @@ public class TeamEventControllerTest {
     void modifyTeamRecurringEvent() throws Exception {
         // given
         Long eventId = 1L;
-        EventModifyRequestDto requestDto = new EventModifyRequestDto("수정된 팀 반복", null, null, null, null);
+        EventModifyRequestDto requestDto = new EventModifyRequestDto("수정된 팀 반복", null, null, null, null, null);
         EventGetResponseDto responseDto = new EventGetResponseDto(eventId, "수정된 팀 반복", null, null, null, false, true);
         given(teamEventService.modifyTeamRecurringEvent(anyString(), anyLong(), any(EventModifyRequestDto.class))).willReturn(responseDto);
 

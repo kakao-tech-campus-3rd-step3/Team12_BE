@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public record TeamEventCreateRequestDto(
         @NotNull(message = "팀 id는 필수입니다.")
@@ -21,7 +22,10 @@ public record TeamEventCreateRequestDto(
         LocalDateTime endTime,
         @JsonProperty("is_private")
         @NotNull(message = "공개 여부는 필수입니다.")
-        Boolean isPrivate
+        Boolean isPrivate,
+
+        @JsonProperty("event_participants")
+        List<Long> eventParticipants
 ) {
         public EventCreateDto toDto() {
                 return new EventCreateDto(

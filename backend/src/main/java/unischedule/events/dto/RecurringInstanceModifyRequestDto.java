@@ -21,6 +21,16 @@ public record RecurringInstanceModifyRequestDto(
         @JsonProperty("is_private")
         Boolean isPrivate
 ) {
+    public EventOverrideUpdateDto toEventOverrideUpdateDto() {
+        return new EventOverrideUpdateDto(
+                this.title,
+                this.content,
+                this.startTime,
+                this.endTime,
+                this.isPrivate
+        );
+    }
+
     public EventOverrideDto toEventOverrideDto() {
         return new EventOverrideDto(
                 this.originalStartTime,

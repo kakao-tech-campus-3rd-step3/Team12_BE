@@ -11,6 +11,7 @@ import unischedule.events.domain.collection.RecurringEventList;
 import unischedule.events.dto.EventServiceDto;
 import unischedule.events.service.internal.RecurringEventRawService;
 import unischedule.events.util.RRuleParser;
+import unischedule.member.domain.Member;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -28,6 +29,29 @@ public class RecurringEventService {
     @Transactional(readOnly = true)
     public List<EventServiceDto> expandRecurringEvents(List<Long> calendarIds, LocalDateTime startAt, LocalDateTime endAt) {
         RecurringEventList recurringEvents = recurringEventRawService.findRecurringSchedule(calendarIds, endAt);
+
+        if (recurringEvents.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<EventServiceDto> finalExpandedEventList = new ArrayList<>();
+
+        Map<Long, List<EventOverride>> exceptionsMap = recurringEventRawService.getEventOverrideMap(recurringEvents.getEvents(), startAt, endAt);
+
+        for (Event recurEvent : recurringEvents.getEvents()) {
+            List<Event> expandedEvent = expandRecurringEvent(recurEvent, startAt, endAt);
+            ExpandedRecurringEvents expandedRecurringEvents = new ExpandedRecurringEvents(expandedEvent, recurEvent);
+            EventOverrideList overrideList = new EventOverrideList(exceptionsMap.getOrDefault(recurEvent.getEventId(), List.of()));
+
+            finalExpandedEventList.addAll(expandedRecurringEvents.applyOverridesToDtos(overrideList));
+        }
+
+        return finalExpandedEventList;
+    }
+
+    @Transactional(readOnly = true)
+    public List<EventServiceDto> expandRecurringEventsForMember(Member member, List<Long> calendarIds, LocalDateTime startAt, LocalDateTime endAt) {
+        RecurringEventList recurringEvents = recurringEventRawService.findRecurringScheduleForMember(member, calendarIds, endAt);
 
         if (recurringEvents.isEmpty()) {
             return Collections.emptyList();

@@ -17,6 +17,7 @@ import unischedule.events.dto.RecurringInstanceModifyRequestDto;
 import unischedule.events.dto.TeamEventCreateRequestDto;
 import unischedule.events.service.common.EventCommandService;
 import unischedule.events.service.common.EventQueryService;
+import unischedule.events.service.internal.EventParticipantRawService;
 import unischedule.events.service.internal.EventRawService;
 import unischedule.member.domain.Member;
 import unischedule.member.service.internal.MemberRawService;
@@ -42,6 +43,7 @@ public class TeamEventService {
     private final TeamMemberRawService teamMemberRawService;
     private final EventQueryService eventQueryService;
     private final EventCommandService eventCommandService;
+    private final EventParticipantRawService eventParticipantRawService;
 
     @Transactional
     public EventCreateResponseDto createTeamSingleEvent(String email, TeamEventCreateRequestDto requestDto) {
@@ -50,9 +52,17 @@ public class TeamEventService {
         validateTeamMember(team, member);
         Calendar calendar = calendarRawService.getTeamCalendar(team);
 
-        List<Long> calendarIdsToValidate = getAllRelatedCalendarIds(team);
+        List<Member> participants = getParticipants(team, requestDto.eventParticipants());
 
-        Event savedEvent = eventCommandService.createSingleEvent(calendar, calendarIdsToValidate, requestDto.toDto());
+        checkConflictForMembers(
+                participants,
+                requestDto.startTime(),
+                requestDto.endTime()
+        );
+
+        Event savedEvent = eventCommandService.createSingleEvent(calendar, requestDto.toDto());
+
+        handleEventParticipants(savedEvent, participants, requestDto.eventParticipants());
 
         return EventCreateResponseDto.from(savedEvent);
     }
@@ -64,9 +74,17 @@ public class TeamEventService {
         validateTeamMember(team, member);
         Calendar calendar = calendarRawService.getTeamCalendar(team);
 
-        List<Long> calendarIdsToValidate = getAllRelatedCalendarIds(team);
+        List<Member> participants = getParticipants(team, requestDto.eventParticipants());
+        checkRecurringConflictForMembers(
+                participants,
+                requestDto.firstStartTime(),
+                requestDto.firstEndTime(),
+                requestDto.rrule()
+        );
 
-        Event savedEvent = eventCommandService.createRecurringEvent(calendar, calendarIdsToValidate, requestDto);
+        Event savedEvent = eventCommandService.createRecurringEvent(calendar, requestDto);
+
+        handleEventParticipants(savedEvent, participants, requestDto.eventParticipants());
 
         return EventCreateResponseDto.from(savedEvent);
     }
@@ -107,17 +125,19 @@ public class TeamEventService {
     @Transactional
     public EventGetResponseDto modifyTeamEvent(String email, Long eventId, EventModifyRequestDto requestDto) {
         Member member = memberRawService.findMemberByEmail(email);
-
         Event event = eventRawService.findEventById(eventId);
-
         Team team = event.getCalendar().getTeam();
         event.validateIsTeamEvent();
-
         validateTeamMember(team, member);
 
-        List<Long> calendarIdsToValidate = getAllRelatedCalendarIds(team);
+        checkConflictForModification(event, team, requestDto);
 
-        eventCommandService.modifySingleEvent(event, calendarIdsToValidate, requestDto.toDto());
+        Event modifiedEvent = eventCommandService.modifySingleEvent(event, requestDto.toDto());
+
+        if (requestDto.eventParticipants() != null) {
+            List<Member> participants = getParticipants(team, requestDto.eventParticipants());
+            handleEventParticipants(modifiedEvent, participants, requestDto.eventParticipants());
+        }
 
         return EventGetResponseDto.fromSingleEvent(event);
     }
@@ -131,9 +151,17 @@ public class TeamEventService {
         Team team = event.getCalendar().getTeam();
         validateTeamMember(team, member);
 
-        List<Long> calendarIdsToValidate = getAllRelatedCalendarIds(team);
+        checkConflictForModification(event, team, requestDto);
 
-        eventCommandService.modifyRecurringEvent(event, calendarIdsToValidate, requestDto.toDto());
+        Event modifiedEvent = eventCommandService.modifyRecurringEvent(
+                event,
+                requestDto.toDto()
+        );
+
+        if (requestDto.eventParticipants() != null) {
+            List<Member> participants = getParticipants(team, requestDto.eventParticipants());
+            handleEventParticipants(modifiedEvent, participants, requestDto.eventParticipants());
+        }
 
         return EventGetResponseDto.fromRecurringEvent(event);
     }
@@ -145,6 +173,13 @@ public class TeamEventService {
         originalEvent.validateIsTeamEvent();
         Team team = originalEvent.getCalendar().getTeam();
         validateTeamMember(team, member);
+
+        // 반복 단건 수정 일정 충돌 체크
+        checkConflictForRecurringInstanceModification(
+                originalEvent,
+                team,
+                requestDto
+        );
 
         EventOverride eventOverride = eventCommandService.modifyRecurringInstance(originalEvent, requestDto);
 
@@ -203,26 +238,53 @@ public class TeamEventService {
         teamMemberRawService.checkTeamAndMember(team, member);
     }
 
-
     /**
-     * 현재 팀에 속해있는 모든 멤버에 대해 해당 멤버가 속한 모든 캘린더 id 조회
-     * @param currentTeam
+     * 팀 이벤트 참여자 검증 및 반환
+     * @param team
+     * @param participantMemberIds
      * @return
      */
-    private List<Long> getAllRelatedCalendarIds(Team currentTeam) {
-        List<Member> teamMembers = getAllTeamMember(currentTeam);
-        Set<Long> calendarIds = new HashSet<>();
-
-        for (Member member : teamMembers) {
-            calendarIds.add(calendarRawService.getMyPersonalCalendar(member).getCalendarId());
-
-            List<TeamMember> memberships = teamMemberRawService.findByMember(member);
-            for (TeamMember membership : memberships) {
-                Team team = membership.getTeam();
-                calendarIds.add(calendarRawService.getTeamCalendar(team).getCalendarId());
-            }
+    private List<Member> getParticipants(Team team, List<Long> participantMemberIds) {
+        if (participantMemberIds == null || participantMemberIds.isEmpty()) {
+            return getAllTeamMember(team);
         }
-        return new ArrayList<>(calendarIds);
+
+        Set<Long> memberIdSet = new HashSet<>(participantMemberIds);
+        List<Member> participants = new ArrayList<>();
+
+        for (Long memberid : memberIdSet) {
+            Member member = memberRawService.findMemberById(memberid);
+
+            teamMemberRawService.checkTeamAndMember(team, member);
+            participants.add(member);
+        }
+        return participants;
+    }
+
+    private List<Member> getCurrentParticipants(Event event, Team team) {
+        if (event.isForAllMembers()) {
+            return getAllTeamMember(team);
+        }
+        else {
+            return eventParticipantRawService.getParticipantsForEvent(event);
+        }
+    }
+
+    private void handleEventParticipants(Event event, List<Member> allParticipants, List<Long> newParticipantIds) {
+        if (newParticipantIds == null) {
+            return;
+        }
+
+        eventParticipantRawService.deleteAllParticipantsByEvent(event);
+
+        if (newParticipantIds.isEmpty()) {
+            event.updateIsSelective(false);
+        }
+        else {
+            event.updateIsSelective(true);
+
+            eventParticipantRawService.saveAllParticipantsForEvent(event, allParticipants);
+        }
     }
     
     private List<EventGetResponseDto> getTeamEventsForPeriod(String email, Long teamId, LocalDateTime start, LocalDateTime end) {
@@ -244,5 +306,94 @@ public class TeamEventService {
                 .stream()
                 .map(TeamMember::getMember)
                 .toList();
+    }
+
+    private void checkConflictForMembers(List<Member> participants, LocalDateTime startAt, LocalDateTime endAt) {
+        for (Member participant : participants) {
+            List<Long> calendarIds = getMemberCalendarIds(participant);
+            eventQueryService.checkNewSingleEventOverlapForMember(
+                    participant,
+                    calendarIds,
+                    startAt,
+                    endAt
+            );
+        }
+    }
+
+    private void checkRecurringConflictForMembers(List<Member> participants, LocalDateTime startAt, LocalDateTime endAt, String rrule) {
+        for (Member participant : participants) {
+            List<Long> calendarIds = getMemberCalendarIds(participant);
+            eventQueryService.checkNewRecurringEventOverlapForMember(
+                    participant,
+                    calendarIds,
+                    startAt,
+                    endAt,
+                    rrule
+            );
+        }
+    }
+
+    private void checkConflictForModification(Event event, Team team, EventModifyRequestDto requestDto) {
+        LocalDateTime newStartAt = getValueOrDefault(requestDto.startTime(), event.getStartAt());
+        LocalDateTime newEndAt = getValueOrDefault(requestDto.endTime(), event.getEndAt());
+
+        boolean timeChanged = (requestDto.startTime() != null || requestDto.endTime() != null);
+
+        List<Member> membersToCheck;
+        if (requestDto.eventParticipants() == null) {
+            if (!timeChanged) return;
+            membersToCheck = getCurrentParticipants(event, team);
+        }
+        else {
+            membersToCheck = getParticipants(team, requestDto.eventParticipants());
+        }
+
+        for (Member participant : membersToCheck) {
+            List<Long> calendarIds = getMemberCalendarIds(participant);
+            eventQueryService.checkEventUpdateOverlapForMember(
+                    participant,
+                    calendarIds,
+                    newStartAt,
+                    newEndAt,
+                    event
+            );
+        }
+    }
+
+    private void checkConflictForRecurringInstanceModification(Event event, Team team, RecurringInstanceModifyRequestDto requestDto) {
+        boolean timeChanged = (requestDto.startTime() != null || requestDto.endTime() != null);
+        if (!timeChanged) return;
+
+        LocalDateTime newStartAt = getValueOrDefault(requestDto.startTime(), event.getStartAt());
+        LocalDateTime newEndAt = getValueOrDefault(requestDto.endTime(), event.getEndAt());
+
+        List<Member> currentParticipants = getCurrentParticipants(event, team);
+
+        for (Member participant : currentParticipants) {
+            List<Long> calendarIds = getMemberCalendarIds(participant);
+            eventQueryService.checkEventUpdateOverlapForMember(participant, calendarIds, newStartAt, newEndAt, event);
+        }
+    }
+
+    private <T> T getValueOrDefault(T value, T defaultValue) {
+        if (value != null) return value;
+        return defaultValue;
+    }
+
+    private List<Long> getMemberCalendarIds(Member member) {
+        List<Team> teamList = teamMemberRawService.findByMember(member)
+                .stream()
+                .map(TeamMember::getTeam)
+                .toList();
+
+        List<Long> calendarIds = new ArrayList<>();
+        calendarIds.add(calendarRawService.getMyPersonalCalendar(member).getCalendarId());
+        List<Long> teamCalendarIds = teamList.stream()
+                .map(calendarRawService::getTeamCalendar)
+                .map(Calendar::getCalendarId)
+                .toList();
+
+        calendarIds.addAll(teamCalendarIds);
+        return calendarIds;
     }
 }

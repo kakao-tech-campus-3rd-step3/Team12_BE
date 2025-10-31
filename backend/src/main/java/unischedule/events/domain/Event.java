@@ -44,6 +44,14 @@ public class Event extends BaseEntity {
     @Column(nullable = false)
     private Boolean isPrivate;
 
+    /**
+     * 일정 참여자 범위
+     * false, null : 멤버 전체
+     * true : EventParticipant 등록된 멤버만 참여
+     */
+    @Column
+    private Boolean isSelective;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = true)
     @JoinColumn(name = "recurrence_rule_id", nullable = true)
     private RecurrenceRule recurrenceRule;
@@ -58,13 +66,15 @@ public class Event extends BaseEntity {
             String content,
             LocalDateTime startAt,
             LocalDateTime endAt,
-            Boolean isPrivate
+            Boolean isPrivate,
+            Boolean isSelective
     ) {
         this.title = title;
         this.content = content;
         this.startAt = startAt;
         this.endAt = endAt;
         this.isPrivate = isPrivate;
+        this.isSelective = (isSelective != null) ? isSelective : false;
     }
     
     public void modifyEvent(String title, String content, LocalDateTime startAt, LocalDateTime endAt, Boolean isPrivate) {
@@ -95,6 +105,10 @@ public class Event extends BaseEntity {
         this.isPrivate = isPrivate;
     }
 
+    public void updateIsSelective(Boolean isSelective) {
+        this.isSelective = isSelective;
+    }
+
     public void connectCalendar(Calendar calendar) {
         this.calendar = calendar;
     }
@@ -113,5 +127,9 @@ public class Event extends BaseEntity {
         if (!this.calendar.hasTeam()) {
             throw new InvalidInputException("팀 일정이 아닙니다.");
         }
+    }
+
+    public boolean isForAllMembers() {
+        return isSelective == null || !isSelective;
     }
 }

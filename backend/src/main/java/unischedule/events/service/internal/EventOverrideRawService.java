@@ -5,7 +5,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import unischedule.events.domain.Event;
 import unischedule.events.domain.EventOverride;
-import unischedule.events.dto.EventOverrideDto;
+import unischedule.events.dto.EventOverrideUpdateDto;
 import unischedule.events.repository.EventOverrideRepository;
 
 import java.time.LocalDateTime;
@@ -17,8 +17,16 @@ public class EventOverrideRawService {
     private final EventOverrideRepository eventOverrideRepository;
 
     @Transactional(readOnly = true)
-    public Optional<EventOverride> findEventOverride(Event originalEvent, LocalDateTime originalEventTime) {
-        return eventOverrideRepository.findByOriginEventTime(originalEvent, originalEventTime);
+    public Optional<EventOverride> findEventOverride(Event originalEvent, LocalDateTime modifiedStartTime) {
+        return eventOverrideRepository.findByEventStartTime(originalEvent, modifiedStartTime);
+    }
+
+    @Transactional(readOnly = true)
+    public boolean existsDeleteEventOverride(Event originalEvent, LocalDateTime originalEventTime) {
+        return eventOverrideRepository.existsByOriginalEventAndOriginalEventTimeAndTitleIsNull(
+                originalEvent,
+                originalEventTime
+        );
     }
 
     @Transactional
@@ -27,14 +35,13 @@ public class EventOverrideRawService {
     }
 
     @Transactional
-    public void updateEventOverride(EventOverride eventOverride, EventOverrideDto eventOverrideDto) {
+    public void updateEventOverride(EventOverride eventOverride, EventOverrideUpdateDto updateDto) {
         eventOverride.update(
-                eventOverrideDto.originalStartTime(),
-                eventOverrideDto.title(),
-                eventOverrideDto.content(),
-                eventOverrideDto.startTime(),
-                eventOverrideDto.endTime(),
-                eventOverrideDto.isPrivate()
+                updateDto.title(),
+                updateDto.content(),
+                updateDto.startTime(),
+                updateDto.endTime(),
+                updateDto.isPrivate()
         );
     }
 

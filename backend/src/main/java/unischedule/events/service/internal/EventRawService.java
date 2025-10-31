@@ -8,6 +8,7 @@ import unischedule.events.domain.collection.SingleEventList;
 import unischedule.events.dto.EventUpdateDto;
 import unischedule.events.repository.EventRepository;
 import unischedule.exception.EntityNotFoundException;
+import unischedule.member.domain.Member;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -47,6 +48,23 @@ public class EventRawService {
     @Transactional(readOnly = true)
     public SingleEventList findSingleSchedule(List<Long> calendarIds, LocalDateTime startTime, LocalDateTime endTime) {
         List<Event> singleEventList = eventRepository.findSingleEventsInPeriod(calendarIds, startTime, endTime);
+
+        return new SingleEventList(singleEventList);
+    }
+
+    @Transactional(readOnly = true)
+    public SingleEventList findSingleScheduleForMember(
+            Member member,
+            List<Long> calendarIds,
+            LocalDateTime startTime,
+            LocalDateTime endTime
+    ) {
+        List<Event> singleEventList = eventRepository.findSingleEventsInPeriodForMember(
+                member.getMemberId(),
+                calendarIds,
+                startTime,
+                endTime
+        );
 
         return new SingleEventList(singleEventList);
     }
