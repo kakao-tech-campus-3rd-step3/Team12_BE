@@ -99,4 +99,51 @@ class WhenToMeetLogicServiceTest {
         // 겹치지 않는 슬롯
         assertThat(slots.get(2).getAvailableMember()).isEqualTo(2L); // 9:30~9:45 (기존 2명 그대로)
     }
+    
+    @Test
+    @DisplayName("통합 테스트: 슬롯 생성(generateSlots)부터 이벤트 적용(applyMemberEvents)까지")
+    void generateAndApplyEvents_IntegrationTest_Success() {
+        
+        //Given
+        Member member1 = TestUtil.makeMember(); // (TestUtil이 있다고 가정)
+        Member member2 = TestUtil.makeMember();
+        List<Member> members = List.of(member1, member2); // 총 2명
+        
+        // 1. generateSlots에 사용할 시간 범위 (1시간 = 15분 슬롯 4개)
+        LocalDateTime dayStart = LocalDateTime.of(2025, 11, 1, 9, 0);
+        LocalDateTime dayEnd = LocalDateTime.of(2025, 11, 1, 10, 0);
+        List<LocalDateTime> intervalStarts = List.of(dayStart);
+        List<LocalDateTime> intervalEnds = List.of(dayEnd);
+        
+        // 2. applyMemberEvents에 사용할 Mock 이벤트
+        // Alice(member1)는 9:00~9:30에 일정이 있다.
+        LocalDateTime eventStart = LocalDateTime.of(2025, 11, 1, 9, 0);
+        LocalDateTime eventEnd = LocalDateTime.of(2025, 11, 1, 9, 30);
+        EventGetResponseDto aliceEvent = new EventGetResponseDto(1L, "title", "", eventStart, eventEnd, false, false);
+        
+        // 2-1. Mock RawService 설정
+        when(whenToMeetRawService.findMemberEvents(member1, dayStart, dayEnd)).thenReturn(List.of(aliceEvent));
+        when(whenToMeetRawService.findMemberEvents(member2, dayStart, dayEnd)).thenReturn(List.of());
+        
+        
+        //When
+        List<WhenToMeet> slots = whenToMeetLogicService.generateSlots(members, intervalStarts, intervalEnds);
+        whenToMeetLogicService.applyMemberEvents(slots, members, intervalStarts, intervalEnds, whenToMeetRawService);
+        
+        
+        //Then
+        
+        // 1. 'generateSlots'가 잘 동작했는지 검증
+        // 9:00~10:00 (1시간)은 15분 단위로 총 4개의 슬롯이 생성되어야 함
+        assertThat(slots).hasSize(4);
+        
+        // 2. 'applyMemberEvents'가 잘 동작했는지 검증
+        // Alice의 일정(9:00~9:30)과 겹치는 슬롯
+        assertThat(slots.get(0).getAvailableMember()).isEqualTo(1L); // 9:00~09:15 (2명 -> 1명)
+        assertThat(slots.get(1).getAvailableMember()).isEqualTo(1L); // 9:15~09:30 (2명 -> 1명)
+        
+        // 겹치지 않는 슬롯
+        assertThat(slots.get(2).getAvailableMember()).isEqualTo(2L); // 9:30~09:45 (2명 그대로)
+        assertThat(slots.get(3).getAvailableMember()).isEqualTo(2L); // 9:45~10:00 (2명 그대로)
+    }
 }
