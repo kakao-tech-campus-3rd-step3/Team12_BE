@@ -6,7 +6,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -19,7 +18,6 @@ public class EmailSenderService {
      * @param to       수신자 이메일 주소
      * @param authCode 전송할 인증 코드
      */
-    @Transactional
     public void sendAuthCodeEmail(String to, String authCode) {
         try {
             MimeMessage message = mailSender.createMimeMessage();

@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 import unischedule.auth.dto.SendEmailResponseDto;
 import unischedule.auth.dto.VerifyEmailResponseDto;
 import unischedule.exception.EmailAuthAlreadySentException;
@@ -19,11 +18,14 @@ import java.util.Random;
 @Service
 @RequiredArgsConstructor
 public class EmailAuthService {
+    private static final String CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()";
+    private static final int CODE_LENGTH = 6;
     private static final int EMAIL_AUTH_TIMEOUT_MINUTES = 5;
     private static final String REDIS_EMAIL_AUTH_KEY_PREFIX = "email:auth:";
     private final StringRedisTemplate srt;
     private final MemberRawService memberRawService;
     private final EmailSenderService emailSenderService;
+    private final Random random = new Random();
 
     /**
      * 인증 코드를 생성하여 이메일로 발송하고, Redis에 저장합니다.
@@ -68,8 +70,8 @@ public class EmailAuthService {
      * 이메일 중복 여부와 이미 인증 코드가 발송된 이메일인지 검증합니다.
      *
      * @param email 인증 코드를 발송할 이메일 주소
-     * @throws EmailDuplicateException 이미 가입된 이메일인 경우
-     * @throws ResponseStatusException 이미 인증 코드가 발송된 이메일인 경우
+     * @throws EmailDuplicateException       이미 가입된 이메일인 경우
+     * @throws EmailAuthAlreadySentException 이미 인증 코드가 발송된 이메일인 경우
      */
     private void validateEmail(String email) {
         if (memberRawService.existsByEmail(email)) {
@@ -86,12 +88,12 @@ public class EmailAuthService {
      *
      * @return 6자리 인증 코드 문자열
      */
-    private String generateAuthCode() {
-        Random random = new Random();
-        StringBuilder sb = new StringBuilder();
+    public String generateAuthCode() {
+        StringBuilder sb = new StringBuilder(CODE_LENGTH);
 
-        for (int i = 0; i < 6; i++) {
-            sb.append(random.nextInt(10));
+        for (int i = 0; i < CODE_LENGTH; i++) {
+            int index = random.nextInt(CHARACTERS.length());
+            sb.append(CHARACTERS.charAt(index));
         }
 
         return sb.toString();
