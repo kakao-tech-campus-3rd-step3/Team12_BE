@@ -101,7 +101,7 @@ class PersonalEventServiceTest {
                 eventCommandService
         );
     }
-    
+
     @Test
     @DisplayName("개인 캘린더에 새 일정 등록")
     void makeEvent() {
@@ -113,13 +113,14 @@ class PersonalEventServiceTest {
                 LocalDateTime.now().plusHours(1),
                 true
         );
-        
+
         Event event = new Event(
                 "새 회의",
                 "주간 회의",
                 requestDto.startTime(),
                 requestDto.endTime(),
-                true
+                true,
+                false
         );
 
         given(memberRawService.findMemberByEmail(memberEmail)).willReturn(owner);
@@ -128,12 +129,12 @@ class PersonalEventServiceTest {
         given(personalCalendar.getCalendarId()).willReturn(calendarId);
         given(teamMemberRawService.findByMember(owner)).willReturn(List.of());
 
-        given(eventCommandService.createSingleEvent(eq(personalCalendar), anyList(), any(EventCreateDto.class)))
+        given(eventCommandService.createSingleEvent(eq(personalCalendar), any(EventCreateDto.class)))
                 .willReturn(event);
-        
+
         // when
         EventCreateResponseDto result = eventService.makePersonalSingleEvent(memberEmail, requestDto);
-        
+
         // then
         assertThat(result).isNotNull();
         assertThat(result.title()).isEqualTo("새 회의");
@@ -141,7 +142,7 @@ class PersonalEventServiceTest {
         verify(memberRawService).findMemberByEmail(memberEmail);
         verify(calendarRawService, times(2)).getMyPersonalCalendar(owner);
         verify(teamMemberRawService).findByMember(owner);
-        verify(eventCommandService).createSingleEvent(eq(personalCalendar), anyList(), any(EventCreateDto.class));
+        verify(eventCommandService).createSingleEvent(eq(personalCalendar), any(EventCreateDto.class));
     }
 
     @Test
@@ -149,7 +150,7 @@ class PersonalEventServiceTest {
     void makePersonalRecurringEvent() {
         // given
         RecurringEventCreateRequestDto requestDto = new RecurringEventCreateRequestDto(
-                "반복 회의", "매주", LocalDateTime.now(), LocalDateTime.now().plusHours(1), false, "FREQ=WEEKLY");
+                "반복 회의", "매주", LocalDateTime.now(), LocalDateTime.now().plusHours(1), false, "FREQ=WEEKLY", null);
         Event savedEvent = TestUtil.makeRecurringEvent("반복 회의", "매주");
 
         given(memberRawService.findMemberByEmail(memberEmail)).willReturn(owner);
@@ -158,7 +159,8 @@ class PersonalEventServiceTest {
         doNothing().when(personalCalendar).validateOwner(owner);
 
         given(teamMemberRawService.findByMember(owner)).willReturn(List.of());
-        given(eventCommandService.createRecurringEvent(eq(personalCalendar), eq(List.of(calendarId)), eq(requestDto)))
+
+        given(eventCommandService.createRecurringEvent(eq(personalCalendar), eq(requestDto)))
                 .willReturn(savedEvent);
 
         // when
@@ -171,8 +173,7 @@ class PersonalEventServiceTest {
         verify(calendarRawService, times(2)).getMyPersonalCalendar(owner);
         verify(personalCalendar).validateOwner(owner);
         verify(teamMemberRawService).findByMember(owner);
-        verify(eventCommandService).createRecurringEvent(eq(personalCalendar), eq(List.of(calendarId)), eq(requestDto));
-        verify(eventQueryService, never()).checkNewRecurringEventOverlap(anyList(), any(), any(), any()); // Not called directly
+        verify(eventCommandService).createRecurringEvent(eq(personalCalendar), eq(requestDto));
     }
 
     @Test
@@ -192,7 +193,8 @@ class PersonalEventServiceTest {
         given(personalCalendar.getCalendarId()).willReturn(calendarId);
 
         given(teamMemberRawService.findByMember(owner)).willReturn(List.of());
-        given(eventCommandService.createSingleEvent(eq(personalCalendar), eq(List.of(calendarId)), any(EventCreateDto.class)))
+
+        given(eventCommandService.createSingleEvent(eq(personalCalendar), any(EventCreateDto.class)))
                 .willThrow(new InvalidInputException("겹치는 일정이 있어 등록할 수 없습니다."));
         // when & then
         assertThatThrownBy(() -> eventService.makePersonalSingleEvent(memberEmail, requestDto))
@@ -202,7 +204,7 @@ class PersonalEventServiceTest {
         verify(memberRawService).findMemberByEmail(memberEmail);
         verify(calendarRawService, times(2)).getMyPersonalCalendar(owner);
         verify(teamMemberRawService).findByMember(owner);
-        verify(eventCommandService).createSingleEvent(eq(personalCalendar), eq(List.of(calendarId)), any(EventCreateDto.class));
+        verify(eventCommandService).createSingleEvent(eq(personalCalendar), any(EventCreateDto.class));
     }
 
     @Test
@@ -246,12 +248,12 @@ class PersonalEventServiceTest {
         given(teamMemberRawService.findByMember(owner)).willReturn(List.of(teamMember));
         given(calendarRawService.getTeamCalendar(team)).willReturn(teamCalendar);
 
-        given(eventQueryService.getEvents(calendarIds, start, end))
+        given(eventQueryService.getEventsForMember(eq(owner), eq(calendarIds), eq(start), eq(end)))
                 .willReturn(List.of(event1, event2));
 
         // when
         List<EventGetResponseDto> result = eventService.getPersonalEvents(memberEmail, start, end);
-        
+
         // then
         assertThat(result).hasSize(2);
         assertThat(result.getFirst().title()).isEqualTo(event1.title());
@@ -261,7 +263,7 @@ class PersonalEventServiceTest {
         verify(calendarRawService).getMyPersonalCalendar(owner);
         verify(teamMemberRawService).findByMember(owner);
         verify(calendarRawService).getTeamCalendar(team);
-        verify(eventQueryService).getEvents(calendarIds, start, end);
+        verify(eventQueryService).getEventsForMember(eq(owner), eq(calendarIds), eq(start), eq(end));
     }
 
     @Test
@@ -272,7 +274,7 @@ class PersonalEventServiceTest {
         Event existingEvent = spy(TestUtil.makeEvent("일정", "내용"));
         existingEvent.connectCalendar(personalCalendar);
 
-        EventModifyRequestDto requestDto = new EventModifyRequestDto("새 제목", "새 내용", null, null, true);
+        EventModifyRequestDto requestDto = new EventModifyRequestDto("새 제목", "새 내용", null, null, true, null);
 
         given(memberRawService.findMemberByEmail(memberEmail)).willReturn(owner);
         given(eventRawService.findEventById(eventId)).willReturn(existingEvent);
@@ -283,10 +285,10 @@ class PersonalEventServiceTest {
 
         doAnswer(invocation -> {
             Event eventArg = invocation.getArgument(0);
-            EventUpdateDto dtoArg = invocation.getArgument(2);
+            EventUpdateDto dtoArg = invocation.getArgument(1);
             eventArg.modifyEvent(dtoArg.title(), dtoArg.content(), dtoArg.startTime(), dtoArg.endTime(), dtoArg.isPrivate());
             return eventArg;
-        }).when(eventCommandService).modifySingleEvent(eq(existingEvent), anyList(), any(EventUpdateDto.class)); // Use anyList() here
+        }).when(eventCommandService).modifySingleEvent(eq(existingEvent), any(EventUpdateDto.class));
 
         doNothing().when(existingEvent).validateEventOwner(owner);
 
@@ -302,7 +304,7 @@ class PersonalEventServiceTest {
         verify(calendarRawService).getMyPersonalCalendar(owner);
         verify(teamMemberRawService).findByMember(owner);
 
-        verify(eventCommandService).modifySingleEvent(eq(existingEvent), anyList(), any(EventUpdateDto.class)); // Use anyList() here too
+        verify(eventCommandService).modifySingleEvent(eq(existingEvent), any(EventUpdateDto.class));
     }
 
     @Test
@@ -333,6 +335,11 @@ class PersonalEventServiceTest {
         given(memberRawService.findMemberByEmail(memberEmail)).willReturn(owner);
         given(eventRawService.findEventById(eventId)).willReturn(originalEvent);
 
+        given(calendarRawService.getMyPersonalCalendar(owner)).willReturn(personalCalendar);
+        given(personalCalendar.getCalendarId()).willReturn(calendarId);
+        given(teamMemberRawService.findByMember(owner)).willReturn(List.of());
+        doNothing().when(originalEvent).validateEventOwner(owner);
+
         given(eventCommandService.modifyRecurringInstance(eq(originalEvent), eq(requestDto)))
                 .willReturn(savedOverride);
         // when
@@ -341,6 +348,11 @@ class PersonalEventServiceTest {
         // then
         verify(memberRawService).findMemberByEmail(memberEmail);
         verify(eventRawService).findEventById(eventId);
+
+        verify(originalEvent).validateEventOwner(owner);
+        verify(calendarRawService).getMyPersonalCalendar(owner);
+        verify(teamMemberRawService).findByMember(owner);
+        verify(eventQueryService).checkEventUpdateOverlapForMember(any(), anyList(), any(), any(), any()); // 충돌 검사 확인
 
         verify(eventCommandService).modifyRecurringInstance(eq(originalEvent), eq(requestDto));
         assertThat(result.eventId()).isEqualTo(originalEvent.getEventId());
@@ -391,6 +403,10 @@ class PersonalEventServiceTest {
         verify(eventRawService).findEventById(eventId);
         verify(originalEvent).validateEventOwner(owner);
         verify(eventCommandService).modifyRecurringInstance(eq(originalEvent), eq(requestDto));
+
+        verify(calendarRawService, never()).getMyPersonalCalendar(owner);
+        verify(teamMemberRawService, never()).findByMember(owner);
+        verify(eventQueryService, never()).checkEventUpdateOverlapForMember(any(), anyList(), any(), any(), any());
 
         assertThat(result.title()).isEqualTo("두 번째 수정");
         assertThat(result.description()).isEqualTo("내용도 수정");
@@ -443,6 +459,10 @@ class PersonalEventServiceTest {
         given(eventRawService.findEventById(eventId)).willReturn(originalEvent);
         doNothing().when(originalEvent).validateEventOwner(owner);
 
+        given(calendarRawService.getMyPersonalCalendar(owner)).willReturn(personalCalendar);
+        given(personalCalendar.getCalendarId()).willReturn(calendarId);
+        given(teamMemberRawService.findByMember(owner)).willReturn(List.of());
+
         given(eventCommandService.modifyRecurringInstance(eq(originalEvent), eq(secondRequestDto))).willReturn(updatedOverride);
 
         EventGetResponseDto result = eventService.modifyPersonalRecurringInstance(memberEmail, eventId, secondRequestDto);
@@ -450,6 +470,11 @@ class PersonalEventServiceTest {
         verify(memberRawService).findMemberByEmail(memberEmail);
         verify(eventRawService).findEventById(eventId);
         verify(originalEvent).validateEventOwner(owner);
+
+        verify(calendarRawService).getMyPersonalCalendar(owner);
+        verify(teamMemberRawService).findByMember(owner);
+        verify(eventQueryService).checkEventUpdateOverlapForMember(any(), anyList(), any(), any(), any());
+
         verify(eventCommandService).modifyRecurringInstance(eq(originalEvent), eq(secondRequestDto));
 
         assertThat(result.eventId()).isEqualTo(eventId);
@@ -468,7 +493,7 @@ class PersonalEventServiceTest {
         Event existingEvent = spy(TestUtil.makeEvent("다른 사람 일정", "내용"));
 
         existingEvent.connectCalendar(personalCalendar);
-        EventModifyRequestDto requestDto = new EventModifyRequestDto("새 제목", null, null, null, null);
+        EventModifyRequestDto requestDto = new EventModifyRequestDto("새 제목", null, null, null, null, null);
 
         given(memberRawService.findMemberByEmail(memberEmail)).willReturn(owner);
         given(eventRawService.findEventById(eventId)).willReturn(existingEvent);
@@ -481,6 +506,10 @@ class PersonalEventServiceTest {
         assertThatThrownBy(() -> eventService.modifyPersonalEvent(memberEmail, eventId, requestDto))
                 .isInstanceOf(AccessDeniedException.class)
                 .hasMessage("해당 캘린더에 대한 접근 권한이 없습니다.");
+
+        verify(memberRawService).findMemberByEmail(memberEmail);
+        verify(eventRawService).findEventById(eventId);
+        verify(existingEvent).validateEventOwner(owner);
     }
 
     @Test
@@ -557,128 +586,132 @@ class PersonalEventServiceTest {
         assertThatThrownBy(() -> eventService.deletePersonalEvent(memberEmail, eventId))
                 .isInstanceOf(EntityNotFoundException.class)
                 .hasMessage("해당 일정을 찾을 수 없습니다.");
+
+        // [수정됨] (verify 추가)
+        verify(memberRawService).findMemberByEmail(memberEmail);
+        verify(eventRawService).findEventById(eventId);
         verify(eventRawService, never()).deleteEvent(any());
     }
-    
+
     @Test
     @DisplayName("다가오는 개인 일정 조회 성공")
     void getUpcomingMyEvent_success() {
         //given
         String email = "test@test.com";
-        
+
         Member member = owner;
         Team team = TestUtil.makeTeam();
         TeamMember teamMember = new TeamMember(team, member, TeamRole.LEADER);
-        
+
         Calendar teamCalendar = spy(TestUtil.makeTeamCalendar(owner, team));
         when(teamCalendar.getCalendarId()).thenReturn(100L);
-        
+
         Calendar personalCalendar = spy(TestUtil.makePersonalCalendar(owner));
         when(personalCalendar.getCalendarId()).thenReturn(200L);
-        
+
         when(memberRawService.findMemberByEmail(email)).thenReturn(member);
         when(teamMemberRawService.findByMember(member)).thenReturn(List.of(teamMember));
         when(calendarRawService.getTeamCalendar(team)).thenReturn(teamCalendar);
         when(calendarRawService.getMyPersonalCalendar(member)).thenReturn(personalCalendar);
-        
+
         LocalDateTime start = LocalDate.now().plusDays(1).atStartOfDay();
         LocalDateTime end = LocalDate.now().plusDays(8).atStartOfDay();
-        
+
         EventServiceDto event1 = new EventServiceDto(
-            1L,
-            "회의",
-            "주간 회의",
-            LocalDateTime.of(2025, 9, 10, 10, 0),
-            LocalDateTime.of(2025, 9, 10, 11, 0),
-            true,
-            false
+                1L,
+                "회의",
+                "주간 회의",
+                LocalDateTime.of(2025, 9, 10, 10, 0),
+                LocalDateTime.of(2025, 9, 10, 11, 0),
+                true,
+                false
         );
-        
+
         EventServiceDto event2 = new EventServiceDto(
-            2L,
-            "워크샵",
-            "분기별 워크샵",
-            LocalDateTime.of(2025, 9, 15, 14, 0),
-            LocalDateTime.of(2025, 9, 15, 17, 0),
-            false,
-            false
+                2L,
+                "워크샵",
+                "분기별 워크샵",
+                LocalDateTime.of(2025, 9, 15, 14, 0),
+                LocalDateTime.of(2025, 9, 15, 17, 0),
+                false,
+                false
         );
-        
-        when(eventQueryService.getEvents(anyList(), eq(start), eq(end)))
-            .thenReturn(List.of(event1, event2));
-        
+
+        when(eventQueryService.getEventsForMember(eq(member), anyList(), eq(start), eq(end)))
+                .thenReturn(List.of(event1, event2));
+
         // when
         List<EventGetResponseDto> result = eventService.getUpcomingMyEvent(email);
-        
+
         // then
         assertThat(result).hasSize(2);
         assertThat(result.getFirst().title()).isEqualTo("회의");
-        
+
         verify(memberRawService).findMemberByEmail(email);
         verify(teamMemberRawService).findByMember(member);
         verify(calendarRawService).getTeamCalendar(team);
         verify(calendarRawService).getMyPersonalCalendar(member);
-        verify(eventQueryService).getEvents(anyList(), eq(start), eq(end));
+        verify(eventQueryService).getEventsForMember(eq(member), anyList(), eq(start), eq(end));
     }
-    
+
     @Test
     @DisplayName("오늘의 개인 일정 조회 성공")
     void getTodayMyEvent_success() {
         //given
         String email = "today@test.com";
-        
+
         Member member = owner;
         Team team = TestUtil.makeTeam();
         TeamMember teamMember = TestUtil.makeTeamMember(team, member);
-        
+
         Calendar teamCalendar = spy(TestUtil.makeTeamCalendar(owner, team));
         when(teamCalendar.getCalendarId()).thenReturn(100L);
-        
+
         Calendar personalCalendar = spy(TestUtil.makePersonalCalendar(owner));
         when(personalCalendar.getCalendarId()).thenReturn(200L);
-        
+
         LocalDateTime start = LocalDate.now().atStartOfDay();
         LocalDateTime end = LocalDate.now().plusDays(1).atStartOfDay();
-        
+
         EventServiceDto event1 = new EventServiceDto(
-            1L,
-            "회의",
-            "주간 회의",
-            LocalDateTime.of(2025, 9, 10, 10, 0),
-            LocalDateTime.of(2025, 9, 10, 11, 0),
-            true,
-            false
+                1L,
+                "회의",
+                "주간 회의",
+                LocalDateTime.of(2025, 9, 10, 10, 0),
+                LocalDateTime.of(2025, 9, 10, 11, 0),
+                true,
+                false
         );
-        
+
         EventServiceDto event2 = new EventServiceDto(
-            2L,
-            "워크샵",
-            "분기별 워크샵",
-            LocalDateTime.of(2025, 9, 15, 14, 0),
-            LocalDateTime.of(2025, 9, 15, 17, 0),
-            false,
-            false
+                2L,
+                "워크샵",
+                "분기별 워크샵",
+                LocalDateTime.of(2025, 9, 15, 14, 0),
+                LocalDateTime.of(2025, 9, 15, 17, 0),
+                false,
+                false
         );
-        
+
         when(memberRawService.findMemberByEmail(email)).thenReturn(member);
         when(teamMemberRawService.findByMember(member)).thenReturn(List.of(teamMember));
         when(calendarRawService.getTeamCalendar(team)).thenReturn(teamCalendar);
         when(calendarRawService.getMyPersonalCalendar(member)).thenReturn(personalCalendar);
-        
-        when(eventQueryService.getEvents(anyList(), eq(start), eq(end))).thenReturn(List.of(event1, event2));
-        
+
+        when(eventQueryService.getEventsForMember(eq(member), anyList(), eq(start), eq(end))).thenReturn(List.of(event1, event2));
+
         //when
         List<EventGetResponseDto> result = eventService.getTodayMyEvent(email);
-        
+
         //then
         assertThat(result).hasSize(2);
         assertThat(result.get(0).title()).isEqualTo("회의");
         assertThat(result.get(1).title()).isEqualTo("워크샵");
-        
+
         verify(memberRawService).findMemberByEmail(email);
         verify(teamMemberRawService).findByMember(member);
         verify(calendarRawService).getTeamCalendar(team);
         verify(calendarRawService).getMyPersonalCalendar(member);
-        verify(eventQueryService).getEvents(anyList(), eq(start), eq(end));
+        verify(eventQueryService).getEventsForMember(eq(member), anyList(), eq(start), eq(end));
     }
 }
