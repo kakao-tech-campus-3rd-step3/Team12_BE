@@ -26,7 +26,8 @@ public class TestUtil {
                 content,
                 LocalDateTime.now(),
                 LocalDateTime.now().plusHours(1),
-                false
+                false,
+                null
         );
     }
 
@@ -36,7 +37,8 @@ public class TestUtil {
                 content,
                 LocalDateTime.now(),
                 LocalDateTime.now().plusHours(1),
-                false
+                false,
+                null
         );
 
         // 매주 반복

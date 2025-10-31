@@ -129,6 +129,8 @@ class PersonalEventServiceTest {
         given(personalCalendar.getCalendarId()).willReturn(calendarId);
         given(teamMemberRawService.findByMember(owner)).willReturn(List.of());
 
+        doNothing().when(eventQueryService).checkNewSingleEventOverlapForMember(any(), anyList(), any(), any());
+
         given(eventCommandService.createSingleEvent(eq(personalCalendar), any(EventCreateDto.class)))
                 .willReturn(event);
 
@@ -142,6 +144,7 @@ class PersonalEventServiceTest {
         verify(memberRawService).findMemberByEmail(memberEmail);
         verify(calendarRawService, times(2)).getMyPersonalCalendar(owner);
         verify(teamMemberRawService).findByMember(owner);
+        verify(eventQueryService).checkNewSingleEventOverlapForMember(any(), anyList(), any(), any());
         verify(eventCommandService).createSingleEvent(eq(personalCalendar), any(EventCreateDto.class));
     }
 
@@ -160,6 +163,8 @@ class PersonalEventServiceTest {
 
         given(teamMemberRawService.findByMember(owner)).willReturn(List.of());
 
+        doNothing().when(eventQueryService).checkNewRecurringEventOverlapForMember(any(), anyList(), any(), any(), any());
+
         given(eventCommandService.createRecurringEvent(eq(personalCalendar), eq(requestDto)))
                 .willReturn(savedEvent);
 
@@ -173,6 +178,7 @@ class PersonalEventServiceTest {
         verify(calendarRawService, times(2)).getMyPersonalCalendar(owner);
         verify(personalCalendar).validateOwner(owner);
         verify(teamMemberRawService).findByMember(owner);
+        verify(eventQueryService).checkNewRecurringEventOverlapForMember(any(), anyList(), any(), any(), any());
         verify(eventCommandService).createRecurringEvent(eq(personalCalendar), eq(requestDto));
     }
 
@@ -194,8 +200,9 @@ class PersonalEventServiceTest {
 
         given(teamMemberRawService.findByMember(owner)).willReturn(List.of());
 
-        given(eventCommandService.createSingleEvent(eq(personalCalendar), any(EventCreateDto.class)))
-                .willThrow(new InvalidInputException("겹치는 일정이 있어 등록할 수 없습니다."));
+        doThrow(new InvalidInputException("겹치는 일정이 있어 등록할 수 없습니다."))
+                .when(eventQueryService)
+                .checkNewSingleEventOverlapForMember(any(), anyList(), any(), any());
         // when & then
         assertThatThrownBy(() -> eventService.makePersonalSingleEvent(memberEmail, requestDto))
                 .isInstanceOf(InvalidInputException.class)
@@ -204,7 +211,6 @@ class PersonalEventServiceTest {
         verify(memberRawService).findMemberByEmail(memberEmail);
         verify(calendarRawService, times(2)).getMyPersonalCalendar(owner);
         verify(teamMemberRawService).findByMember(owner);
-        verify(eventCommandService).createSingleEvent(eq(personalCalendar), any(EventCreateDto.class));
     }
 
     @Test
@@ -283,6 +289,8 @@ class PersonalEventServiceTest {
         given(personalCalendar.getCalendarId()).willReturn(calendarId);
         given(teamMemberRawService.findByMember(owner)).willReturn(List.of());
 
+        doNothing().when(eventQueryService).checkEventUpdateOverlapForMember(any(), anyList(), any(), any(), any());
+
         doAnswer(invocation -> {
             Event eventArg = invocation.getArgument(0);
             EventUpdateDto dtoArg = invocation.getArgument(1);
@@ -303,7 +311,7 @@ class PersonalEventServiceTest {
         verify(existingEvent).validateEventOwner(owner);
         verify(calendarRawService).getMyPersonalCalendar(owner);
         verify(teamMemberRawService).findByMember(owner);
-
+        verify(eventQueryService).checkEventUpdateOverlapForMember(any(), anyList(), any(), any(), any());
         verify(eventCommandService).modifySingleEvent(eq(existingEvent), any(EventUpdateDto.class));
     }
 
@@ -314,14 +322,17 @@ class PersonalEventServiceTest {
         Long eventId = 1L;
         Event originalEvent = TestUtil.makeRecurringEvent("반복 회의", "주간 회의");
         originalEvent.connectCalendar(personalCalendar);
+        ReflectionTestUtils.setField(originalEvent, "eventId", eventId);
         LocalDateTime originalStartTime = originalEvent.getStartAt().plusDays(7);
+        LocalDateTime newStartTime = originalStartTime.plusHours(1);
+        LocalDateTime newEndTime = originalStartTime.plusHours(2);
 
         RecurringInstanceModifyRequestDto requestDto = new RecurringInstanceModifyRequestDto(
                 originalStartTime,
                 "변경된 회의",
                 "내용 변경",
-                originalStartTime.plusHours(1),
-                originalStartTime.plusHours(2),
+                newStartTime,
+                newEndTime,
                 false
         );
 
@@ -338,7 +349,8 @@ class PersonalEventServiceTest {
         given(calendarRawService.getMyPersonalCalendar(owner)).willReturn(personalCalendar);
         given(personalCalendar.getCalendarId()).willReturn(calendarId);
         given(teamMemberRawService.findByMember(owner)).willReturn(List.of());
-        doNothing().when(originalEvent).validateEventOwner(owner);
+
+        doNothing().when(eventQueryService).checkEventUpdateOverlapForMember(eq(owner), anyList(), eq(newStartTime), eq(newEndTime), eq(originalEvent));
 
         given(eventCommandService.modifyRecurringInstance(eq(originalEvent), eq(requestDto)))
                 .willReturn(savedOverride);
@@ -349,10 +361,9 @@ class PersonalEventServiceTest {
         verify(memberRawService).findMemberByEmail(memberEmail);
         verify(eventRawService).findEventById(eventId);
 
-        verify(originalEvent).validateEventOwner(owner);
         verify(calendarRawService).getMyPersonalCalendar(owner);
         verify(teamMemberRawService).findByMember(owner);
-        verify(eventQueryService).checkEventUpdateOverlapForMember(any(), anyList(), any(), any(), any()); // 충돌 검사 확인
+        verify(eventQueryService).checkEventUpdateOverlapForMember(any(), anyList(), any(), any(), any());
 
         verify(eventCommandService).modifyRecurringInstance(eq(originalEvent), eq(requestDto));
         assertThat(result.eventId()).isEqualTo(originalEvent.getEventId());
@@ -368,6 +379,8 @@ class PersonalEventServiceTest {
         Long eventId = 1L;
         Event originalEvent = spy(TestUtil.makeRecurringEvent("반복 일정", "주간 회의"));
         originalEvent.connectCalendar(personalCalendar);
+        ReflectionTestUtils.setField(originalEvent, "eventId", eventId);
+
         LocalDateTime originalStartTime = originalEvent.getStartAt().plusDays(7);
 
         RecurringInstanceModifyRequestDto requestDto = new RecurringInstanceModifyRequestDto(
@@ -392,6 +405,10 @@ class PersonalEventServiceTest {
         given(eventRawService.findEventById(eventId)).willReturn(originalEvent);
         doNothing().when(originalEvent).validateEventOwner(owner);
 
+        given(calendarRawService.getMyPersonalCalendar(owner)).willReturn(personalCalendar);
+        given(personalCalendar.getCalendarId()).willReturn(calendarId);
+        given(teamMemberRawService.findByMember(owner)).willReturn(List.of());
+
         given(eventCommandService.modifyRecurringInstance(eq(originalEvent), eq(requestDto)))
                 .willReturn(updatedOverride);
 
@@ -404,9 +421,8 @@ class PersonalEventServiceTest {
         verify(originalEvent).validateEventOwner(owner);
         verify(eventCommandService).modifyRecurringInstance(eq(originalEvent), eq(requestDto));
 
-        verify(calendarRawService, never()).getMyPersonalCalendar(owner);
-        verify(teamMemberRawService, never()).findByMember(owner);
-        verify(eventQueryService, never()).checkEventUpdateOverlapForMember(any(), anyList(), any(), any(), any());
+        verify(calendarRawService).getMyPersonalCalendar(owner);
+        verify(teamMemberRawService).findByMember(owner);
 
         assertThat(result.title()).isEqualTo("두 번째 수정");
         assertThat(result.description()).isEqualTo("내용도 수정");

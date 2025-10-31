@@ -89,10 +89,14 @@ public class PersonalEventControllerTest {
     void makeMyRecurringEvent() throws Exception {
         // given
         RecurringEventCreateRequestDto requestDto = new RecurringEventCreateRequestDto(
-                "반복 일정", "매주 회의",
+                "반복 일정",
+                "매주 회의",
                 LocalDateTime.of(2025, 10, 1, 10, 0),
                 LocalDateTime.of(2025, 10, 1, 11, 0),
-                false, "FREQ=WEEKLY;INTERVAL=1");
+                false,
+                "FREQ=WEEKLY;INTERVAL=1",
+                null
+        );
 
         EventCreateResponseDto responseDto = new EventCreateResponseDto(1L, "반복 일정", "매주 회의",
                 requestDto.firstStartTime(), requestDto.firstEndTime(), false);
@@ -157,7 +161,7 @@ public class PersonalEventControllerTest {
     void modifyMyEvent() throws Exception {
         // given
         Long eventId = 1L;
-        EventModifyRequestDto requestDto = new EventModifyRequestDto("Updated Title", null, null, null, null);
+        EventModifyRequestDto requestDto = new EventModifyRequestDto("Updated Title", null, null, null, null, null);
         EventGetResponseDto responseDto = new EventGetResponseDto(
                 eventId,
                 "Updated Title",
@@ -186,7 +190,7 @@ public class PersonalEventControllerTest {
     void modifyMyRecurringEvent() throws Exception {
         // given
         Long eventId = 1L;
-        EventModifyRequestDto requestDto = new EventModifyRequestDto("수정된 반복 일정", null, null, null, null);
+        EventModifyRequestDto requestDto = new EventModifyRequestDto("수정된 반복 일정", null, null, null, null, null);
         EventGetResponseDto responseDto = new EventGetResponseDto(eventId, "수정된 반복 일정", "설명",
                 LocalDateTime.now(), LocalDateTime.now().plusHours(1), false, true);
 
