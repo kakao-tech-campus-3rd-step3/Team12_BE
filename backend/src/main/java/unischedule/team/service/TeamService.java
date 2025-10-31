@@ -274,10 +274,10 @@ public class TeamService {
         List<LocalDateTime> intervalEnds = whenToMeetLogicService.generateIntervalEnds(startTime, endTime);
         List<WhenToMeet> slots = whenToMeetLogicService.generateSlots(members, intervalStarts, intervalEnds);
         
-        // 3️⃣ 멤버 이벤트 반영
+        // 멤버 이벤트 반영
         whenToMeetLogicService.applyMemberEvents(slots, members, intervalStarts, intervalEnds, whenToMeetRawService);
         
-        // 4️⃣ 추천 N개 계산
+        // 추천 N개 계산
         return recommendBestSlots(slots, requiredTime, requiredCnt, Long.valueOf(members.size()));
     }
     
