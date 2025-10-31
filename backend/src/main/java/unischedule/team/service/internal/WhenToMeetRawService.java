@@ -49,7 +49,7 @@ public class WhenToMeetRawService {
         List<Long> calendarIds = getMemberCalendarIds(teamList, findMember);
         
         // 해당 기간의 모든 일정 조회
-        List<EventServiceDto> events = eventQueryService.getEvents(calendarIds, start, end);
+        List<EventServiceDto> events = eventQueryService.getEventsForMember(member, calendarIds, start, end);
         
         return events.stream()
             .map(EventGetResponseDto::fromServiceDto)

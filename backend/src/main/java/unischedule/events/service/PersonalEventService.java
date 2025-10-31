@@ -212,28 +212,16 @@ public class PersonalEventService {
     public List<EventGetResponseDto> getTodayMyEvent(String email) {
         LocalDateTime start = LocalDate.now().atStartOfDay();
         LocalDateTime end = LocalDate.now().plusDays(1).atStartOfDay();
-        return getEventsForPeriod(email, start, end);
+        return getPersonalEvents(email, start, end);
     }
     
     @Transactional(readOnly = true)
     public List<EventGetResponseDto> getUpcomingMyEvent(String email) {
         LocalDateTime start = LocalDate.now().plusDays(1).atStartOfDay();
         LocalDateTime end = LocalDate.now().plusDays(8).atStartOfDay();
-        return getEventsForPeriod(email, start, end);
+        return getPersonalEvents(email, start, end);
     }
     
-    private List<EventGetResponseDto> getEventsForPeriod(String email, LocalDateTime start, LocalDateTime end) {
-        Member member = memberRawService.findMemberByEmail(email);
-        
-        List<Long> calendarIds = getMemberCalendarIds(member);
-        
-        List<EventServiceDto> events = eventQueryService.getEventsForMember(member, calendarIds, start, end);
-        
-        return events.stream()
-            .map(EventGetResponseDto::fromServiceDto)
-            .toList();
-    }
-
     private List<Long> getMemberCalendarIds(Member member) {
         List<Team> teamList = teamMemberRawService.findByMember(member)
                 .stream()

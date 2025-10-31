@@ -201,14 +201,14 @@ public class TeamEventService {
     public List<EventGetResponseDto> getTodayTeamEvents(String email, Long teamId) {
         LocalDateTime start = LocalDate.now().atStartOfDay();
         LocalDateTime end = LocalDate.now().plusDays(1).atStartOfDay();
-        return getTeamEventsForPeriod(email, teamId, start, end);
+        return getTeamEvents(email, teamId, start, end);
     }
     
     @Transactional(readOnly = true)
     public List<EventGetResponseDto> getUpcomingTeamEvents(String email, Long teamId) {
         LocalDateTime start = LocalDate.now().plusDays(1).atStartOfDay();
         LocalDateTime end = LocalDate.now().plusDays(8).atStartOfDay();
-        return getTeamEventsForPeriod(email, teamId, start, end);
+        return getTeamEvents(email, teamId, start, end);
     }
 
     @Transactional
@@ -285,20 +285,6 @@ public class TeamEventService {
 
             eventParticipantRawService.saveAllParticipantsForEvent(event, allParticipants);
         }
-    }
-    
-    private List<EventGetResponseDto> getTeamEventsForPeriod(String email, Long teamId, LocalDateTime start, LocalDateTime end) {
-        Member member = memberRawService.findMemberByEmail(email);
-        Team team = teamRawService.findTeamById(teamId);
-        
-        validateTeamMember(team, member);
-        
-        Long calendarId = calendarRawService.getTeamCalendar(team).getCalendarId();
-        List<EventServiceDto> events = eventQueryService.getEvents(List.of(calendarId), start, end);
-        
-        return events.stream()
-            .map(EventGetResponseDto::fromServiceDto)
-            .toList();
     }
     
     private List<Member> getAllTeamMember(Team team) {
@@ -379,7 +365,7 @@ public class TeamEventService {
         if (value != null) return value;
         return defaultValue;
     }
-
+    
     private List<Long> getMemberCalendarIds(Member member) {
         List<Team> teamList = teamMemberRawService.findByMember(member)
                 .stream()
