@@ -77,5 +77,10 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponseDto> EmailDuplicateException(EmailDuplicateException ex) {
         return ResponseEntity.badRequest().body(ErrorResponseDto.of(ex.getMessage()));
     }
+
+    @ExceptionHandler(EmailAuthCodeMissMatchException.class)
+    public ResponseEntity<ErrorResponseDto> EmailAuthCodeMissMatchException(EmailAuthCodeMissMatchException ex) {
+        return ResponseEntity.badRequest().body(ErrorResponseDto.of(ex.getMessage()));
+    }
 }
 

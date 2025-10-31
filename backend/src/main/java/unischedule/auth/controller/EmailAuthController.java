@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import unischedule.auth.dto.SendEmailRequestDto;
 import unischedule.auth.dto.SendEmailResponseDto;
+import unischedule.auth.dto.VerifyEmailRequestDto;
+import unischedule.auth.dto.VerifyEmailResponseDto;
 import unischedule.auth.service.EmailAuthService;
 
 @RestController
@@ -21,6 +23,13 @@ public class EmailAuthController {
     @PostMapping("/send")
     public ResponseEntity<SendEmailResponseDto> sendAuthEmail(@Valid @RequestBody SendEmailRequestDto requestDto) {
         SendEmailResponseDto responseDto = emailAuthService.sendAuthEmail(requestDto.email());
+
+        return new ResponseEntity<>(responseDto, HttpStatus.OK);
+    }
+
+    @PostMapping("/verify")
+    public ResponseEntity<VerifyEmailResponseDto> verifyAuthCode(@Valid @RequestBody VerifyEmailRequestDto requestDto) {
+        VerifyEmailResponseDto responseDto = emailAuthService.verifyAuthCode(requestDto.email(), requestDto.code());
 
         return new ResponseEntity<>(responseDto, HttpStatus.OK);
     }
