@@ -2,6 +2,7 @@ package unischedule.team.controller;
 
 import jakarta.validation.Valid;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import lombok.RequiredArgsConstructor;
@@ -27,6 +28,7 @@ import unischedule.team.dto.TeamJoinRequestDto;
 import unischedule.team.dto.TeamJoinResponseDto;
 import unischedule.team.dto.TeamMemberResponseDto;
 import unischedule.team.dto.TeamResponseDto;
+import unischedule.team.dto.WhenToMeetRecommendResponseDto;
 import unischedule.team.dto.WhenToMeetResponseDto;
 import unischedule.team.service.TeamService;
 
@@ -82,7 +84,21 @@ public class TeamController {
         List<WhenToMeetResponseDto> whenToMeetList = teamService.getTeamMembersWhenToMeet(teamId);
         return ResponseEntity.ok(whenToMeetList);
     }
-
+    
+    @GetMapping("/{teamId}/when-to-meet/recommend")
+    public ResponseEntity<List<WhenToMeetRecommendResponseDto>> getOptimalTimeWhenToMeet(
+        @RequestParam("start_time") LocalDateTime startTime,
+        @RequestParam("end_time") LocalDateTime endTime,
+        @RequestParam("required_time") Long requiredTime,
+        @RequestParam("N") Long requiredCnt,
+        @PathVariable Long teamId
+    ) {
+        List<WhenToMeetRecommendResponseDto> result = teamService.getOptimalTimeWhenToMeet(
+            startTime, endTime, requiredTime, requiredCnt, teamId
+        );
+        
+        return ResponseEntity.ok(result);
+    }
     @GetMapping
     public ResponseEntity<PageResponseDto<TeamResponseDto>> findMyTeamsWithMembers(
             @AuthenticationPrincipal UserDetails userDetails,
