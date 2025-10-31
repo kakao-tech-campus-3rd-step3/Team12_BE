@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
@@ -11,6 +12,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import unischedule.events.dto.EventGetResponseDto;
 import unischedule.member.domain.Member;
@@ -26,6 +29,151 @@ class WhenToMeetLogicServiceTest {
     
     @InjectMocks
     private WhenToMeetLogicService whenToMeetLogicService;
+    
+    @Test
+    @DisplayName("generateIntervals (파라미터 O): 여러 날짜의 교집합을 정확히 계산한다")
+    void generateIntervals_Parameterized_MultiDay_Partial() {
+        //Given
+        // 11월 1일 10:30 부터 (09:00 이후 시작)
+        LocalDateTime start = LocalDateTime.of(2025, 11, 1, 10, 30);
+        // 11월 2일 18:00 까지 (24:00 이전 종료)
+        LocalDateTime end = LocalDateTime.of(2025, 11, 2, 18, 0);
+        
+        //When
+        List<LocalDateTime> starts = whenToMeetLogicService.generateIntervalStarts(start, end);
+        List<LocalDateTime> ends = whenToMeetLogicService.generateIntervalEnds(start, end);
+        
+        //Then
+        
+        // 총 2일치(11/1, 11/2)의 간격이 나와야 함
+        assertThat(starts).hasSize(2);
+        assertThat(ends).hasSize(2);
+        
+        // 1. 11월 1일의 간격 (10:30 ~ 24:00)
+        assertThat(starts.get(0)).isEqualTo("2025-11-01T10:30:00"); // 09:00가 아닌 10:30
+        assertThat(ends.get(0)).isEqualTo("2025-11-02T00:00:00"); // 24:00 (다음날 0시)
+        
+        // 2. 11월 2일의 간격 (09:00 ~ 18:00)
+        assertThat(starts.get(1)).isEqualTo("2025-11-02T09:00:00"); // 09:00
+        assertThat(ends.get(1)).isEqualTo("2025-11-02T18:00:00"); // 24:00가 아닌 18:00
+    }
+    
+    @Test
+    @DisplayName("generateIntervals (파라미터 O): 단 하루(Single Day) 범위가 정확히 계산된다")
+    void generateIntervals_Parameterized_SingleDay_Partial() {
+        //Given
+        // 11월 1일 11:00 부터
+        LocalDateTime start = LocalDateTime.of(2025, 11, 1, 11, 0);
+        // 11월 1일 15:00 까지
+        LocalDateTime end = LocalDateTime.of(2025, 11, 1, 15, 0);
+        
+        //When
+        List<LocalDateTime> starts = whenToMeetLogicService.generateIntervalStarts(start, end);
+        List<LocalDateTime> ends = whenToMeetLogicService.generateIntervalEnds(start, end);
+        
+        //Then
+        assertThat(starts).hasSize(1);
+        assertThat(ends).hasSize(1);
+        
+        assertThat(starts.get(0)).isEqualTo("2025-11-01T11:00:00");
+        assertThat(ends.get(0)).isEqualTo("2025-11-01T15:00:00");
+    }
+    
+    @Test
+    @DisplayName("generateIntervals (파라미터 O): 업무 시간(09:00) 이전에 겹치는 경우 09:00로 잘라낸다")
+    void generateIntervals_Parameterized_OverlapBeforeNine() {
+        //Given
+        // 11월 1일 08:00 부터 (업무 시간 전)
+        LocalDateTime start = LocalDateTime.of(2025, 11, 1, 8, 0);
+        // 11월 1일 10:00 까지
+        LocalDateTime end = LocalDateTime.of(2025, 11, 1, 10, 0);
+        
+        //When
+        List<LocalDateTime> starts = whenToMeetLogicService.generateIntervalStarts(start, end);
+        List<LocalDateTime> ends = whenToMeetLogicService.generateIntervalEnds(start, end);
+        
+        //Then
+        assertThat(starts).hasSize(1);
+        assertThat(ends).hasSize(1);
+        
+        // 시작 시간이 08:00가 아닌 09:00여야 함 (dayStart = start.isAfter(dayStart) ? start : dayStart;)
+        assertThat(starts.get(0)).isEqualTo("2025-11-01T09:00:00");
+        assertThat(ends.get(0)).isEqualTo("2025-11-01T10:00:00");
+    }
+    
+    @Test
+    @DisplayName("generateIntervals (파라미터 O): 업무 시간과 전혀 겹치지 않으면 빈 리스트를 반환한다")
+    void generateIntervals_Parameterized_NoOverlap() {
+        //Given
+        // 11월 1일 06:00 부터
+        LocalDateTime start = LocalDateTime.of(2025, 11, 1, 6, 0);
+        // 11월 1일 08:00 까지 (업무 시간 09:00 이전에 종료)
+        LocalDateTime end = LocalDateTime.of(2025, 11, 1, 8, 0);
+        
+        // --- When (실행) ---
+        List<LocalDateTime> starts = whenToMeetLogicService.generateIntervalStarts(start, end);
+        List<LocalDateTime> ends = whenToMeetLogicService.generateIntervalEnds(start, end);
+        
+        // --- Then (검증) ---
+        // 교집합이 없으므로 빈 리스트여야 함
+        assertThat(starts).isEmpty();
+        assertThat(ends).isEmpty();
+    }
+    
+    @Test
+    @DisplayName("generateIntervalStarts (파라미터 없음): '오늘'을 기준으로 7일간의 시작 시간(09:00)을 반환한다")
+    void generateIntervalStarts_Default_Success() {
+        
+        //Given
+        //'오늘' 날짜를 고정
+        final LocalDate fixedToday = LocalDate.of(2025, 10, 31);
+        
+        try (MockedStatic<LocalDate> mockedDate = Mockito.mockStatic(LocalDate.class, Mockito.CALLS_REAL_METHODS)) {
+            mockedDate.when(LocalDate::now).thenReturn(fixedToday);
+            
+            //When
+            List<LocalDateTime> starts = whenToMeetLogicService.generateIntervalStarts();
+            
+            //Then
+            // effectiveStart = 2025-11-01T09:00
+            // effectiveEnd = 2025-11-08T00:00
+            // (11/1 ~ 11/7, 총 7일간)
+            
+            assertThat(starts).hasSize(7);
+            
+            // 1. 첫 번째 날짜(11월 1일)의 09:00
+            assertThat(starts.get(0)).isEqualTo("2025-11-01T09:00:00");
+            
+            // 2. 마지막 날짜(11월 7일)의 09:00
+            assertThat(starts.get(6)).isEqualTo("2025-11-07T09:00:00");
+        }
+    }
+    
+    @Test
+    @DisplayName("generateIntervalEnds (파라미터 없음): '오늘'을 기준으로 7일간의 종료 시간(24:00)을 반환한다")
+    void generateIntervalEnds_Default_Success() {
+        
+        //Given
+        final LocalDate fixedToday = LocalDate.of(2025, 10, 31);
+        
+        try (MockedStatic<LocalDate> mockedDate = Mockito.mockStatic(LocalDate.class, Mockito.CALLS_REAL_METHODS)) {
+            mockedDate.when(LocalDate::now).thenReturn(fixedToday);
+            
+            //When
+            List<LocalDateTime> ends = whenToMeetLogicService.generateIntervalEnds();
+            
+            //Then
+            // (11/1 ~ 11/7, 총 7일간)
+            
+            assertThat(ends).hasSize(7);
+            
+            // 1. 첫 번째 날짜(11월 1일)의 종료 시간 (다음 날 0시)
+            assertThat(ends.get(0)).isEqualTo("2025-11-02T00:00:00");
+            
+            // 2. 마지막 날짜(11월 7일)의 종료 시간 (다음 날 0시)
+            assertThat(ends.get(6)).isEqualTo("2025-11-08T00:00:00");
+        }
+    }
     
     @Test
     @DisplayName("generateSlots: 1시간(9:00~10:00) 범위에 15분 단위 슬롯 4개가 생성되어야 한다")
