@@ -8,6 +8,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import unischedule.member.domain.Member;
+import unischedule.member.domain.MemberStatus;
 import unischedule.member.repository.MemberRepository;
 
 import java.util.Collections;
@@ -23,9 +24,14 @@ public class UserDetailServiceImpl implements UserDetailsService {
     @Override
     @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String email) {
-        return memberRepository.findByEmail(email)
-                .map(this::createUserDetails)
+        Member member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다. : " + email));
+
+        if (member.getStatus() == MemberStatus.DELETED) {
+            throw new UsernameNotFoundException("탈퇴한 사용자입니다. : " + email);
+        }
+
+        return createUserDetails(member);
     }
 
     private UserDetails createUserDetails(Member member) {

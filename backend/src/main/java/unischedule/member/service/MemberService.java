@@ -4,14 +4,20 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import unischedule.auth.repository.RefreshTokenRepository;
 import unischedule.calendar.entity.Calendar;
 import unischedule.calendar.repository.CalendarRepository;
+import unischedule.events.repository.EventOverrideRepository;
+import unischedule.events.repository.EventParticipantRepository;
+import unischedule.events.repository.EventRepository;
 import unischedule.exception.dto.EntityAlreadyExistsException;
 import unischedule.member.domain.Member;
 import unischedule.member.dto.CurrentMemberInfoResponseDto;
 import unischedule.member.dto.MemberRegistrationDto;
 import unischedule.member.repository.MemberRepository;
 import unischedule.member.service.internal.MemberRawService;
+import unischedule.team.chat.repository.ChatMessageRepository;
+import unischedule.team.repository.TeamMemberRepository;
 
 @Service
 @RequiredArgsConstructor
@@ -20,6 +26,12 @@ public class MemberService {
     private final PasswordEncoder passwordEncoder;
     private final CalendarRepository calendarRepository;
     private final MemberRawService memberRawService;
+    private RefreshTokenRepository refreshTokenRepository;
+    private final TeamMemberRepository teamMemberRepository;
+    private final EventParticipantRepository eventParticipantRepository;
+    private final EventRepository eventRepository;
+    private final EventOverrideRepository eventOverrideRepository;
+    private final ChatMessageRepository chatMessageRepository;
 
     /**
      * 회원가입 시 기본 개인 캘린더 생성
@@ -57,5 +69,12 @@ public class MemberService {
         Member member = memberRawService.findMemberByEmail(email);
 
         return CurrentMemberInfoResponseDto.from(member);
+    }
+
+    @Transactional
+    public void withdrawMember(String email) {
+        Member member = memberRawService.findMemberByEmail(email);
+
+
     }
 }
