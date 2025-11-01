@@ -1,5 +1,6 @@
 package unischedule.event.service;
 
+import java.util.Collections;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -30,6 +31,7 @@ import unischedule.events.service.common.EventQueryService;
 import unischedule.events.service.internal.EventRawService;
 import unischedule.exception.EntityNotFoundException;
 import unischedule.exception.InvalidInputException;
+import unischedule.lecture.service.internal.LectureRawService;
 import unischedule.member.domain.Member;
 import unischedule.member.service.internal.MemberRawService;
 import unischedule.team.domain.Team;
@@ -73,6 +75,8 @@ class PersonalEventServiceTest {
     private TeamMemberRawService teamMemberRawService;
     @Mock
     private EventCommandService eventCommandService;
+    @Mock
+    private LectureRawService lectureRawService;
     @InjectMocks
     private PersonalEventService eventService;
 
@@ -709,5 +713,42 @@ class PersonalEventServiceTest {
         verify(calendarRawService).getTeamCalendar(team);
         verify(calendarRawService).getMyPersonalCalendar(member);
         verify(eventQueryService).getEventsForMember(eq(member), anyList(), eq(start), eq(end));
+    }
+    
+    @Test
+    @DisplayName("강의 이벤트는 제외되고 일반 이벤트만 반환된다")
+    void getUpcomingMyEvent_excludesLectureEvents() {
+        // given
+        String email = "user@example.com";
+        Member mockMember = TestUtil.makeMember(); // 단순 Mock 객체
+        
+        // member 조회 시 mockMember 반환
+        given(memberRawService.findMemberByEmail(email)).willReturn(mockMember);
+        
+        Calendar mockCalendar = TestUtil.makePersonalCalendar(mockMember);
+        given(calendarRawService.getMyPersonalCalendar(mockMember)).willReturn(mockCalendar);
+        
+        given(teamMemberRawService.findByMember(mockMember)).willReturn(Collections.emptyList());
+        
+        // eventQueryService 결과: Lecture Event(1L), Normal Event(2L)
+        var serviceDto1 = new EventServiceDto(1L, "Lecture Event", "", LocalDateTime.now(), LocalDateTime.now().plusHours(1), null);
+        var serviceDto2 = new EventServiceDto(2L, "Normal Event", "", LocalDateTime.now(), LocalDateTime.now().plusHours(1), null);
+        given(eventQueryService.getEventsForMember(any(), anyList(), any(), any()))
+            .willReturn(List.of(
+                serviceDto1,
+                serviceDto2
+            ));
+        
+        // LectureRawService 설정
+        given(lectureRawService.isEventLecture(1L)).willReturn(true);  // Lecture인 이벤트
+        given(lectureRawService.isEventLecture(2L)).willReturn(false); // 일반 이벤트
+        
+        // when
+        List<EventGetResponseDto> result = eventService.getUpcomingMyEvent(email);
+        
+        // then
+        assertThat(result)
+            .extracting(EventGetResponseDto::eventId)
+            .containsExactly(2L); // Lecture가 아닌 이벤트만 남아야 함
     }
 }
