@@ -29,7 +29,6 @@ public class TestUtil {
                 content,
                 LocalDateTime.now(),
                 LocalDateTime.now().plusHours(1),
-                false,
                 null
         );
     }
@@ -40,7 +39,6 @@ public class TestUtil {
                 content,
                 LocalDateTime.now(),
                 LocalDateTime.now().plusHours(1),
-                false,
                 null
         );
 

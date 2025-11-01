@@ -20,9 +20,6 @@ public record TeamEventCreateRequestDto(
         @JsonProperty("end_time")
         @NotNull(message = "종료 시간은 필수입니다.")
         LocalDateTime endTime,
-        @JsonProperty("is_private")
-        @NotNull(message = "공개 여부는 필수입니다.")
-        Boolean isPrivate,
 
         @JsonProperty("event_participants")
         List<Long> eventParticipants
@@ -32,8 +29,7 @@ public record TeamEventCreateRequestDto(
                         this.title,
                         this.description,
                         this.startTime,
-                        this.endTime,
-                        this.isPrivate
+                        this.endTime
                 );
         }
 

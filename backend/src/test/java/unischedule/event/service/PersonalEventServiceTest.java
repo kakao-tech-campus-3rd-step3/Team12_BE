@@ -110,8 +110,7 @@ class PersonalEventServiceTest {
                 "새 회의",
                 "주간 회의",
                 LocalDateTime.now(),
-                LocalDateTime.now().plusHours(1),
-                true
+                LocalDateTime.now().plusHours(1)
         );
 
         Event event = new Event(
@@ -119,7 +118,6 @@ class PersonalEventServiceTest {
                 "주간 회의",
                 requestDto.startTime(),
                 requestDto.endTime(),
-                true,
                 false
         );
 
@@ -153,7 +151,7 @@ class PersonalEventServiceTest {
     void makePersonalRecurringEvent() {
         // given
         RecurringEventCreateRequestDto requestDto = new RecurringEventCreateRequestDto(
-                "반복 회의", "매주", LocalDateTime.now(), LocalDateTime.now().plusHours(1), false, "FREQ=WEEKLY", null);
+                "반복 회의", "매주", LocalDateTime.now(), LocalDateTime.now().plusHours(1), "FREQ=WEEKLY", null);
         Event savedEvent = TestUtil.makeRecurringEvent("반복 회의", "매주");
 
         given(memberRawService.findMemberByEmail(memberEmail)).willReturn(owner);
@@ -190,8 +188,7 @@ class PersonalEventServiceTest {
                 "겹치는 회의",
                 "주간 회의",
                 LocalDateTime.now(),
-                LocalDateTime.now().plusHours(1),
-                true
+                LocalDateTime.now().plusHours(1)
         );
 
         given(memberRawService.findMemberByEmail(memberEmail)).willReturn(owner);
@@ -233,7 +230,6 @@ class PersonalEventServiceTest {
                 "주간 회의",
                 LocalDateTime.of(2025, 9, 10, 10, 0),
                 LocalDateTime.of(2025, 9, 10, 11, 0),
-                true,
                 false
         );
 
@@ -243,7 +239,6 @@ class PersonalEventServiceTest {
                 "분기별 워크샵",
                 LocalDateTime.of(2025, 9, 15, 14, 0),
                 LocalDateTime.of(2025, 9, 15, 17, 0),
-                false,
                 false
         );
 
@@ -280,7 +275,7 @@ class PersonalEventServiceTest {
         Event existingEvent = spy(TestUtil.makeEvent("일정", "내용"));
         existingEvent.connectCalendar(personalCalendar);
 
-        EventModifyRequestDto requestDto = new EventModifyRequestDto("새 제목", "새 내용", null, null, true, null);
+        EventModifyRequestDto requestDto = new EventModifyRequestDto("새 제목", "새 내용", null, null, null);
 
         given(memberRawService.findMemberByEmail(memberEmail)).willReturn(owner);
         given(eventRawService.findEventById(eventId)).willReturn(existingEvent);
@@ -294,7 +289,7 @@ class PersonalEventServiceTest {
         doAnswer(invocation -> {
             Event eventArg = invocation.getArgument(0);
             EventUpdateDto dtoArg = invocation.getArgument(1);
-            eventArg.modifyEvent(dtoArg.title(), dtoArg.content(), dtoArg.startTime(), dtoArg.endTime(), dtoArg.isPrivate());
+            eventArg.modifyEvent(dtoArg.title(), dtoArg.content(), dtoArg.startTime(), dtoArg.endTime());
             return eventArg;
         }).when(eventCommandService).modifySingleEvent(eq(existingEvent), any(EventUpdateDto.class));
 
@@ -332,14 +327,12 @@ class PersonalEventServiceTest {
                 "변경된 회의",
                 "내용 변경",
                 newStartTime,
-                newEndTime,
-                false
+                newEndTime
         );
 
         EventOverride savedOverride = mock(EventOverride.class);
         when(savedOverride.getTitle()).thenReturn(requestDto.title());
         when(savedOverride.getContent()).thenReturn(requestDto.content());
-        when(savedOverride.getIsPrivate()).thenReturn(requestDto.isPrivate());
         when(savedOverride.getStartAt()).thenReturn(originalStartTime.plusHours(1));
         when(savedOverride.getEndAt()).thenReturn(originalStartTime.plusHours(2));
 
@@ -388,7 +381,6 @@ class PersonalEventServiceTest {
                 "두 번째 수정",
                 "내용도 수정",
                 null,
-                null,
                 null
         );
 
@@ -397,9 +389,6 @@ class PersonalEventServiceTest {
         when(updatedOverride.getContent()).thenReturn("내용도 수정");
         when(updatedOverride.getStartAt()).thenReturn(originalStartTime);
         when(updatedOverride.getEndAt()).thenReturn(originalStartTime.plusHours(1));
-
-        Boolean originalIsPrivate = originalEvent.getIsPrivate();
-        when(updatedOverride.getIsPrivate()).thenReturn(originalIsPrivate);
 
         given(memberRawService.findMemberByEmail(memberEmail)).willReturn(owner);
         given(eventRawService.findEventById(eventId)).willReturn(originalEvent);
@@ -445,8 +434,7 @@ class PersonalEventServiceTest {
                 "1차 수정",
                 null,
                 firstModifiedStartTime,
-                firstModifiedStartTime.plusHours(1),
-                false
+                firstModifiedStartTime.plusHours(1)
         ));
         ReflectionTestUtils.setField(existingOverride, "id", 100L);
 
@@ -456,8 +444,7 @@ class PersonalEventServiceTest {
                 "회의 2차 변경",
                 "장소 B",
                 secondModifiedStartTime,
-                secondModifiedStartTime.plusHours(1),
-                true
+                secondModifiedStartTime.plusHours(1)
         );
 
         EventOverride updatedOverride = spy(new EventOverride(
@@ -466,8 +453,7 @@ class PersonalEventServiceTest {
                 "회의 2차 변경",
                 "장소 B",
                 secondModifiedStartTime,
-                secondModifiedStartTime.plusHours(1),
-                true
+                secondModifiedStartTime.plusHours(1)
         ));
         ReflectionTestUtils.setField(updatedOverride, "id", 100L);
 
@@ -496,7 +482,6 @@ class PersonalEventServiceTest {
         assertThat(result.eventId()).isEqualTo(eventId);
         assertThat(result.title()).isEqualTo("회의 2차 변경");
         assertThat(result.startTime()).isEqualTo(secondModifiedStartTime);
-        assertThat(result.isPrivate()).isTrue();
         assertThat(result.isRecurring()).isTrue();
     }
 
@@ -509,7 +494,7 @@ class PersonalEventServiceTest {
         Event existingEvent = spy(TestUtil.makeEvent("다른 사람 일정", "내용"));
 
         existingEvent.connectCalendar(personalCalendar);
-        EventModifyRequestDto requestDto = new EventModifyRequestDto("새 제목", null, null, null, null, null);
+        EventModifyRequestDto requestDto = new EventModifyRequestDto("새 제목", null, null, null, null);
 
         given(memberRawService.findMemberByEmail(memberEmail)).willReturn(owner);
         given(eventRawService.findEventById(eventId)).willReturn(existingEvent);
@@ -569,8 +554,7 @@ class PersonalEventServiceTest {
                 "수정됨",
                 null,
                 modifiedStartTime,
-                modifiedStartTime.plusHours(1),
-                false
+                modifiedStartTime.plusHours(1)
         ));
         ReflectionTestUtils.setField(existingOverride, "id", 100L);
 
@@ -639,8 +623,7 @@ class PersonalEventServiceTest {
                 "주간 회의",
                 LocalDateTime.of(2025, 9, 10, 10, 0),
                 LocalDateTime.of(2025, 9, 10, 11, 0),
-                true,
-                false
+                true
         );
 
         EventServiceDto event2 = new EventServiceDto(
@@ -649,7 +632,6 @@ class PersonalEventServiceTest {
                 "분기별 워크샵",
                 LocalDateTime.of(2025, 9, 15, 14, 0),
                 LocalDateTime.of(2025, 9, 15, 17, 0),
-                false,
                 false
         );
 
@@ -695,7 +677,6 @@ class PersonalEventServiceTest {
                 "주간 회의",
                 LocalDateTime.of(2025, 9, 10, 10, 0),
                 LocalDateTime.of(2025, 9, 10, 11, 0),
-                true,
                 false
         );
 
@@ -705,7 +686,6 @@ class PersonalEventServiceTest {
                 "분기별 워크샵",
                 LocalDateTime.of(2025, 9, 15, 14, 0),
                 LocalDateTime.of(2025, 9, 15, 17, 0),
-                false,
                 false
         );
 

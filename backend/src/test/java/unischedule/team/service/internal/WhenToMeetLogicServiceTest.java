@@ -230,7 +230,7 @@ class WhenToMeetLogicServiceTest {
         // Alice(member1)는 9:00~9:30에 일정이 있다.
         LocalDateTime eventStart = LocalDateTime.of(2025, 11, 1, 9, 0);
         LocalDateTime eventEnd = LocalDateTime.of(2025, 11, 1, 9, 30);
-        EventGetResponseDto aliceEvent = new EventGetResponseDto(1L, "title", "", eventStart, eventEnd, false, false);
+        EventGetResponseDto aliceEvent = new EventGetResponseDto(1L, "title", "", eventStart, eventEnd, false);
         
         when(whenToMeetRawService.findMemberEvents(member1, dayStart, dayEnd)).thenReturn(List.of(aliceEvent));
         // Bob(member2)는 일정이 없다.
@@ -267,7 +267,7 @@ class WhenToMeetLogicServiceTest {
         // Alice(member1)는 9:00~9:30에 일정이 있다.
         LocalDateTime eventStart = LocalDateTime.of(2025, 11, 1, 9, 0);
         LocalDateTime eventEnd = LocalDateTime.of(2025, 11, 1, 9, 30);
-        EventGetResponseDto aliceEvent = new EventGetResponseDto(1L, "title", "", eventStart, eventEnd, false, false);
+        EventGetResponseDto aliceEvent = new EventGetResponseDto(1L, "title", "", eventStart, eventEnd, false);
         
         // 2-1. Mock RawService 설정
         when(whenToMeetRawService.findMemberEvents(member1, dayStart, dayEnd)).thenReturn(List.of(aliceEvent));

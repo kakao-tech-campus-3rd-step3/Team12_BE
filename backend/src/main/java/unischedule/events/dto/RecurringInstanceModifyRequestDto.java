@@ -17,17 +17,14 @@ public record RecurringInstanceModifyRequestDto(
         @JsonProperty("start_time")
         LocalDateTime startTime,
         @JsonProperty("end_time")
-        LocalDateTime endTime,
-        @JsonProperty("is_private")
-        Boolean isPrivate
+        LocalDateTime endTime
 ) {
     public EventOverrideUpdateDto toEventOverrideUpdateDto() {
         return new EventOverrideUpdateDto(
                 this.title,
                 this.content,
                 this.startTime,
-                this.endTime,
-                this.isPrivate
+                this.endTime
         );
     }
 
@@ -37,8 +34,7 @@ public record RecurringInstanceModifyRequestDto(
                 this.title,
                 this.content,
                 this.startTime,
-                this.endTime,
-                this.isPrivate
+                this.endTime
         );
     }
 

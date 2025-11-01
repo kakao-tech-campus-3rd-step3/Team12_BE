@@ -14,8 +14,6 @@ public record EventModifyRequestDto(
         LocalDateTime startTime,
         @JsonProperty("end_time")
         LocalDateTime endTime,
-        @JsonProperty("is_private")
-        Boolean isPrivate,
 
         @JsonProperty("event_participants")
         List<Long> eventParticipants
@@ -25,8 +23,7 @@ public record EventModifyRequestDto(
                         this.title,
                         this.description,
                         this.startTime,
-                        this.endTime,
-                        this.isPrivate
+                        this.endTime
                 );
         }
     

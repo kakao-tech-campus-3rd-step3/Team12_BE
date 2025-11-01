@@ -18,9 +18,6 @@ public record RecurringEventCreateRequestDto(
         @JsonProperty("first_end_time")
         @NotNull(message = "종료 시간은 필수입니다.")
         LocalDateTime firstEndTime,
-        @JsonProperty("is_private")
-        @NotNull(message = "공개 여부는 필수입니다.")
-        Boolean isPrivate,
         @NotBlank(message = "반복 규칙(rrule)은 필수입니다.")
         String rrule,
 

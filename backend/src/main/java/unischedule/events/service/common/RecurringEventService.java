@@ -75,7 +75,6 @@ public class RecurringEventService {
                         .content(recEvent.getContent())
                         .startAt(eventStart)
                         .endAt(eventStart.plus(duration))
-                        .isPrivate(recEvent.getIsPrivate())
                         .build())
                 .toList();
     }

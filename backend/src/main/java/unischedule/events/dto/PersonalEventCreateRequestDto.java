@@ -15,18 +15,14 @@ public record PersonalEventCreateRequestDto(
         LocalDateTime startTime,
         @JsonProperty("end_time")
         @NotNull(message = "종료 시간은 필수입니다.")
-        LocalDateTime endTime,
-        @JsonProperty("is_private")
-        @NotNull(message = "공개 여부는 필수입니다.")
-        Boolean isPrivate
+        LocalDateTime endTime
 ) {
         public EventCreateDto toDto() {
                 return new EventCreateDto(
                         this.title,
                         this.description,
                         this.startTime,
-                        this.endTime,
-                        this.isPrivate
+                        this.endTime
                 );
         }
     
