@@ -28,7 +28,7 @@ public class ExpandedRecurringEvents {
         }
     }
 
-    public List<Event> applyOverrides(EventOverrideList overrideList) {
+    public List<Event> applyOverrides(EventOverrideSeries overrideList) {
         if (overrideList == null || overrideList.isEmpty()) {
             return this.expandedEvents;
         }
@@ -54,7 +54,7 @@ public class ExpandedRecurringEvents {
         return List.copyOf(finalEventList);
     }
 
-    public List<EventServiceDto> applyOverridesToDtos(EventOverrideList overrideList) {
+    public List<EventServiceDto> applyOverridesToDtos(EventOverrideSeries overrideList) {
         List<Event> finalEvents = applyOverrides(overrideList);
         return finalEvents.stream()
                 .map(event -> EventServiceDto.fromRecurringEvent(event, true, this.originalEvent))

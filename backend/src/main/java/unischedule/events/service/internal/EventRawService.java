@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import unischedule.events.domain.Event;
-import unischedule.events.domain.collection.SingleEventList;
+import unischedule.events.domain.collection.SingleEventSeries;
 import unischedule.events.dto.EventUpdateDto;
 import unischedule.events.repository.EventRepository;
 import unischedule.exception.EntityNotFoundException;
@@ -46,14 +46,14 @@ public class EventRawService {
     }
 
     @Transactional(readOnly = true)
-    public SingleEventList findSingleSchedule(List<Long> calendarIds, LocalDateTime startTime, LocalDateTime endTime) {
+    public SingleEventSeries findSingleSchedule(List<Long> calendarIds, LocalDateTime startTime, LocalDateTime endTime) {
         List<Event> singleEventList = eventRepository.findSingleEventsInPeriod(calendarIds, startTime, endTime);
 
-        return new SingleEventList(singleEventList);
+        return new SingleEventSeries(singleEventList);
     }
 
     @Transactional(readOnly = true)
-    public SingleEventList findSingleScheduleForMember(
+    public SingleEventSeries findSingleScheduleForMember(
             Member member,
             List<Long> calendarIds,
             LocalDateTime startTime,
@@ -66,7 +66,7 @@ public class EventRawService {
                 endTime
         );
 
-        return new SingleEventList(singleEventList);
+        return new SingleEventSeries(singleEventList);
     }
 
     @Transactional(readOnly = true)

@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import unischedule.events.domain.Event;
-import unischedule.events.domain.collection.SingleEventList;
+import unischedule.events.domain.collection.SingleEventSeries;
 import unischedule.events.dto.EventServiceDto;
 import unischedule.events.service.internal.EventRawService;
 import unischedule.events.util.RRuleParser;
@@ -28,7 +28,7 @@ public class EventQueryService {
     public List<EventServiceDto> getEvents(List<Long> calendarIds, LocalDateTime startAt, LocalDateTime endAt) {
         List<EventServiceDto> eventList = new ArrayList<>();
 
-        SingleEventList singleEvents = eventRawService.findSingleSchedule(calendarIds, startAt, endAt);
+        SingleEventSeries singleEvents = eventRawService.findSingleSchedule(calendarIds, startAt, endAt);
 
         eventList.addAll(singleEvents.toServiceDtos());
         eventList.addAll(recurringEventService.expandRecurringEvents(calendarIds, startAt, endAt));
@@ -48,7 +48,7 @@ public class EventQueryService {
     public List<EventServiceDto> getEventsForMember(Member member, List<Long> calendarIds, LocalDateTime startAt, LocalDateTime endAt) {
         List<EventServiceDto> eventList = new ArrayList<>();
 
-        SingleEventList singleEvents = eventRawService.findSingleScheduleForMember(member, calendarIds, startAt, endAt);
+        SingleEventSeries singleEvents = eventRawService.findSingleScheduleForMember(member, calendarIds, startAt, endAt);
         eventList.addAll(singleEvents.toServiceDtos());
         eventList.addAll(recurringEventService.expandRecurringEventsForMember(member, calendarIds, startAt, endAt));
 
@@ -121,15 +121,12 @@ public class EventQueryService {
      * @return
      */
     private boolean hasEventForMember(Member member, List<Long> calendarIds, LocalDateTime startAt, LocalDateTime endAt) {
-        SingleEventList singleEventList = eventRawService.findSingleScheduleForMember(member, calendarIds, startAt, endAt);
-        if (singleEventList.hasOverlap(startAt, endAt)) {
+        SingleEventSeries singleEvents = eventRawService.findSingleScheduleForMember(member, calendarIds, startAt, endAt);
+        if (singleEvents.hasOverlap(startAt, endAt)) {
             return true;
         }
 
-        if (!recurringEventService.expandRecurringEventsForMember(member, calendarIds, startAt, endAt).isEmpty()) {
-            return true;
-        }
-        return false;
+        return !recurringEventService.expandRecurringEventsForMember(member, calendarIds, startAt, endAt).isEmpty();
     }
 
 }

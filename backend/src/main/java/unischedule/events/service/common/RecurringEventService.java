@@ -5,9 +5,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import unischedule.events.domain.Event;
 import unischedule.events.domain.EventOverride;
-import unischedule.events.domain.collection.EventOverrideList;
+import unischedule.events.domain.collection.EventOverrideSeries;
 import unischedule.events.domain.collection.ExpandedRecurringEvents;
-import unischedule.events.domain.collection.RecurringEventList;
+import unischedule.events.domain.collection.RecurringEventSeries;
 import unischedule.events.dto.EventServiceDto;
 import unischedule.events.service.internal.RecurringEventRawService;
 import unischedule.events.util.RRuleParser;
@@ -28,7 +28,7 @@ public class RecurringEventService {
 
     @Transactional(readOnly = true)
     public List<EventServiceDto> expandRecurringEvents(List<Long> calendarIds, LocalDateTime startAt, LocalDateTime endAt) {
-        RecurringEventList recurringEvents = recurringEventRawService.findRecurringSchedule(calendarIds, endAt);
+        RecurringEventSeries recurringEvents = recurringEventRawService.findRecurringSchedule(calendarIds, endAt);
 
         if (recurringEvents.isEmpty()) {
             return Collections.emptyList();
@@ -41,9 +41,9 @@ public class RecurringEventService {
         for (Event recurEvent : recurringEvents.getEvents()) {
             List<Event> expandedEvent = expandRecurringEvent(recurEvent, startAt, endAt);
             ExpandedRecurringEvents expandedRecurringEvents = new ExpandedRecurringEvents(expandedEvent, recurEvent);
-            EventOverrideList overrideList = new EventOverrideList(exceptionsMap.getOrDefault(recurEvent.getEventId(), List.of()));
+            EventOverrideSeries overrideSeries = new EventOverrideSeries(exceptionsMap.getOrDefault(recurEvent.getEventId(), List.of()));
 
-            finalExpandedEventList.addAll(expandedRecurringEvents.applyOverridesToDtos(overrideList));
+            finalExpandedEventList.addAll(expandedRecurringEvents.applyOverridesToDtos(overrideSeries));
         }
 
         return finalExpandedEventList;
@@ -51,7 +51,7 @@ public class RecurringEventService {
 
     @Transactional(readOnly = true)
     public List<EventServiceDto> expandRecurringEventsForMember(Member member, List<Long> calendarIds, LocalDateTime startAt, LocalDateTime endAt) {
-        RecurringEventList recurringEvents = recurringEventRawService.findRecurringScheduleForMember(member, calendarIds, endAt);
+        RecurringEventSeries recurringEvents = recurringEventRawService.findRecurringScheduleForMember(member, calendarIds, endAt);
 
         if (recurringEvents.isEmpty()) {
             return Collections.emptyList();
@@ -64,9 +64,9 @@ public class RecurringEventService {
         for (Event recurEvent : recurringEvents.getEvents()) {
             List<Event> expandedEvent = expandRecurringEvent(recurEvent, startAt, endAt);
             ExpandedRecurringEvents expandedRecurringEvents = new ExpandedRecurringEvents(expandedEvent, recurEvent);
-            EventOverrideList overrideList = new EventOverrideList(exceptionsMap.getOrDefault(recurEvent.getEventId(), List.of()));
+            EventOverrideSeries overrideSeries = new EventOverrideSeries(exceptionsMap.getOrDefault(recurEvent.getEventId(), List.of()));
 
-            finalExpandedEventList.addAll(expandedRecurringEvents.applyOverridesToDtos(overrideList));
+            finalExpandedEventList.addAll(expandedRecurringEvents.applyOverridesToDtos(overrideSeries));
         }
 
         return finalExpandedEventList;

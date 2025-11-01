@@ -6,12 +6,12 @@ import unischedule.events.dto.EventServiceDto;
 import java.time.LocalDateTime;
 import java.util.List;
 
-public class SingleEventList {
+public class SingleEventSeries {
 
     private final List<Event> eventList;
     private final Boolean isRecurring = false;
 
-    public SingleEventList(List<Event> eventList) {
+    public SingleEventSeries(List<Event> eventList) {
         for (Event event : eventList) {
             if (event.getRecurrenceRule() != null) {
                 throw new IllegalArgumentException("반복 일정을 단일 일정으로 관리할 수 없습니다.");
