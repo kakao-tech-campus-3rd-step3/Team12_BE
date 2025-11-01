@@ -28,7 +28,7 @@ public class LectureRawService {
     
     @Transactional(readOnly = true)
     public List<Lecture> findActiveLecturesByMemberId(Long memberId) {
-        return lectureRepository.findActiveLecturesByMemberId(memberId, LocalDate.now());
+        return lectureRepository.findByEventCalendarOwnerMemberIdAndEndDateGreaterThanEqual(memberId, LocalDate.now());
     }
     
     @Transactional
