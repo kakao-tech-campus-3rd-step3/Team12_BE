@@ -10,6 +10,9 @@ import java.util.List;
 @Repository
 public interface LectureRepository extends JpaRepository<Lecture, Long> {
     
+    @Query("SELECT CASE WHEN COUNT(l) > 0 THEN true ELSE false END FROM Lecture l WHERE l.event.eventId = :eventId")
+    boolean existsByEventId(@Param("eventId") Long eventId);
+  
     List<Lecture> findByEventCalendarOwnerMemberIdAndEndDateGreaterThanEqual(Long memberId, LocalDate today);
 }
 

@@ -35,5 +35,10 @@ public class LectureRawService {
     public void deleteLecture(Lecture lecture) {
         lectureRepository.delete(lecture);
     }
+    
+    @Transactional(readOnly = true)
+    public boolean isEventLecture(Long eventId) {
+        return lectureRepository.existsByEventId(eventId);
+    }
 }
 
