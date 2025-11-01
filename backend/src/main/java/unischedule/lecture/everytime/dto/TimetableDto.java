@@ -1,4 +1,4 @@
-package unischedule.everytime.dto;
+package unischedule.lecture.everytime.dto;
 
 import unischedule.external.dto.EverytimeTimetableRawResponseDto.PrimaryTable;
 
@@ -17,3 +17,4 @@ public record TimetableDto(
 
     }
 }
+
