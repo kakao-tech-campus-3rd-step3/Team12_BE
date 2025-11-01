@@ -3,6 +3,7 @@ package unischedule.events.service.internal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import unischedule.calendar.entity.Calendar;
 import unischedule.events.domain.Event;
 import unischedule.events.domain.collection.SingleEventSeries;
 import unischedule.events.dto.EventUpdateDto;
@@ -72,5 +73,15 @@ public class EventRawService {
     @Transactional(readOnly = true)
     public boolean existsSingleSchedule(List<Long> calendarIds, LocalDateTime startTime, LocalDateTime endTime) {
         return eventRepository.existsSingleScheduleInPeriod(calendarIds, startTime, endTime);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Event> findByCalendar(Calendar calendar) {
+        return eventRepository.findByCalendar(calendar);
+    }
+
+    @Transactional
+    public void deleteAll(List<Event> events) {
+        eventRepository.deleteAll(events);
     }
 }
