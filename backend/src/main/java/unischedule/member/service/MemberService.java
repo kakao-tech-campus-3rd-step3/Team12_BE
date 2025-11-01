@@ -7,9 +7,11 @@ import org.springframework.transaction.annotation.Transactional;
 import unischedule.auth.repository.RefreshTokenRepository;
 import unischedule.calendar.entity.Calendar;
 import unischedule.calendar.repository.CalendarRepository;
+import unischedule.events.domain.Event;
 import unischedule.events.repository.EventOverrideRepository;
 import unischedule.events.repository.EventParticipantRepository;
 import unischedule.events.repository.EventRepository;
+import unischedule.exception.InvalidInputException;
 import unischedule.exception.dto.EntityAlreadyExistsException;
 import unischedule.member.domain.Member;
 import unischedule.member.dto.CurrentMemberInfoResponseDto;
@@ -17,7 +19,11 @@ import unischedule.member.dto.MemberRegistrationDto;
 import unischedule.member.repository.MemberRepository;
 import unischedule.member.service.internal.MemberRawService;
 import unischedule.team.chat.repository.ChatMessageRepository;
+import unischedule.team.domain.TeamMember;
+import unischedule.team.domain.TeamRole;
 import unischedule.team.repository.TeamMemberRepository;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -75,6 +81,58 @@ public class MemberService {
     public void withdrawMember(String email) {
         Member member = memberRawService.findMemberByEmail(email);
 
+        checkTeamWithdraw(member);
 
+        deletePersonalCalendarData(member);
+
+        teamMemberRepository.deleteAllByMember(member);
+        eventParticipantRepository.deleteAllByMember(member);
+
+        refreshTokenRepository.findByMember(member)
+                .ifPresent(refreshTokenRepository::delete);
+
+        chatMessageRepository.updateSenderNameBySender(member, "탈퇴한 사용자");
+
+        member.withdraw();
+        memberRepository.save(member);
+
+    }
+
+    private void checkTeamWithdraw(Member member) {
+        List<TeamMember> memberships = teamMemberRepository.findByMember(member);
+
+        for (TeamMember tm : memberships) {
+            checkTeamLeadership(tm);
+        }
+    }
+
+    private void checkTeamLeadership(TeamMember teamMember) {
+        if (teamMember.getRole() != TeamRole.LEADER) {
+            return;
+        }
+
+        int leaderCount = teamMemberRepository.countByTeamAndRole(teamMember.getTeam(), TeamRole.LEADER);
+        if (leaderCount <= 1) {
+            throw new InvalidInputException("팀[" + teamMember.getTeam().getName() + "] 탈퇴 전 팀장을 위임하거나 팀을 삭제해야 합니다.");
+        }
+    }
+
+    /**
+     * 개인 캘린더 데이터 삭제
+     * @param member
+     */
+    private void deletePersonalCalendarData(Member member) {
+        calendarRepository.findByOwnerAndTeamIsNull(member)
+                .ifPresent(personalCalendar -> {
+                    List<Event> events = eventRepository.findByCalendar(personalCalendar);
+
+                    for (Event event : events) {
+                        eventParticipantRepository.deleteAllByEvent(event);
+                        eventOverrideRepository.deleteAllByOriginalEvent(event);
+                    }
+
+                    eventRepository.deleteAll(events);
+                    calendarRepository.delete(personalCalendar);
+                });
     }
 }
