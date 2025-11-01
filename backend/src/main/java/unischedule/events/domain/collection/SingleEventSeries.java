@@ -9,7 +9,7 @@ import java.util.List;
 public class SingleEventSeries {
 
     private final List<Event> eventList;
-    private final Boolean isRecurring = false;
+    private final static Boolean isRecurring = false;
 
     public SingleEventSeries(List<Event> eventList) {
         for (Event event : eventList) {

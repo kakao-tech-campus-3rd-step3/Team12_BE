@@ -30,29 +30,17 @@ public class RecurringEventService {
     public List<EventServiceDto> expandRecurringEvents(List<Long> calendarIds, LocalDateTime startAt, LocalDateTime endAt) {
         RecurringEventSeries recurringEvents = recurringEventRawService.findRecurringSchedule(calendarIds, endAt);
 
-        if (recurringEvents.isEmpty()) {
-            return Collections.emptyList();
-        }
-
-        List<EventServiceDto> finalExpandedEventList = new ArrayList<>();
-
-        Map<Long, List<EventOverride>> exceptionsMap = recurringEventRawService.getEventOverrideMap(recurringEvents.getEvents(), startAt, endAt);
-
-        for (Event recurEvent : recurringEvents.getEvents()) {
-            List<Event> expandedEvent = expandRecurringEvent(recurEvent, startAt, endAt);
-            ExpandedRecurringEvents expandedRecurringEvents = ExpandedRecurringEvents.of(expandedEvent, recurEvent);
-            EventOverrideSeries overrideSeries = new EventOverrideSeries(exceptionsMap.getOrDefault(recurEvent.getEventId(), List.of()));
-
-            finalExpandedEventList.addAll(expandedRecurringEvents.applyOverridesToDtos(overrideSeries));
-        }
-
-        return finalExpandedEventList;
+        return getEventServiceDtos(startAt, endAt, recurringEvents);
     }
 
     @Transactional(readOnly = true)
     public List<EventServiceDto> expandRecurringEventsForMember(Member member, List<Long> calendarIds, LocalDateTime startAt, LocalDateTime endAt) {
         RecurringEventSeries recurringEvents = recurringEventRawService.findRecurringScheduleForMember(member, calendarIds, endAt);
 
+        return getEventServiceDtos(startAt, endAt, recurringEvents);
+    }
+
+    private List<EventServiceDto> getEventServiceDtos(LocalDateTime startAt, LocalDateTime endAt, RecurringEventSeries recurringEvents) {
         if (recurringEvents.isEmpty()) {
             return Collections.emptyList();
         }

@@ -24,6 +24,13 @@ public class EventQueryService {
     private final RecurringEventService recurringEventService;
     private final RRuleParser rruleParser;
 
+    /**
+     * 특정 캘린더들의 일정 조회
+     * @param calendarIds
+     * @param startAt
+     * @param endAt
+     * @return
+     */
     @Transactional(readOnly = true)
     public List<EventServiceDto> getEvents(List<Long> calendarIds, LocalDateTime startAt, LocalDateTime endAt) {
         List<EventServiceDto> eventList = new ArrayList<>();
