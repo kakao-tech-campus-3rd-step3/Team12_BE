@@ -2,6 +2,7 @@ package unischedule.team.controller;
 
 import jakarta.validation.Valid;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import lombok.RequiredArgsConstructor;
@@ -22,9 +23,12 @@ import unischedule.common.dto.PaginationRequestDto;
 import unischedule.team.dto.RemoveMemberCommandDto;
 import unischedule.team.dto.TeamCreateRequestDto;
 import unischedule.team.dto.TeamCreateResponseDto;
+import unischedule.team.dto.TeamDetailResponseDto;
 import unischedule.team.dto.TeamJoinRequestDto;
 import unischedule.team.dto.TeamJoinResponseDto;
+import unischedule.team.dto.TeamMemberResponseDto;
 import unischedule.team.dto.TeamResponseDto;
+import unischedule.team.dto.WhenToMeetRecommendResponseDto;
 import unischedule.team.dto.WhenToMeetResponseDto;
 import unischedule.team.service.TeamService;
 
@@ -80,7 +84,21 @@ public class TeamController {
         List<WhenToMeetResponseDto> whenToMeetList = teamService.getTeamMembersWhenToMeet(teamId);
         return ResponseEntity.ok(whenToMeetList);
     }
-
+    
+    @GetMapping("/{teamId}/when-to-meet/recommend")
+    public ResponseEntity<List<WhenToMeetRecommendResponseDto>> getOptimalTimeWhenToMeet(
+        @RequestParam("start_time") LocalDateTime startTime,
+        @RequestParam("end_time") LocalDateTime endTime,
+        @RequestParam("required_time") Long requiredTime,
+        @RequestParam("N") Long requiredCnt,
+        @PathVariable Long teamId
+    ) {
+        List<WhenToMeetRecommendResponseDto> result = teamService.getOptimalTimeWhenToMeet(
+            startTime, endTime, requiredTime, requiredCnt, teamId
+        );
+        
+        return ResponseEntity.ok(result);
+    }
     @GetMapping
     public ResponseEntity<PageResponseDto<TeamResponseDto>> findMyTeamsWithMembers(
             @AuthenticationPrincipal UserDetails userDetails,
@@ -104,5 +122,29 @@ public class TeamController {
         teamService.removeMemberFromTeam(requestDto);
 
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    @GetMapping("/{teamId}/members")
+    public ResponseEntity<PageResponseDto<TeamMemberResponseDto>> getTeamMembers(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable Long teamId,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int limit,
+            @RequestParam(required = false) String search
+    ) {
+        PaginationRequestDto paginationRequestDto = new PaginationRequestDto(page, limit, search);
+        PageResponseDto<TeamMemberResponseDto> responseDto = teamService.getTeamMembers(userDetails.getUsername(), teamId, paginationRequestDto);
+
+        return new ResponseEntity<>(responseDto, HttpStatus.OK);
+    }
+
+    @GetMapping("/{teamId}")
+    public ResponseEntity<TeamDetailResponseDto> getTeamDetail(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable Long teamId
+    ) {
+        TeamDetailResponseDto responseDto = teamService.getTeamDetail(userDetails.getUsername(), teamId);
+
+        return new ResponseEntity<>(responseDto, HttpStatus.OK);
     }
 }

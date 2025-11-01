@@ -4,8 +4,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -28,6 +30,7 @@ import unischedule.calendar.entity.Calendar;
 import unischedule.calendar.service.internal.CalendarRawService;
 import unischedule.common.dto.PageResponseDto;
 import unischedule.common.dto.PaginationRequestDto;
+import unischedule.exception.EntityNotFoundException;
 import unischedule.exception.NoPermissionException;
 import unischedule.member.domain.Member;
 import unischedule.member.service.internal.MemberRawService;
@@ -36,14 +39,17 @@ import unischedule.team.domain.TeamMember;
 import unischedule.team.domain.TeamRole;
 import unischedule.team.domain.WhenToMeet;
 import unischedule.team.dto.TeamCreateRequestDto;
+import unischedule.team.dto.TeamDetailResponseDto;
 import unischedule.team.dto.TeamJoinRequestDto;
 import unischedule.team.dto.TeamResponseDto;
+import unischedule.team.dto.WhenToMeetRecommendResponseDto;
 import unischedule.team.dto.WhenToMeetResponseDto;
 import unischedule.team.dto.RemoveMemberCommandDto;
 import unischedule.team.service.internal.TeamMemberRawService;
 import unischedule.team.service.internal.TeamRawService;
 import unischedule.team.service.internal.WhenToMeetLogicService;
 import unischedule.team.service.internal.WhenToMeetRawService;
+import unischedule.util.TestUtil;
 
 
 @ExtendWith(MockitoExtension.class)
@@ -344,5 +350,235 @@ class TeamServiceTest {
                 .hasMessage("리더가 아닙니다.");
 
         verify(teamMemberRawService, never()).deleteTeamMember(any());
+    }
+    
+    @Test
+    @DisplayName("팀 일정 추천 시, 모든 멤버가 가능한 시간을 1순위로 반환한다")
+    void getOptimalTimeWhenToMeet_Success() {
+        
+        //GIVEN
+        Long teamId = 1L;
+        LocalDateTime startTime = LocalDateTime.of(2025, 11, 1, 9, 0); // 11/1 (토) 09:00
+        LocalDateTime endTime = LocalDateTime.of(2025, 11, 1, 12, 0); // 11/1 (토) 12:00
+        Long requiredTime = 60L; // 60분 (4슬롯)
+        Long requiredCnt = 1L;   // 1개 추천
+        
+        Member member1 = TestUtil.makeMember(); // (실제 Member 객체 또는 Mock 객체)
+        Member member2 = TestUtil.makeMember();
+        List<Member> members = List.of(member1, member2);
+        when(whenToMeetRawService.findTeamMembers(teamId)).thenReturn(members);
+        
+        List<LocalDateTime> intervalStarts = List.of(startTime);
+        List<LocalDateTime> intervalEnds = List.of(endTime);
+        when(whenToMeetLogicService.generateIntervalStarts(startTime, endTime)).thenReturn(intervalStarts);
+        when(whenToMeetLogicService.generateIntervalEnds(startTime, endTime)).thenReturn(intervalEnds);
+        
+        List<WhenToMeet> initialSlots = TestUtil.createInitialSlots(startTime, endTime, members.size());
+        when(whenToMeetLogicService.generateSlots(members, intervalStarts, intervalEnds)).thenReturn(initialSlots);
+        
+        doAnswer(invocation -> {
+            List<WhenToMeet> slotsToModify = invocation.getArgument(0);
+            slotsToModify.get(4).discountAvailable(); // 10:00-10:15
+            slotsToModify.get(5).discountAvailable(); // 10:15-10:30
+            slotsToModify.get(6).discountAvailable(); // 10:30-10:45
+            slotsToModify.get(7).discountAvailable(); // 10:45-11:00
+            return null; // void 메서드이므로 null 반환
+        }).when(whenToMeetLogicService).applyMemberEvents(
+            eq(initialSlots), eq(members), eq(intervalStarts), eq(intervalEnds), eq(whenToMeetRawService)
+        );
+        
+        // WHEN
+        List<WhenToMeetRecommendResponseDto> result = teamService.getOptimalTimeWhenToMeet(
+            startTime, endTime, requiredTime, requiredCnt, teamId
+        );
+        
+        // THEN
+        // recommendBestSlots는 60분(4슬롯) 윈도우를 찾습니다.
+        // - 09:00~10:00 (슬롯 0,1,2,3): minAvailable = 2
+        // - 09:15~10:15 (슬롯 1,2,3,4): minAvailable = 1 (4번 슬롯 때문)
+        // - ...
+        // - 11:00~12:00 (슬롯 8,9,10,11): minAvailable = 2
+        //
+        // 정렬 기준: 1. available(내림), 2. startTime(오름)
+        // 1순위: 09:00~10:00 (available=2)
+        // 2순위: 11:00~12:00 (available=2)
+        // ... (나머지 available=1)
+        
+        assertThat(result).isNotNull();
+        assertThat(result).hasSize(1); // requiredCnt = 1
+        
+        WhenToMeetRecommendResponseDto topPick = result.get(0);
+        assertThat(topPick.available()).isEqualTo(2L);
+        assertThat(topPick.status()).isEqualTo("최적");
+        assertThat(topPick.week()).isEqualTo("토"); // 2025-11-01은 토요일
+        assertThat(topPick.startTime()).isEqualTo(LocalDateTime.of(2025, 11, 1, 9, 0));
+        assertThat(topPick.endTime()).isEqualTo(LocalDateTime.of(2025, 11, 1, 10, 0)); // 60분 뒤
+        
+        // VERIFY
+        verify(whenToMeetRawService).findTeamMembers(teamId);
+        verify(whenToMeetLogicService).generateSlots(any(), any(), any());
+        verify(whenToMeetLogicService).applyMemberEvents(any(), any(), any(), any(), any());
+    }
+    
+    @Test
+    @DisplayName("팀 일정 추천 시, 최적(2명) 2개, 보통(1명) 1개를 순서대로 반환한다")
+    void getOptimalTimeWhenToMeet_Success_Top3() {
+        // GIVEN
+        Long teamId = 1L;
+        LocalDateTime startTime = LocalDateTime.of(2025, 10, 30, 9, 0);
+        LocalDateTime endTime = LocalDateTime.of(2025, 10, 30, 12, 0);
+        Long requiredTime = 60L; // 60분 (4슬롯)
+        Long requiredCnt = 3L;   // 3개 추천
+        
+        Member member1 = TestUtil.makeMember();
+        Member member2 = TestUtil.makeMember();
+        List<Member> members = List.of(member1, member2);
+        long totalMembers = members.size();
+        when(whenToMeetRawService.findTeamMembers(teamId)).thenReturn(members);
+        
+        List<LocalDateTime> intervalStarts = List.of(startTime);
+        List<LocalDateTime> intervalEnds = List.of(endTime);
+        when(whenToMeetLogicService.generateIntervalStarts(startTime, endTime)).thenReturn(intervalStarts);
+        when(whenToMeetLogicService.generateIntervalEnds(startTime, endTime)).thenReturn(intervalEnds);
+        
+        List<WhenToMeet> initialSlots = TestUtil.createInitialSlots(startTime, endTime, totalMembers);
+        when(whenToMeetLogicService.generateSlots(members, intervalStarts, intervalEnds)).thenReturn(initialSlots);
+        
+        doAnswer(invocation -> {
+            List<WhenToMeet> slotsToModify = invocation.getArgument(0);
+            slotsToModify.get(4).discountAvailable(); // 10:00-10:15 (available=1)
+            slotsToModify.get(5).discountAvailable(); // 10:15-10:30 (available=1)
+            slotsToModify.get(6).discountAvailable(); // 10:30-10:45 (available=1)
+            slotsToModify.get(7).discountAvailable(); // 10:45-11:00 (available=1)
+            return null; // void 메서드
+        }).when(whenToMeetLogicService).applyMemberEvents(
+            eq(initialSlots), eq(members), eq(intervalStarts), eq(intervalEnds), eq(whenToMeetRawService)
+        );
+        
+        // WHEN
+        List<WhenToMeetRecommendResponseDto> result = teamService.getOptimalTimeWhenToMeet(
+            startTime, endTime, requiredTime, requiredCnt, teamId
+        );
+        
+        //THEN
+        
+        // [시나리오 분석 (60분/4슬롯 윈도우)]
+        // (0) 09:00~10:00 (슬롯 0,1,2,3) : minAvailable = 2 ("최적")
+        // (1) 09:15~10:15 (슬롯 1,2,3,4) : minAvailable = 1 ("보통") - 4번 슬롯(1)
+        // (2) 09:30~10:30 (슬롯 2,3,4,5) : minAvailable = 1 ("보통") - 4,5번 슬롯(1)
+        // (3) 09:45~10:45 (슬롯 3,4,5,6) : minAvailable = 1 ("보통") - 4,5,6번 슬롯(1)
+        // (4) 10:00~11:00 (슬롯 4,5,6,7) : minAvailable = 1 ("보통") - 4,5,6,7번 슬롯(1)
+        // (5) 10:15~11:15 (슬롯 5,6,7,8) : minAvailable = 1 ("보통") - 5,6,7번 슬롯(1)
+        // (6) 10:30~11:30 (슬롯 6,7,8,9) : minAvailable = 1 ("보통") - 6,7번 슬롯(1)
+        // (7) 10:45~11:45 (슬롯 7,8,9,10): minAvailable = 1 ("보통") - 7번 슬롯(1)
+        // (8) 11:00~12:00 (슬롯 8,9,10,11): minAvailable = 2 ("보통")
+        
+        // [정렬 후 Top 3]
+        // 1. 09:00~10:00 (available=2, status="최적")
+        // 2. 11:00~12:00 (available=2, status="최적")
+        // 3. 09:15~10:15 (available=1, status="좋음")
+        
+        assertThat(result).isNotNull();
+        assertThat(result).hasSize(3); // 3개 반환 확인
+        
+        // 1순위 검증
+        WhenToMeetRecommendResponseDto top1 = result.get(0);
+        assertThat(top1.available()).isEqualTo(2L);
+        assertThat(top1.status()).isEqualTo("최적");
+        assertThat(top1.week()).isEqualTo("목"); // 2025-10-30은 목요일
+        assertThat(top1.startTime()).isEqualTo(LocalDateTime.of(2025, 10, 30, 9, 0));
+        assertThat(top1.endTime()).isEqualTo(LocalDateTime.of(2025, 10, 30, 10, 0));
+        
+        // 2순위 검증
+        WhenToMeetRecommendResponseDto top2 = result.get(1);
+        assertThat(top2.available()).isEqualTo(2L);
+        assertThat(top2.status()).isEqualTo("최적");
+        assertThat(top2.week()).isEqualTo("목");
+        assertThat(top2.startTime()).isEqualTo(LocalDateTime.of(2025, 10, 30, 11, 0));
+        assertThat(top2.endTime()).isEqualTo(LocalDateTime.of(2025, 10, 30, 12, 0));
+        
+        // 3순위 검증
+        WhenToMeetRecommendResponseDto top3 = result.get(2);
+        assertThat(top3.available()).isEqualTo(1L);
+        assertThat(top3.status()).isEqualTo("보통"); // (2명 중 1명 가능 = 1명 불참)
+        assertThat(top3.week()).isEqualTo("목");
+        assertThat(top3.startTime()).isEqualTo(LocalDateTime.of(2025, 10, 30, 9, 15));
+        assertThat(top3.endTime()).isEqualTo(LocalDateTime.of(2025, 10, 30, 10, 15));
+        
+        //VERIFY
+        verify(whenToMeetRawService).findTeamMembers(teamId);
+        verify(whenToMeetLogicService).generateSlots(any(), any(), any());
+        verify(whenToMeetLogicService).applyMemberEvents(any(), any(), any(), any(), any());
+    }
+  
+    @Test
+    @DisplayName("해당 소속 팀의 멤버가 아닐 경우 예외 발생")
+    void 해당_소속팀이_아닐_경우_예외_발생() {
+        //given
+        Member member1 = new Member("member1@email.com", "nickname1", "1234");
+        Team team = new Team("TeamA", "설명", "CODE123");
+        PaginationRequestDto paginationMeta = new PaginationRequestDto(1, 10, null);
+
+        when(memberRawService.findMemberByEmail(anyString())).thenReturn(member1);
+        when(teamRawService.findTeamById(any())).thenReturn(team);
+        doThrow(EntityNotFoundException.class)
+                .when(teamMemberRawService)
+                .validateMembership(team, member1);
+
+        //when & then
+        assertThatThrownBy(() -> teamService.getTeamMembers(member1.getEmail(), team.getTeamId(), paginationMeta))
+                .isInstanceOf(EntityNotFoundException.class);
+    }
+
+    @Test
+    @DisplayName("팀 상세 정보를 정상적으로 조회한다")
+    void 팀_상세_정보를_정상적으로_조회한다() {
+        // given
+        String email = "test@kakao.com";
+        Long teamId = 1L;
+
+        Team team = new Team("카테캠 FE", "카카오 테크 캠퍼스 3단계 프로젝트", "WHFFU5");
+        Member member = new Member(email, "홍길동", "securePassword");
+        int memberCount = 5;
+        when(teamRawService.findTeamById(teamId)).thenReturn(team);
+        when(memberRawService.findMemberByEmail(email)).thenReturn(member);
+        doNothing().when(teamMemberRawService).checkTeamAndMember(team, member);
+        when(teamMemberRawService.countTeamMemberByTeam(team)).thenReturn(memberCount);
+
+        // when
+        TeamDetailResponseDto response = teamService.getTeamDetail(email, teamId);
+
+        // then
+        assertThat(response).isNotNull();
+        assertThat(response.name()).isEqualTo("카테캠 FE");
+        assertThat(response.description()).isEqualTo("카카오 테크 캠퍼스 3단계 프로젝트");
+        assertThat(response.count()).isEqualTo(5);
+        assertThat(response.code()).isEqualTo("WHFFU5");
+
+        // verify (Mock 호출 검증)
+        verify(teamRawService).findTeamById(teamId);
+        verify(memberRawService).findMemberByEmail(email);
+        verify(teamMemberRawService).checkTeamAndMember(team, member);
+        verify(teamMemberRawService).countTeamMemberByTeam(team);
+    }
+
+    @Test
+    @DisplayName("팀 상세 정보 조회 시, 팀에 속하지 않은 멤버는 예외가 발생한다")
+    void 팀_상세_정보_조회_시_팀에_속하지_않은_멤버는_예외가_발생한다() {
+        // given
+        String email = "test@kakao.com";
+        Long teamId = 1L;
+        Team team = new Team("카테캠 FE", "카카오 테크 캠퍼스 3단계 프로젝트", "WHFFU5");
+        Member member = new Member(email, "홍길동", "securePassword");
+
+        when(teamRawService.findTeamById(teamId)).thenReturn(team);
+        when(memberRawService.findMemberByEmail(email)).thenReturn(member);
+        doThrow(EntityNotFoundException.class)
+                .when(teamMemberRawService)
+                .checkTeamAndMember(team, member);
+
+        //when & then
+        assertThatThrownBy(() -> teamService.getTeamDetail(email, teamId))
+                .isInstanceOf(EntityNotFoundException.class);
     }
 }

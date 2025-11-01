@@ -34,12 +34,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponseDto> handleEntityAlreadyExists(EntityAlreadyExistsException ex) {
         return ResponseEntity.badRequest().body(ErrorResponseDto.of(ex.getMessage()));
     }
-    
+
     @ExceptionHandler(NoPermissionException.class)
     public ResponseEntity<ErrorResponseDto> handleNoPermission(NoPermissionException ex) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ErrorResponseDto.of(ex.getMessage()));
     }
-    
+
     @ExceptionHandler(ConflictException.class)
     public ResponseEntity<ErrorResponseDto> handleConflict(ConflictException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(ErrorResponseDto.of(ex.getMessage()));
@@ -66,6 +66,26 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponseDto> handleGeneralException(Exception ex) {
         return ResponseEntity.internalServerError().body(ErrorResponseDto.of(ex.getMessage())); //TODO: 실 배포 시 메시지 변경
+    }
+
+    @ExceptionHandler(EmailAuthAlreadySentException.class)
+    public ResponseEntity<ErrorResponseDto> EmailAuthAlreadySentException(EmailAuthAlreadySentException ex) {
+        return ResponseEntity.badRequest().body(ErrorResponseDto.of(ex.getMessage()));
+    }
+
+    @ExceptionHandler(EmailDuplicateException.class)
+    public ResponseEntity<ErrorResponseDto> EmailDuplicateException(EmailDuplicateException ex) {
+        return ResponseEntity.badRequest().body(ErrorResponseDto.of(ex.getMessage()));
+    }
+
+    @ExceptionHandler(EmailAuthCodeMismatchException.class)
+    public ResponseEntity<ErrorResponseDto> EmailAuthCodeMissMatchException(EmailAuthCodeMismatchException ex) {
+        return ResponseEntity.badRequest().body(ErrorResponseDto.of(ex.getMessage()));
+    }
+
+    @ExceptionHandler(EmailSendFailedException.class)
+    public ResponseEntity<ErrorResponseDto> EmailSendFailedException(EmailSendFailedException ex) {
+        return ResponseEntity.internalServerError().body(ErrorResponseDto.of(ex.getMessage()));
     }
 }
 

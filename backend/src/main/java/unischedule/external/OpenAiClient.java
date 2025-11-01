@@ -1,6 +1,7 @@
 package unischedule.external;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -9,7 +10,6 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 import unischedule.everytime.dto.TimetableDetailDto;
 import unischedule.exception.ExternalApiException;
-import unischedule.external.dto.OpenAiChatCompletionResponseDto;
 
 import java.util.Base64;
 import java.util.List;
@@ -26,18 +26,29 @@ public class OpenAiClient {
         try {
             String base64Image = Base64.getEncoder().encodeToString(file.getBytes());
             Map<String, Object> request = Map.of(
-                    "model", "gpt-4.1-nano",
-                    "messages", List.of(
+                    "model", "gpt-5-nano",
+                    "reasoning", Map.of("effort", "low"),
+                    "input", List.of(
                             Map.of("role", "user", "content", List.of(
-                                    Map.of("type", "text", "text",
-                                            "이 시간표 이미지를 JSON으로 변환해줘. 과목명, 교수, 요일, 시작/끝 시간, 장소 포함. 시작 시간, 끝 시간은 정각이 아닐 수도 있어. dayOfWeek는 월요일이 0임."),
-                                    Map.of("type", "image_url", "image_url",
-                                            Map.of("url", "data:image/png;base64," + base64Image))
-                            ))
+                                    Map.of("type", "input_text", "text",
+                                                """
+                                                      너는 시간표 스크린샷 이미지를 입력받아 사용자에게 json으로 변환해주는 역할을 가지고 있어.
+                                                      이미지는 표로 구성되어있고, 행은 시간을 나타내고, 열은 요일을 나타내.
+                                                      입력받은 시간표 이미지를 표에 표시된 시간과 요일 및 아래 사항들에 유의하여 JSON으로 정확하게 변환해줘.
+                                                    
+                                                      1. 과목명, 교수, 요일, 시작/끝 시간, 장소 포함.
+                                                      2. 수업 시작 시간, 끝 시간은 정각이 아닐 수도 있어. 5분 간격임.
+                                                      3. 보이는 그대로 작성할 것. dayOfWeek는 월요일이 0임.
+                                                      4. 시간은 01:01 형식 유지. 시간 분 모두 2자리로 고정할 것. 24시간제 사용.
+                                                      5. 동일 수업(동일 색상)에 시간이 여러 개 있는 경우도 있어. 해당 경우 하나의 수업에 시간 list를 추가하는 방식으로 응답해야 함.
+                                                    """),
+                                    Map.of("type", "input_image", "image_url",
+                                            "data:image/png;base64," + base64Image))
+                            )
                     ),
-                    "response_format", Map.of(
-                            "type", "json_schema",
-                            "json_schema", Map.of(
+                    "text", Map.of("format",
+                            Map.of(
+                                    "type", "json_schema",
                                     "name", "timetable_schema",
                                     "schema", createTimetableScheme(),
                                     "strict", true
@@ -46,13 +57,13 @@ public class OpenAiClient {
             );
 
             return openAiWebClient.post()
-                    .uri("/chat/completions")
+                    .uri("/responses")
                     .bodyValue(request)
                     .retrieve()
-                    .bodyToMono(OpenAiChatCompletionResponseDto.class)
+                    .bodyToMono(JsonNode.class)
                     .handle((resp, sink) -> {
                         try {
-                            String content = resp.choices().getFirst().message().content();
+                            String content = resp.get("output").get(1).get("content").get(0).get("text").textValue();
                             TimetableDetailDto result = objectMapper.readValue(content, TimetableDetailDto.class);
                             sink.next(result);
                         } catch (JsonProcessingException e) {

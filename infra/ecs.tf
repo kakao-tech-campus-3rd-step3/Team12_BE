@@ -25,6 +25,7 @@ resource "aws_ecs_task_definition" "this" {
       ]
 
       environment = [
+        { name = "TZ", value = "Asia/Seoul" },
         { name = "SPRING_DATASOURCE_URL", value = data.aws_ssm_parameter.db_url.value },
         { name = "JWT_ACCESS_TOKEN_TIMEOUT_SEC", value = data.aws_ssm_parameter.jwt_access_token_timeout_sec.value },
         { name = "JWT_REFRESH_TOKEN_TIMEOUT_SEC", value = data.aws_ssm_parameter.jwt_refresh_token_timeout_sec.value },
@@ -38,7 +39,9 @@ resource "aws_ecs_task_definition" "this" {
         { name = "SPRING_DATASOURCE_PASSWORD", valueFrom = data.aws_ssm_parameter.db_password.arn },
         { name = "JWT_SECRET", valueFrom = data.aws_ssm_parameter.jwt_secret.arn },
         { name = "OPENAI_API_KEY", valueFrom = data.aws_ssm_parameter.openai_api_key.arn },
-        { name = "REDIS_PASSWORD", valueFrom = data.aws_ssm_parameter.redis_password.arn }
+        { name = "REDIS_PASSWORD", valueFrom = data.aws_ssm_parameter.redis_password.arn },
+        { name = "MAIL_USERNAME", valueFrom = data.aws_ssm_parameter.mail_username.arn },
+        { name = "MAIL_PASSWORD", valueFrom = data.aws_ssm_parameter.mail_password.arn }
       ]
 
       logConfiguration = {
@@ -84,9 +87,29 @@ resource "aws_lb_listener" "this" {
   protocol          = "HTTP"
 
   default_action {
+    type = "redirect"
+
+    redirect {
+      port        = "443"
+      protocol    = "HTTPS"
+      status_code = "HTTP_301"
+    }
+  }
+}
+
+resource "aws_lb_listener" "https" {
+  load_balancer_arn = aws_lb.this.arn
+  port              = "443"
+  protocol          = "HTTPS"
+  ssl_policy        = "ELBSecurityPolicy-2016-08"
+  certificate_arn   = aws_acm_certificate.this.arn
+
+  default_action {
     type             = "forward"
     target_group_arn = aws_lb_target_group.this.arn
   }
+
+  depends_on = [aws_acm_certificate_validation.this]
 }
 
 resource "aws_ecs_service" "this" {

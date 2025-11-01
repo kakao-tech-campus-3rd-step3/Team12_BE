@@ -19,16 +19,10 @@ public class RecurrenceRule {
     @Column(name = "recurrence_rule_id")
     private Long id;
 
-    @Column(nullable = false, length = 255)
+    @Column(nullable = false)
     private String rruleString;
 
     public RecurrenceRule(String rruleString) {
         this.rruleString = rruleString;
-    }
-
-    public void updateRruleString(String rruleString) {
-        if (rruleString != null && !rruleString.isBlank()) {
-            this.rruleString = rruleString;
-        }
     }
 }
