@@ -86,7 +86,6 @@ public class LectureService {
                 .content(content)
                 .startAt(calculateEventDateTime(startDate, firstTime.dayOfWeek(), firstTime.startTime()))
                 .endAt(calculateEventDateTime(startDate, firstTime.dayOfWeek(), firstTime.endTime()))
-                .isPrivate(false)
                 .build();
         
         event.connectCalendar(calendar);
