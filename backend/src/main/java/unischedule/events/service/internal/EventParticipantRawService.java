@@ -23,7 +23,7 @@ public class EventParticipantRawService {
                 .toList();
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public void saveAllParticipantsForEvent(Event event, List<Member> participants) {
         List<EventParticipant> newParticipants = participants.stream()
                 .map(member -> new EventParticipant(event, member))
