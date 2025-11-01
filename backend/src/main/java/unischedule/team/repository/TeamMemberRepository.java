@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import unischedule.member.domain.Member;
 import unischedule.team.domain.Team;
 import unischedule.team.domain.TeamMember;
+import unischedule.team.domain.TeamRole;
 
 import java.util.List;
 import java.util.Optional;
@@ -33,4 +34,7 @@ public interface TeamMemberRepository extends JpaRepository<TeamMember, Long> {
     Page<TeamMember> findTeamMemberByTeamAndKeyword(Team findTeam, Pageable pageable, String keyword);
 
     int countTeamMemberByTeam(Team team);
+
+    int countByTeamAndRole(Team team, TeamRole role);
+    void deleteAllByMember(Member member);
 }

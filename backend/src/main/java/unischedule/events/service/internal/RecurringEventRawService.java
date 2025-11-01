@@ -5,7 +5,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import unischedule.events.domain.Event;
 import unischedule.events.domain.EventOverride;
-import unischedule.events.domain.collection.RecurringEventList;
+import unischedule.events.domain.collection.RecurringEventSeries;
 import unischedule.events.repository.EventOverrideRepository;
 import unischedule.events.repository.EventRepository;
 import unischedule.member.domain.Member;
@@ -23,16 +23,16 @@ public class RecurringEventRawService {
     private final EventRepository eventRepository;
 
     @Transactional(readOnly = true)
-    public RecurringEventList findRecurringSchedule(List<Long> calendarIds, LocalDateTime endTime) {
+    public RecurringEventSeries findRecurringSchedule(List<Long> calendarIds, LocalDateTime endTime) {
         List<Event> recurringEvents = eventRepository.findRecurringEventsInPeriod(calendarIds, endTime);
 
-        return new RecurringEventList(recurringEvents);
+        return new RecurringEventSeries(recurringEvents);
     }
 
     @Transactional(readOnly = true)
-    public RecurringEventList findRecurringScheduleForMember(Member member, List<Long> calendarIds, LocalDateTime endTime) {
+    public RecurringEventSeries findRecurringScheduleForMember(Member member, List<Long> calendarIds, LocalDateTime endTime) {
         List<Event> recurringEvents = eventRepository.findRecurringEventsInPeriodForMember(member.getMemberId(), calendarIds, endTime);
-        return new RecurringEventList(recurringEvents);
+        return new RecurringEventSeries(recurringEvents);
     }
 
     @Transactional(readOnly = true)

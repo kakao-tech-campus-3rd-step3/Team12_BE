@@ -79,15 +79,13 @@ public class EventCommandService {
     public EventOverride modifyRecurringInstance(Event originalEvent, RecurringInstanceModifyRequestDto requestDto) {
         Optional<EventOverride> eventOverrideOpt = eventOverrideRawService.findEventOverride(originalEvent, requestDto.originalStartTime());
 
-        EventOverride eventOverride;
         if (eventOverrideOpt.isPresent()) {
-            eventOverride = eventOverrideOpt.get();
-            eventOverrideRawService.updateEventOverride(eventOverride, requestDto.toEventOverrideUpdateDto());
-        }
-        else {
-            eventOverride = EventOverride.makeEventOverride(originalEvent, requestDto.toEventOverrideDto());
+            EventOverride presentEventOverride = eventOverrideOpt.get();
+            eventOverrideRawService.updateEventOverride(presentEventOverride, requestDto.toEventOverrideUpdateDto());
+            return eventOverrideRawService.saveEventOverride(presentEventOverride);
         }
 
+        EventOverride eventOverride = EventOverride.makeEventOverride(originalEvent, requestDto.toEventOverrideDto());
         return eventOverrideRawService.saveEventOverride(eventOverride);
     }
 
