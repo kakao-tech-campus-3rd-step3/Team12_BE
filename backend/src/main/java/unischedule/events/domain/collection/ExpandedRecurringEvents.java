@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 public class ExpandedRecurringEvents {
     private final List<Event> expandedEvents;
@@ -41,20 +42,24 @@ public class ExpandedRecurringEvents {
         List<Event> finalEventList = new ArrayList<>();
 
         for (Event event : expandedEvents) {
-            if (overrideMap.containsKey(event.getStartAt())) {
-                EventOverride eventOverride = overrideMap.get(event.getStartAt());
-
-                if (eventOverride.isDeleteOverride()) {
-                    continue;
-                }
-
-                finalEventList.add(eventOverride.toEvent());
-            }
-            else {
-                finalEventList.add(event);
-            }
+            applyOverrideToEvent(event, overrideMap)
+                    .ifPresent(finalEventList::add);
         }
         return List.copyOf(finalEventList);
+    }
+
+    private Optional<Event> applyOverrideToEvent(Event event, Map<LocalDateTime, EventOverride> overrideMap) {
+        EventOverride eventOverride = overrideMap.get(event.getStartAt());
+
+        if (eventOverride == null) {
+            return Optional.of(event);
+        }
+
+        if (eventOverride.isDeleteOverride()) {
+            return Optional.empty();
+        }
+
+        return Optional.of(eventOverride.toEvent());
     }
 
     public List<EventServiceDto> applyOverridesToDtos(EventOverrideSeries overrideList) {
