@@ -16,8 +16,6 @@ public record EventGetResponseDto(
         LocalDateTime startTime,
         @JsonProperty("end_time")
         LocalDateTime endTime,
-        @JsonProperty("is_private")
-        Boolean isPrivate,
         @JsonProperty("is_recurring")
         Boolean isRecurring
 ) {
@@ -28,7 +26,6 @@ public record EventGetResponseDto(
                 event.getContent(),
                 event.getStartAt(),
                 event.getEndAt(),
-                event.getIsPrivate(),
                 false
         );
     }
@@ -40,7 +37,6 @@ public record EventGetResponseDto(
                 event.getContent(),
                 event.getStartAt(),
                 event.getEndAt(),
-                event.getIsPrivate(),
                 true
         );
     }
@@ -52,7 +48,6 @@ public record EventGetResponseDto(
                 eventOverride.getContent(),
                 eventOverride.getStartAt(),
                 eventOverride.getEndAt(),
-                eventOverride.getIsPrivate(),
                 true
         );
     }
@@ -64,7 +59,6 @@ public record EventGetResponseDto(
                 serviceDto.content(),
                 serviceDto.startAt(),
                 serviceDto.endAt(),
-                serviceDto.isPrivate(),
                 serviceDto.fromRecurring()
         );
     }

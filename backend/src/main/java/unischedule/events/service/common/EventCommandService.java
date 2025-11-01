@@ -38,7 +38,6 @@ public class EventCommandService {
                    .content(createDto.description())
                    .startAt(createDto.startTime())
                    .endAt(createDto.endTime())
-                   .isPrivate(createDto.isPrivate())
                    .isSelective(false)
                    .build();
 
@@ -54,7 +53,6 @@ public class EventCommandService {
                 .content(requestDto.description())
                 .startAt(requestDto.firstStartTime())
                 .endAt(requestDto.firstEndTime())
-                .isPrivate(requestDto.isPrivate())
                 .isSelective(false)
                 .build();
 

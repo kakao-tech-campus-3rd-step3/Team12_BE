@@ -40,8 +40,6 @@ public class EventOverride {
     private LocalDateTime startAt;
     @Column(nullable = true)
     private LocalDateTime endAt;
-    @Column(nullable = true)
-    private Boolean isPrivate;
 
     public EventOverride(
             Event originalEvent,
@@ -49,8 +47,7 @@ public class EventOverride {
             String title,
             String content,
             LocalDateTime startAt,
-            LocalDateTime endAt,
-            Boolean isPrivate
+            LocalDateTime endAt
     ) {
         this.originalEvent = originalEvent;
         this.originalEventTime = originalEventTime;
@@ -58,7 +55,6 @@ public class EventOverride {
         this.content = content;
         this.startAt = startAt;
         this.endAt = endAt;
-        this.isPrivate = isPrivate;
     }
 
     public static EventOverride makeEventOverride(Event originEvent, EventOverrideDto exceptionDto) {
@@ -68,8 +64,7 @@ public class EventOverride {
                 getNonBlankOrDefault(exceptionDto.title(), originEvent.getTitle()),
                 getNonBlankOrDefault(exceptionDto.content(), originEvent.getContent()),
                 getValueOrDefault(exceptionDto.startTime(), originEvent.getStartAt()),
-                getValueOrDefault(exceptionDto.endTime(), originEvent.getEndAt()),
-                getValueOrDefault(exceptionDto.isPrivate(), originEvent.getIsPrivate())
+                getValueOrDefault(exceptionDto.endTime(), originEvent.getEndAt())
         );
     }
 
@@ -77,7 +72,6 @@ public class EventOverride {
         return new EventOverride(
                 originEvent,
                 originStartTime,
-                null,
                 null,
                 null,
                 null,
@@ -105,14 +99,12 @@ public class EventOverride {
             String title,
             String content,
             LocalDateTime startAt,
-            LocalDateTime endAt,
-            Boolean isPrivate
+            LocalDateTime endAt
     ) {
         updateTitle(title);
         updateContent(content);
         updateStartAt(startAt);
         updateEndAt(endAt);
-        updateIsPrivate(isPrivate);
     }
 
     private void updateTitle(String title) {
@@ -139,19 +131,12 @@ public class EventOverride {
         }
     }
 
-    private void updateIsPrivate(Boolean isPrivate) {
-        if (isPrivate != null) {
-            this.isPrivate = isPrivate;
-        }
-    }
-
     public Event toEvent() {
         return new Event(
                 this.title,
                 this.content,
                 this.startAt,
                 this.endAt,
-                this.isPrivate,
                 false
         );
     }
@@ -161,7 +146,6 @@ public class EventOverride {
         this.content = null;
         this.startAt = null;
         this.endAt = null;
-        this.isPrivate = null;
     }
 
     public boolean isDeleteOverride() {

@@ -40,9 +40,6 @@ public class Event extends BaseEntity {
     
     @Column(nullable = false)
     private LocalDateTime endAt;
-    
-    @Column(nullable = false)
-    private Boolean isPrivate;
 
     /**
      * 일정 참여자 범위
@@ -66,23 +63,20 @@ public class Event extends BaseEntity {
             String content,
             LocalDateTime startAt,
             LocalDateTime endAt,
-            Boolean isPrivate,
             Boolean isSelective
     ) {
         this.title = title;
         this.content = content;
         this.startAt = startAt;
         this.endAt = endAt;
-        this.isPrivate = isPrivate;
         this.isSelective = (isSelective != null) ? isSelective : false;
     }
     
-    public void modifyEvent(String title, String content, LocalDateTime startAt, LocalDateTime endAt, Boolean isPrivate) {
+    public void modifyEvent(String title, String content, LocalDateTime startAt, LocalDateTime endAt) {
         if(title != null) modifyTitle(title);
         if(content != null) modifyContent(content);
         if(startAt != null) modifyStartAt(startAt);
         if(endAt != null) modifyEndAt(endAt);
-        if(isPrivate != null) modifyPrivate(isPrivate);
     }
     
     private void modifyTitle(String title) {
@@ -99,10 +93,6 @@ public class Event extends BaseEntity {
     
     private void modifyEndAt(LocalDateTime endAt) {
         this.endAt = endAt;
-    }
-    
-    private void modifyPrivate(Boolean isPrivate) {
-        this.isPrivate = isPrivate;
     }
 
     public void updateIsSelective(Boolean isSelective) {

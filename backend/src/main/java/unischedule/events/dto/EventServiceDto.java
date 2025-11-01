@@ -10,7 +10,6 @@ public record EventServiceDto(
         String content,
         LocalDateTime startAt,
         LocalDateTime endAt,
-        Boolean isPrivate,
         Boolean fromRecurring
 ) {
     public static EventServiceDto fromSingleEvent(Event event, Boolean fromRecurring) {
@@ -20,7 +19,6 @@ public record EventServiceDto(
                 event.getContent(),
                 event.getStartAt(),
                 event.getEndAt(),
-                event.getIsPrivate(),
                 fromRecurring
         );
     }
@@ -32,7 +30,6 @@ public record EventServiceDto(
                 event.getContent(),
                 event.getStartAt(),
                 event.getEndAt(),
-                event.getIsPrivate(),
                 fromRecurring
         );
     }

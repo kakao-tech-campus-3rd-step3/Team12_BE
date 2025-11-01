@@ -11,6 +11,4 @@ public interface EventParticipantRepository extends JpaRepository<EventParticipa
     void deleteAllByEvent(Event event);
 
     List<EventParticipant> findByEvent(Event event);
-
-    boolean existsByEventAndMember(Event event, Member member);
 }
