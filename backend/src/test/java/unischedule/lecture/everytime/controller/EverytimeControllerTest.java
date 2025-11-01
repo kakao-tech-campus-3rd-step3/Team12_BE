@@ -1,4 +1,4 @@
-package unischedule.everytime.controller;
+package unischedule.lecture.everytime.controller;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -12,9 +12,9 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import unischedule.auth.jwt.JwtTokenProvider;
 import unischedule.common.config.SecurityConfig;
-import unischedule.everytime.dto.TimetableDetailDto;
-import unischedule.everytime.dto.TimetableDto;
-import unischedule.everytime.service.EverytimeService;
+import unischedule.lecture.everytime.dto.TimetableDetailDto;
+import unischedule.lecture.everytime.dto.TimetableDto;
+import unischedule.lecture.everytime.service.EverytimeService;
 import unischedule.exception.ExternalApiException;
 import unischedule.exception.InvalidInputException;
 
@@ -205,3 +205,4 @@ class EverytimeControllerTest {
     }
 
 }
+

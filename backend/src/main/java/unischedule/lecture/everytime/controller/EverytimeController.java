@@ -1,4 +1,4 @@
-package unischedule.everytime.controller;
+package unischedule.lecture.everytime.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -11,11 +11,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
-import unischedule.everytime.dto.TimetableDetailDto;
-import unischedule.everytime.dto.TimetableDetailRequestDto;
-import unischedule.everytime.dto.TimetableDto;
-import unischedule.everytime.dto.TimetablesRequestDto;
-import unischedule.everytime.service.EverytimeService;
+import unischedule.lecture.everytime.dto.TimetableDetailDto;
+import unischedule.lecture.everytime.dto.TimetableDetailRequestDto;
+import unischedule.lecture.everytime.dto.TimetableDto;
+import unischedule.lecture.everytime.dto.TimetablesRequestDto;
+import unischedule.lecture.everytime.service.EverytimeService;
 
 import java.util.List;
 
@@ -45,3 +45,4 @@ public class EverytimeController {
         return ResponseEntity.ok(everytimeService.getTimetableDetailFromImage(image));
     }
 }
+

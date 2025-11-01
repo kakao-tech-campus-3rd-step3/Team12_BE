@@ -1,4 +1,4 @@
-package unischedule.everytime.dto;
+package unischedule.lecture.everytime.dto;
 
 import jakarta.validation.constraints.Pattern;
 
@@ -8,3 +8,4 @@ public record TimetablesRequestDto(
 ) {
 
 }
+
