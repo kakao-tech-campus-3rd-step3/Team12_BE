@@ -40,7 +40,7 @@ public class RecurringEventService {
 
         for (Event recurEvent : recurringEvents.getEvents()) {
             List<Event> expandedEvent = expandRecurringEvent(recurEvent, startAt, endAt);
-            ExpandedRecurringEvents expandedRecurringEvents = new ExpandedRecurringEvents(expandedEvent, recurEvent);
+            ExpandedRecurringEvents expandedRecurringEvents = ExpandedRecurringEvents.of(expandedEvent, recurEvent);
             EventOverrideSeries overrideSeries = new EventOverrideSeries(exceptionsMap.getOrDefault(recurEvent.getEventId(), List.of()));
 
             finalExpandedEventList.addAll(expandedRecurringEvents.applyOverridesToDtos(overrideSeries));
@@ -63,7 +63,7 @@ public class RecurringEventService {
 
         for (Event recurEvent : recurringEvents.getEvents()) {
             List<Event> expandedEvent = expandRecurringEvent(recurEvent, startAt, endAt);
-            ExpandedRecurringEvents expandedRecurringEvents = new ExpandedRecurringEvents(expandedEvent, recurEvent);
+            ExpandedRecurringEvents expandedRecurringEvents = ExpandedRecurringEvents.of(expandedEvent, recurEvent);
             EventOverrideSeries overrideSeries = new EventOverrideSeries(exceptionsMap.getOrDefault(recurEvent.getEventId(), List.of()));
 
             finalExpandedEventList.addAll(expandedRecurringEvents.applyOverridesToDtos(overrideSeries));

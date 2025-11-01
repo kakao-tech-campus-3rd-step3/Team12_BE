@@ -14,18 +14,21 @@ public class ExpandedRecurringEvents {
     private final List<Event> expandedEvents;
     private final Event originalEvent;
 
-    public ExpandedRecurringEvents(List<Event> expandedEvents, Event originalEvent) {
+    private ExpandedRecurringEvents(List<Event> expandedEvents, Event originalEvent) {
+        this.expandedEvents = expandedEvents;
+        this.originalEvent = originalEvent;
+    }
+
+    public static ExpandedRecurringEvents of(List<Event> expandedEvents, Event originalEvent) {
         if (originalEvent == null || originalEvent.getRecurrenceRule() == null) {
             throw new IllegalArgumentException("원본 이벤트는 반복 규칙을 가지는 유효한 객체여야 합니다.");
         }
-        this.originalEvent = originalEvent;
 
-        if (expandedEvents == null) {
-            this.expandedEvents = Collections.emptyList();
-        }
-        else {
-            this.expandedEvents = List.copyOf(expandedEvents);
-        }
+        List<Event> events = (expandedEvents == null)
+                ? Collections.emptyList()
+                : List.copyOf(expandedEvents);
+
+        return new ExpandedRecurringEvents(events, originalEvent);
     }
 
     public List<Event> applyOverrides(EventOverrideSeries overrideList) {
