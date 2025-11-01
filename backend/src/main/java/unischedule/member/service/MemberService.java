@@ -8,9 +8,9 @@ import unischedule.auth.repository.RefreshTokenRepository;
 import unischedule.calendar.entity.Calendar;
 import unischedule.calendar.repository.CalendarRepository;
 import unischedule.events.domain.Event;
-import unischedule.events.repository.EventOverrideRepository;
-import unischedule.events.repository.EventParticipantRepository;
-import unischedule.events.repository.EventRepository;
+import unischedule.events.service.internal.EventOverrideRawService;
+import unischedule.events.service.internal.EventParticipantRawService;
+import unischedule.events.service.internal.EventRawService;
 import unischedule.exception.InvalidInputException;
 import unischedule.exception.dto.EntityAlreadyExistsException;
 import unischedule.member.domain.Member;
@@ -21,7 +21,7 @@ import unischedule.member.service.internal.MemberRawService;
 import unischedule.team.chat.repository.ChatMessageRepository;
 import unischedule.team.domain.TeamMember;
 import unischedule.team.domain.TeamRole;
-import unischedule.team.repository.TeamMemberRepository;
+import unischedule.team.service.internal.TeamMemberRawService;
 
 import java.util.List;
 
@@ -32,12 +32,13 @@ public class MemberService {
     private final PasswordEncoder passwordEncoder;
     private final CalendarRepository calendarRepository;
     private final MemberRawService memberRawService;
-    private RefreshTokenRepository refreshTokenRepository;
-    private final TeamMemberRepository teamMemberRepository;
-    private final EventParticipantRepository eventParticipantRepository;
-    private final EventRepository eventRepository;
-    private final EventOverrideRepository eventOverrideRepository;
+
+    private final RefreshTokenRepository refreshTokenRepository;
+    private final EventOverrideRawService eventOverrideRawService;
     private final ChatMessageRepository chatMessageRepository;
+    private final TeamMemberRawService teamMemberRawService;
+    private final EventRawService eventRawService;
+    private final EventParticipantRawService eventParticipantRawService;
 
     /**
      * 회원가입 시 기본 개인 캘린더 생성
@@ -85,8 +86,8 @@ public class MemberService {
 
         deletePersonalCalendarData(member);
 
-        teamMemberRepository.deleteAllByMember(member);
-        eventParticipantRepository.deleteAllByMember(member);
+        teamMemberRawService.deleteAllByMember(member);
+        eventParticipantRawService.deleteAllByMember(member);
 
         refreshTokenRepository.findByMember(member)
                 .ifPresent(refreshTokenRepository::delete);
@@ -99,7 +100,7 @@ public class MemberService {
     }
 
     private void checkTeamWithdraw(Member member) {
-        List<TeamMember> memberships = teamMemberRepository.findByMember(member);
+        List<TeamMember> memberships = teamMemberRawService.findByMember(member);
 
         for (TeamMember tm : memberships) {
             checkTeamLeadership(tm);
@@ -111,7 +112,7 @@ public class MemberService {
             return;
         }
 
-        int leaderCount = teamMemberRepository.countByTeamAndRole(teamMember.getTeam(), TeamRole.LEADER);
+        int leaderCount = teamMemberRawService.countByTeamAndRole(teamMember.getTeam(), TeamRole.LEADER);
         if (leaderCount <= 1) {
             throw new InvalidInputException("팀[" + teamMember.getTeam().getName() + "] 탈퇴 전 팀장을 위임하거나 팀을 삭제해야 합니다.");
         }
@@ -124,14 +125,14 @@ public class MemberService {
     private void deletePersonalCalendarData(Member member) {
         calendarRepository.findByOwnerAndTeamIsNull(member)
                 .ifPresent(personalCalendar -> {
-                    List<Event> events = eventRepository.findByCalendar(personalCalendar);
+                    List<Event> events = eventRawService.findByCalendar(personalCalendar);
 
                     for (Event event : events) {
-                        eventParticipantRepository.deleteAllByEvent(event);
-                        eventOverrideRepository.deleteAllByOriginalEvent(event);
+                        eventParticipantRawService.deleteAllByEvent(event);
+                        eventOverrideRawService.deleteAllEventOverrideByEvent(event);
                     }
 
-                    eventRepository.deleteAll(events);
+                    eventRawService.deleteAll(events);
                     calendarRepository.delete(personalCalendar);
                 });
     }

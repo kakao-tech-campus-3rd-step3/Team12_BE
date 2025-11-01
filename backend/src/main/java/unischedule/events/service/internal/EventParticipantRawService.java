@@ -36,4 +36,14 @@ public class EventParticipantRawService {
     public void deleteAllParticipantsByEvent(Event event) {
         eventParticipantRepository.deleteAllByEvent(event);
     }
+
+    @Transactional
+    public void deleteAllByMember(Member member) {
+        eventParticipantRepository.deleteAllByMember(member);
+    }
+
+    @Transactional
+    public void deleteAllByEvent(Event event) {
+        eventParticipantRepository.deleteAllByEvent(event);
+    }
 }

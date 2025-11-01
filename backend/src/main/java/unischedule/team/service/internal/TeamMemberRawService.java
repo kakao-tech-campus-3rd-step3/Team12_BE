@@ -13,6 +13,7 @@ import unischedule.exception.EntityNotFoundException;
 import unischedule.member.domain.Member;
 import unischedule.team.domain.Team;
 import unischedule.team.domain.TeamMember;
+import unischedule.team.domain.TeamRole;
 import unischedule.team.repository.TeamMemberRepository;
 
 import java.util.List;
@@ -125,9 +126,18 @@ public class TeamMemberRawService {
         return teamMemberRepository.countTeamMemberByTeam(team);
     }
 
+    public int countByTeamAndRole(Team team, TeamRole role) {
+        return teamMemberRepository.countByTeamAndRole(team, role);
+    }
+
     @Transactional
     public void deleteTeamMember(TeamMember teamMember) {
         teamMemberRepository.delete(teamMember);
+    }
+
+    @Transactional
+    public void deleteAllByMember(Member member) {
+        teamMemberRepository.deleteAllByMember(member);
     }
 
     @Transactional
