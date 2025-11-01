@@ -13,9 +13,7 @@ public record EventCreateResponseDto(
         @JsonProperty("start_time")
         LocalDateTime startTime,
         @JsonProperty("end_time")
-        LocalDateTime endTime,
-        @JsonProperty("is_private")
-        Boolean isPrivate
+        LocalDateTime endTime
 ) {
     public static EventCreateResponseDto from(Event event) {
         return new EventCreateResponseDto(
@@ -23,8 +21,7 @@ public record EventCreateResponseDto(
                 event.getTitle(),
                 event.getContent(),
                 event.getStartAt(),
-                event.getEndAt(),
-                event.getIsPrivate()
+                event.getEndAt()
         );
     }
     

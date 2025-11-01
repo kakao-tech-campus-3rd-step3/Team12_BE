@@ -40,8 +40,7 @@ public class EventOverrideRawService {
                 updateDto.title(),
                 updateDto.content(),
                 updateDto.startTime(),
-                updateDto.endTime(),
-                updateDto.isPrivate()
+                updateDto.endTime()
         );
     }
 

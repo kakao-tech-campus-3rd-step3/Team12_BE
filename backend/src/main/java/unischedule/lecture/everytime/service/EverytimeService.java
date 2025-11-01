@@ -1,11 +1,11 @@
-package unischedule.everytime.service;
+package unischedule.lecture.everytime.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import unischedule.everytime.dto.TimetableDetailDto;
-import unischedule.everytime.dto.TimetableDto;
-import unischedule.everytime.mapper.EverytimeTimetableMapper;
+import unischedule.lecture.everytime.dto.TimetableDetailDto;
+import unischedule.lecture.everytime.dto.TimetableDto;
+import unischedule.lecture.everytime.mapper.EverytimeTimetableMapper;
 import unischedule.exception.EntityNotFoundException;
 import unischedule.exception.ExternalApiException;
 import unischedule.external.EverytimeClient;
@@ -54,3 +54,4 @@ public class EverytimeService {
         return urlString.substring(urlString.lastIndexOf("@") + 1);
     }
 }
+

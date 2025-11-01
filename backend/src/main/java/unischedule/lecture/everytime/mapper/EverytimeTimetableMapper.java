@@ -1,9 +1,9 @@
-package unischedule.everytime.mapper;
+package unischedule.lecture.everytime.mapper;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import unischedule.everytime.dto.TimetableDetailDto;
-import unischedule.everytime.dto.TimetableDto;
+import unischedule.lecture.everytime.dto.TimetableDetailDto;
+import unischedule.lecture.everytime.dto.TimetableDto;
 import unischedule.external.dto.EverytimeTimetableRawResponseDto;
 import unischedule.external.dto.EverytimeTimetableRawResponseDto.Attr;
 
@@ -14,8 +14,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class EverytimeTimetableMapper {
 
-    // 에브리타임 API에서 시간을 09:00부터 5분 단위로 증가하는 형태로 반환 (09:00=0, 09:05=1, ..., 18:00=108)
-    private static final LocalTime BASE_TIME = LocalTime.of(9, 0);
+    private static final LocalTime BASE_TIME = LocalTime.of(0, 0);
     private static final long TIME_UNIT_MINUTES = 5L;
 
     public List<TimetableDto> toTimetableDtos(EverytimeTimetableRawResponseDto rawResponse) {
@@ -79,10 +78,11 @@ public class EverytimeTimetableMapper {
     private TimetableDetailDto.Subject.Time mapToTime(
             EverytimeTimetableRawResponseDto.TimeData rawTimeData) {
         return TimetableDetailDto.Subject.Time.from(
-                rawTimeData.day(),
+                rawTimeData.day() + 1,
                 BASE_TIME.plusMinutes(rawTimeData.starttime() * TIME_UNIT_MINUTES),
                 BASE_TIME.plusMinutes(rawTimeData.endtime() * TIME_UNIT_MINUTES),
                 rawTimeData.place()
         );
     }
 }
+

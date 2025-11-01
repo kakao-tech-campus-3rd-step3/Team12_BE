@@ -59,16 +59,14 @@ public class PersonalEventControllerTest {
                 "Test Event",
                 "Description",
                 LocalDateTime.of(2025, 9, 18, 10, 0),
-                LocalDateTime.of(2025, 9, 18, 11, 0),
-                false
+                LocalDateTime.of(2025, 9, 18, 11, 0)
         );
         EventCreateResponseDto responseDto = new EventCreateResponseDto(
                 1L,
                 "Test Event",
                 "Description",
                 requestDto.startTime(),
-                requestDto.endTime(),
-                false
+                requestDto.endTime()
         );
 
         given(eventService.makePersonalSingleEvent(anyString(), any(PersonalEventCreateRequestDto.class))).willReturn(responseDto);
@@ -93,13 +91,12 @@ public class PersonalEventControllerTest {
                 "매주 회의",
                 LocalDateTime.of(2025, 10, 1, 10, 0),
                 LocalDateTime.of(2025, 10, 1, 11, 0),
-                false,
                 "FREQ=WEEKLY;INTERVAL=1",
                 null
         );
 
         EventCreateResponseDto responseDto = new EventCreateResponseDto(1L, "반복 일정", "매주 회의",
-                requestDto.firstStartTime(), requestDto.firstEndTime(), false);
+                requestDto.firstStartTime(), requestDto.firstEndTime());
 
         given(eventService.makePersonalRecurringEvent(anyString(), any(RecurringEventCreateRequestDto.class))).willReturn(responseDto);
 
@@ -119,7 +116,7 @@ public class PersonalEventControllerTest {
         // given
         Long eventId = 1L;
         EventGetResponseDto responseDto = new EventGetResponseDto(eventId, "회의", "내용",
-                LocalDateTime.now(), LocalDateTime.now().plusHours(1), false, false);
+                LocalDateTime.now(), LocalDateTime.now().plusHours(1), false);
         given(eventService.getPersonalEvent(anyString(), anyLong())).willReturn(responseDto);
 
         // when & then
@@ -139,7 +136,6 @@ public class PersonalEventControllerTest {
                 "Description",
                 LocalDateTime.of(2025, 9, 18, 10, 0),
                 LocalDateTime.of(2025, 9, 18, 11, 0),
-                false,
                 false
         );
 
@@ -161,14 +157,13 @@ public class PersonalEventControllerTest {
     void modifyMyEvent() throws Exception {
         // given
         Long eventId = 1L;
-        EventModifyRequestDto requestDto = new EventModifyRequestDto("Updated Title", null, null, null, null, null);
+        EventModifyRequestDto requestDto = new EventModifyRequestDto("Updated Title", null, null, null, null);
         EventGetResponseDto responseDto = new EventGetResponseDto(
                 eventId,
                 "Updated Title",
                 "Description",
                 LocalDateTime.of(2025, 9, 18, 10, 0),
                 LocalDateTime.of(2025, 9, 18, 11, 0),
-                false,
                 false
         );
 
@@ -190,9 +185,9 @@ public class PersonalEventControllerTest {
     void modifyMyRecurringEvent() throws Exception {
         // given
         Long eventId = 1L;
-        EventModifyRequestDto requestDto = new EventModifyRequestDto("수정된 반복 일정", null, null, null, null, null);
+        EventModifyRequestDto requestDto = new EventModifyRequestDto("수정된 반복 일정", null, null, null, null);
         EventGetResponseDto responseDto = new EventGetResponseDto(eventId, "수정된 반복 일정", "설명",
-                LocalDateTime.now(), LocalDateTime.now().plusHours(1), false, true);
+                LocalDateTime.now(), LocalDateTime.now().plusHours(1), true);
 
         given(eventService.modifyPersonalRecurringEvent(anyString(), anyLong(), any(EventModifyRequestDto.class))).willReturn(responseDto);
 
@@ -213,10 +208,10 @@ public class PersonalEventControllerTest {
         Long eventId = 1L;
         RecurringInstanceModifyRequestDto requestDto = new RecurringInstanceModifyRequestDto(
                 LocalDateTime.of(2025, 10, 8, 10, 0),
-                "특정 날짜만 수정", null, null, null, null);
+                "특정 날짜만 수정", null, null, null);
 
         EventGetResponseDto responseDto = new EventGetResponseDto(eventId, "특정 날짜만 수정", "설명",
-                LocalDateTime.now(), LocalDateTime.now().plusHours(1), false, true);
+                LocalDateTime.now(), LocalDateTime.now().plusHours(1), true);
 
         given(eventService.modifyPersonalRecurringInstance(anyString(), anyLong(), any(RecurringInstanceModifyRequestDto.class))).willReturn(responseDto);
 

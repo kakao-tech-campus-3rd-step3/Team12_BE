@@ -1,4 +1,4 @@
-package unischedule.everytime.service;
+package unischedule.lecture.everytime.service;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -7,9 +7,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
-import unischedule.everytime.dto.TimetableDetailDto;
-import unischedule.everytime.dto.TimetableDto;
-import unischedule.everytime.mapper.EverytimeTimetableMapper;
+import unischedule.lecture.everytime.dto.TimetableDetailDto;
+import unischedule.lecture.everytime.dto.TimetableDto;
+import unischedule.lecture.everytime.mapper.EverytimeTimetableMapper;
 import unischedule.exception.EntityNotFoundException;
 import unischedule.exception.ExternalApiException;
 import unischedule.external.EverytimeClient;
@@ -135,7 +135,7 @@ class EverytimeServiceTest {
     }
 
     private Table createMockTable() {
-        TimeData timeData = new TimeData(0, 0, 15, "201-6515"); // 월요일 09:00~10:15
+        TimeData timeData = new TimeData(0, 0, 15, "201-6515");
         Time time = new Time("화 10:30(100) 201-6408&lt;br/>목 10:30(100) 201-6408",
                 List.of(timeData));
 
@@ -179,3 +179,4 @@ class EverytimeServiceTest {
         return TimetableDetailDto.of("2025", "1", List.of(subject));
     }
 }
+

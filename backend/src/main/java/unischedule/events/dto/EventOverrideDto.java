@@ -7,7 +7,6 @@ public record EventOverrideDto(
         String title,
         String content,
         LocalDateTime startTime,
-        LocalDateTime endTime,
-        Boolean isPrivate
+        LocalDateTime endTime
 ) {
 }

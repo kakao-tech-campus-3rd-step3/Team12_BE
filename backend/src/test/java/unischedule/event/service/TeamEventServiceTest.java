@@ -91,7 +91,7 @@ class TeamEventServiceTest {
 
         TeamEventCreateRequestDto requestDto = new TeamEventCreateRequestDto(
                 teamId, "팀 회의", "주간 보고",
-                LocalDateTime.now(), LocalDateTime.now().plusHours(1), false, null);
+                LocalDateTime.now(), LocalDateTime.now().plusHours(1), null);
 
         EventCreateDto createDto = requestDto.toDto();
         Event savedEvent = TestUtil.makeEvent("팀 회의", "주간 보고");
@@ -147,7 +147,6 @@ class TeamEventServiceTest {
                 "매주 진행",
                 LocalDateTime.now(),
                 LocalDateTime.now().plusHours(1),
-                false,
                 "FREQ=WEEKLY;INTERVAL=1",
                 participantIds
         );
@@ -207,7 +206,6 @@ class TeamEventServiceTest {
                 "수정된 팀 회의",
                 null,
                 null,
-                null,
                 null
         );
 
@@ -255,8 +253,7 @@ class TeamEventServiceTest {
                 "두 번째 수정",
                 "내용도 수정",
                 newStartTime,
-                newEndTime,
-                null
+                newEndTime
         );
 
         EventOverride updatedOverride = mock(EventOverride.class);
@@ -264,7 +261,6 @@ class TeamEventServiceTest {
         when(updatedOverride.getContent()).thenReturn("내용도 수정");
         when(updatedOverride.getStartAt()).thenReturn(newStartTime);
         when(updatedOverride.getEndAt()).thenReturn(newEndTime);
-        when(updatedOverride.getIsPrivate()).thenReturn(originalEvent.getIsPrivate());
 
         given(memberRawService.findMemberByEmail(email)).willReturn(member);
         given(eventRawService.findEventById(eventId)).willReturn(originalEvent);
@@ -317,7 +313,6 @@ class TeamEventServiceTest {
                 "주간 보고",
                 LocalDateTime.now(),
                 LocalDateTime.now().plusHours(1),
-                false,
                 null // 전체 참여
         );
 
@@ -365,7 +360,7 @@ class TeamEventServiceTest {
         Event event = spy(TestUtil.makeEvent("Original Title", "Original Content"));
         event.connectCalendar(teamCalendar);
         EventModifyRequestDto requestDto = new EventModifyRequestDto(
-                "Updated Title", "Updated Content", event.getStartAt(), event.getEndAt(), true, Collections.emptyList());
+                "Updated Title", "Updated Content", event.getStartAt(), event.getEndAt(), Collections.emptyList());
 
         given(memberRawService.findMemberByEmail(email)).willReturn(member);
         given(eventRawService.findEventById(eventId)).willReturn(event);
@@ -383,7 +378,7 @@ class TeamEventServiceTest {
         doAnswer(invocation -> {
             Event eventToModify = invocation.getArgument(0);
             EventUpdateDto updateDto = invocation.getArgument(1);
-            eventToModify.modifyEvent(updateDto.title(),updateDto.content(), updateDto.startTime(), updateDto.endTime(), updateDto.isPrivate());
+            eventToModify.modifyEvent(updateDto.title(),updateDto.content(), updateDto.startTime(), updateDto.endTime());
             return eventToModify;
         }).when(eventCommandService).modifySingleEvent(eq(event), any(EventUpdateDto.class));
 
@@ -395,7 +390,6 @@ class TeamEventServiceTest {
         // then
         assertThat(responseDto.title()).isEqualTo("Updated Title");
         assertThat(responseDto.description()).isEqualTo("Updated Content");
-        assertThat(responseDto.isPrivate()).isTrue();
 
         verify(memberRawService).findMemberByEmail(email);
         verify(eventRawService).findEventById(eventId);
@@ -494,7 +488,6 @@ class TeamEventServiceTest {
                 "주간 회의",
                 LocalDateTime.of(2025, 9, 10, 10, 0),
                 LocalDateTime.of(2025, 9, 10, 11, 0),
-                true,
                 false
         );
 
@@ -504,7 +497,6 @@ class TeamEventServiceTest {
                 "분기별 워크샵",
                 LocalDateTime.of(2025, 9, 15, 14, 0),
                 LocalDateTime.of(2025, 9, 15, 17, 0),
-                false,
                 false
         );
 
@@ -550,7 +542,6 @@ class TeamEventServiceTest {
                 "주간 회의",
                 LocalDateTime.of(2025, 9, 10, 10, 0),
                 LocalDateTime.of(2025, 9, 10, 11, 0),
-                true,
                 false
         );
 
@@ -560,7 +551,6 @@ class TeamEventServiceTest {
                 "분기별 워크샵",
                 LocalDateTime.of(2025, 9, 15, 14, 0),
                 LocalDateTime.of(2025, 9, 15, 17, 0),
-                false,
                 false
         );
 

@@ -6,7 +6,6 @@ public record EventCreateDto(
         String title,
         String description,
         LocalDateTime startTime,
-        LocalDateTime endTime,
-        Boolean isPrivate
+        LocalDateTime endTime
 ) {
 }

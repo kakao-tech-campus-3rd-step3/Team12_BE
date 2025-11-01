@@ -61,7 +61,6 @@ public class TeamEventControllerTest {
                 "Description",
                 LocalDateTime.of(2025, 10, 1, 10, 0),
                 LocalDateTime.of(2025, 10, 1, 11, 0),
-                false,
                 null
         );
         EventCreateResponseDto responseDto = new EventCreateResponseDto(
@@ -69,8 +68,7 @@ public class TeamEventControllerTest {
                 "Team Event",
                 "Description",
                 requestDto.startTime(),
-                requestDto.endTime(),
-                false
+                requestDto.endTime()
         );
 
         given(teamEventService.createTeamSingleEvent(anyString(), any(TeamEventCreateRequestDto.class))).willReturn(responseDto);
@@ -96,11 +94,10 @@ public class TeamEventControllerTest {
                 "매주",
                 LocalDateTime.now(),
                 LocalDateTime.now().plusHours(1),
-                false,
                 "FREQ=WEEKLY",
                 null
         );
-        EventCreateResponseDto responseDto = new EventCreateResponseDto(1L, "팀 반복 회의", null, null, null, false);
+        EventCreateResponseDto responseDto = new EventCreateResponseDto(1L, "팀 반복 회의", null, null, null);
         given(teamEventService.createTeamRecurringEvent(anyString(), anyLong(), any(RecurringEventCreateRequestDto.class))).willReturn(responseDto);
 
         // when & then
@@ -119,7 +116,7 @@ public class TeamEventControllerTest {
         // given
         Long eventId = 1L;
         EventGetResponseDto responseDto = new EventGetResponseDto(eventId, "팀 회의", "내용",
-                LocalDateTime.now(), LocalDateTime.now().plusHours(1), false, false);
+                LocalDateTime.now(), LocalDateTime.now().plusHours(1), false);
         given(teamEventService.getTeamEvent(anyString(), anyLong())).willReturn(responseDto);
 
         // when & then
@@ -135,7 +132,7 @@ public class TeamEventControllerTest {
         // given
         Long teamId = 1L;
         EventGetResponseDto responseDto = new EventGetResponseDto(1L, "팀 회의", "내용",
-                LocalDateTime.now(), LocalDateTime.now().plusHours(1), false, false);
+                LocalDateTime.now(), LocalDateTime.now().plusHours(1), false);
         given(teamEventService.getTeamEvents(anyString(), anyLong(), any(LocalDateTime.class), any(LocalDateTime.class)))
                 .willReturn(List.of(responseDto));
 
@@ -153,14 +150,13 @@ public class TeamEventControllerTest {
     void modifyTeamEvent() throws Exception {
         // given
         Long eventId = 1L;
-        EventModifyRequestDto requestDto = new EventModifyRequestDto("Updated Title", null, null, null, null, null);
+        EventModifyRequestDto requestDto = new EventModifyRequestDto("Updated Title", null, null, null, null);
         EventGetResponseDto responseDto = new EventGetResponseDto(
                 eventId,
                 "Updated Title",
                 "Description",
                 LocalDateTime.of(2025, 10, 1, 10, 0),
                 LocalDateTime.of(2025, 10, 1, 11, 0),
-                false,
                 false
         );
 
@@ -182,8 +178,8 @@ public class TeamEventControllerTest {
     void modifyTeamRecurringEvent() throws Exception {
         // given
         Long eventId = 1L;
-        EventModifyRequestDto requestDto = new EventModifyRequestDto("수정된 팀 반복", null, null, null, null, null);
-        EventGetResponseDto responseDto = new EventGetResponseDto(eventId, "수정된 팀 반복", null, null, null, false, true);
+        EventModifyRequestDto requestDto = new EventModifyRequestDto("수정된 팀 반복", null, null, null, null);
+        EventGetResponseDto responseDto = new EventGetResponseDto(eventId, "수정된 팀 반복", null, null, null, true);
         given(teamEventService.modifyTeamRecurringEvent(anyString(), anyLong(), any(EventModifyRequestDto.class))).willReturn(responseDto);
 
         // when & then
@@ -201,8 +197,8 @@ public class TeamEventControllerTest {
     void modifyTeamRecurringInstance() throws Exception {
         // given
         Long eventId = 1L;
-        RecurringInstanceModifyRequestDto requestDto = new RecurringInstanceModifyRequestDto(LocalDateTime.now(), "회의 날짜 변경", null, null, null, null);
-        EventGetResponseDto responseDto = new EventGetResponseDto(eventId, "회의 날짜 변경", null, null, null, false, true);
+        RecurringInstanceModifyRequestDto requestDto = new RecurringInstanceModifyRequestDto(LocalDateTime.now(), "회의 날짜 변경", null, null, null);
+        EventGetResponseDto responseDto = new EventGetResponseDto(eventId, "회의 날짜 변경", null, null, null, true);
         given(teamEventService.modifyTeamRecurringInstance(anyString(), anyLong(), any(RecurringInstanceModifyRequestDto.class))).willReturn(responseDto);
 
         // when & then

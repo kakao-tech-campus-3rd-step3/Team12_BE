@@ -41,8 +41,7 @@ public class EventRawService {
                 updateDto.title(),
                 updateDto.content(),
                 updateDto.startTime(),
-                updateDto.endTime(),
-                updateDto.isPrivate()
+                updateDto.endTime()
         );
     }
 
@@ -68,11 +67,6 @@ public class EventRawService {
         );
 
         return new SingleEventSeries(singleEventList);
-    }
-
-    @Transactional(readOnly = true)
-    public boolean existsSingleSchedule(List<Long> calendarIds, LocalDateTime startTime, LocalDateTime endTime) {
-        return eventRepository.existsSingleScheduleInPeriod(calendarIds, startTime, endTime);
     }
 
     @Transactional(readOnly = true)
