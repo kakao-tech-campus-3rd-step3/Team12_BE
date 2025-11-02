@@ -8,10 +8,12 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import unischedule.auth.jwt.JwtTokenProvider;
 import unischedule.common.config.SecurityConfig;
+import unischedule.google.handler.OAuth2LoginSuccessHandler;
 import unischedule.lecture.everytime.dto.TimetableDetailDto;
 import unischedule.lecture.everytime.dto.TimetableDto;
 import unischedule.lecture.everytime.service.EverytimeService;
@@ -44,6 +46,11 @@ class EverytimeControllerTest {
 
     @MockitoBean
     private JwtTokenProvider jwtTokenProvider;
+
+    @MockitoBean
+    private OAuth2AuthorizedClientService authorizedClientService;
+    @MockitoBean
+    private OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
 
     @Test
     @DisplayName("시간표 목록 조회 성공")

@@ -1,29 +1,28 @@
 package unischedule.team.chat.controller;
 
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
+import unischedule.auth.jwt.JwtTokenProvider;
+import unischedule.common.config.SecurityConfig;
+import unischedule.google.handler.OAuth2LoginSuccessHandler;
+import unischedule.team.chat.dto.ChatMessageDto;
+import unischedule.team.chat.dto.ChatMessageHistoryResponseDto;
+import unischedule.team.chat.service.ChatService;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import java.time.LocalDateTime;
-import java.util.List;
-
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.context.annotation.Import;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.MockMvc;
-
-import unischedule.auth.jwt.JwtTokenProvider;
-import unischedule.common.config.SecurityConfig;
-import unischedule.team.chat.dto.ChatMessageDto;
-import unischedule.team.chat.dto.ChatMessageHistoryResponseDto;
-import unischedule.team.chat.service.ChatService;
 
 @WebMvcTest(ChatController.class)
 @Import(SecurityConfig.class)
@@ -37,6 +36,11 @@ class ChatControllerTest {
 
     @MockitoBean
     private JwtTokenProvider jwtTokenProvider;
+
+    @MockitoBean
+    private OAuth2AuthorizedClientService authorizedClientService;
+    @MockitoBean
+    private OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
 
     @Test
     @DisplayName("커서 없이 메시지 조회 - 최신 메시지 반환")
