@@ -49,6 +49,9 @@ public class Event extends BaseEntity {
     @Column
     private Boolean isSelective;
 
+    @Column(name = "google_event_id")
+    private String googleEventId;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = true)
     @JoinColumn(name = "recurrence_rule_id", nullable = true)
     private RecurrenceRule recurrenceRule;
