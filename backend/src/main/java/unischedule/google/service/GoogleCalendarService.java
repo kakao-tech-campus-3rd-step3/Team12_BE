@@ -1,24 +1,37 @@
 package unischedule.google.service;
 
+import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.JsonFactory;
+import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.client.util.DateTime;
 import com.google.api.services.calendar.model.EventDateTime;
+import com.google.api.services.calendar.model.Events;
+import com.google.auth.http.HttpCredentialsAdapter;
+import com.google.auth.oauth2.UserCredentials;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import unischedule.calendar.entity.Calendar;
 import unischedule.calendar.service.internal.CalendarRawService;
-import unischedule.events.domain.Event;
 import unischedule.events.dto.EventCreateDto;
 import unischedule.events.service.common.EventCommandService;
+import unischedule.events.service.common.EventQueryService;
 import unischedule.events.service.internal.EventRawService;
+import unischedule.exception.InvalidInputException;
 import unischedule.google.domain.GoogleAuthToken;
 import unischedule.google.repository.GoogleAuthTokenRepository;
 import unischedule.member.domain.Member;
 import unischedule.member.service.internal.MemberRawService;
+import unischedule.team.domain.Team;
+import unischedule.team.domain.TeamMember;
+import unischedule.team.service.internal.TeamMemberRawService;
 
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -29,20 +42,70 @@ public class GoogleCalendarService {
     private final EventRawService eventRawService;
     private final CalendarRawService calendarRawService;
     private final GoogleAuthTokenRepository tokenRepository;
+    private final TeamMemberRawService teamMemberRawService;
+    private final EventQueryService eventQueryService;
+
+    private static final String APPLICATION_NAME = "Unischedule";
+    private static final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
+
+    @Value("${spring.security.oauth2.client.registration.google.client-id}")
+    private String CLIENT_ID;
+    @Value("${spring.security.oauth2.client.registration.google.client-secret}")
+    private String CLIENT_SECRET;
 
     public void syncEvents(String userEmail) {
         Member member = memberRawService.findMemberByEmail(userEmail);
         GoogleAuthToken token = tokenRepository.findByMember(member)
                 .orElseThrow(() -> new IllegalArgumentException("Google 계정이 연동되지 않았습니다."));
 
-        //GoogleCredential credential = new GoogleCredential().Builder()
-        //        .setClientSecretes()
+        try {
+            final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
+            //GoogleCredential credential = new GoogleCredential().Builder()
+            //        .setClientSecretes()
 
+            UserCredentials credentials = UserCredentials.newBuilder()
+                    .setClientId(CLIENT_ID)
+                    .setClientSecret(CLIENT_SECRET)
+                    .setRefreshToken(token.getRefreshToken())
+                    .build();
+
+            com.google.api.services.calendar.Calendar client =
+                    new com.google.api.services.calendar.Calendar.Builder(
+                            HTTP_TRANSPORT,
+                            JSON_FACTORY,
+                            new HttpCredentialsAdapter(credentials)
+                    )
+                            .setApplicationName(APPLICATION_NAME)
+                            .build();
+
+            LocalDateTime startDate = LocalDateTime.now().minusMonths(1);
+            LocalDateTime endDate = LocalDateTime.now().plusMonths(6);
+
+            // 한 달 전 ~ 향후 6개월 일정까지
+            Events events = client.events().list("primary")
+                    .setTimeMin(new DateTime(startDate.toString())) // 최근 30일
+                    .setTimeMax(new DateTime(endDate.toString())) // 앞으로 90일
+                    .setMaxResults(1000)
+                    .setOrderBy("startTime")
+                    .setSingleEvents(true)
+                    .execute();
+
+            List<com.google.api.services.calendar.model.Event> items = events.getItems();
+
+            if (items != null && items.isEmpty()) {
+                mapAndSaveEvents(items, member);
+            }
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
 
     }
 
     private void mapAndSaveEvents(List<com.google.api.services.calendar.model.Event> googleEvents, Member member) {
         Calendar personalCalendar = calendarRawService.getMyPersonalCalendar(member);
+
+        List<Long> allCalendarIds = getMemberCalendarIds(member);
 
         for (com.google.api.services.calendar.model.Event googleEvent : googleEvents) {
             if ("cancelled".equals(googleEvent.getStatus())) {
@@ -51,15 +114,23 @@ public class GoogleCalendarService {
 
             EventCreateDto dto = mapGoogleEventToDto(googleEvent);
 
-            Event newEvent = Event.builder()
-                    .title(dto.title())
-                    .content(dto.description())
-                    .startAt(dto.startTime())
-                    .endAt(dto.endTime())
-                    .build();
+            if (dto.startTime() == null || dto.endTime() == null) {
+                continue;
+            }
 
-            newEvent.connectCalendar(personalCalendar);
-            eventRawService.saveEvent(newEvent);
+            try {
+                eventQueryService.checkNewSingleEventOverlapForMember(
+                        member,
+                        allCalendarIds,
+                        dto.startTime(),
+                        dto.endTime()
+                );
+
+                eventCommandService.createSingleEvent(personalCalendar, dto);
+            }
+            catch (InvalidInputException e) {
+                // 중복 일정 건너뛰기
+            }
         }
     }
 
@@ -92,5 +163,26 @@ public class GoogleCalendarService {
         return Instant.ofEpochMilli(dateTime.getValue())
                 .atZone(ZoneId.systemDefault())
                 .toLocalDateTime();
+    }
+
+    private List<Long> getMemberCalendarIds(Member member) {
+        List<Team> teamList = teamMemberRawService.findByMember(member)
+                .stream()
+                .map(TeamMember::getTeam)
+                .toList();
+
+        List<Long> calendarIds = new ArrayList<>();
+
+        // 개인 캘린더
+        calendarIds.add(calendarRawService.getMyPersonalCalendar(member).getCalendarId());
+
+        // 팀 캘린더
+        List<Long> teamCalendarIds = teamList.stream()
+                .map(calendarRawService::getTeamCalendar)
+                .map(Calendar::getCalendarId)
+                .toList();
+
+        calendarIds.addAll(teamCalendarIds);
+        return calendarIds;
     }
 }
