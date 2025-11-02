@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
@@ -42,11 +43,17 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
                 );
 
         String refreshToken = client.getRefreshToken().getTokenValue();
-        String email = token.getPrincipal().getAttribute("email");
+        String googleEmail = token.getPrincipal().getAttribute("email");
 
         try {
-            // 로그인한 Google 계정 이메일과 UniSchedule 계정 이메일이 같아야 함
-            Member member = memberRawService.findMemberByEmail(email);
+
+            Authentication currentAuth = SecurityContextHolder.getContext().getAuthentication();
+            if (currentAuth == null || currentAuth.getName() == null) {
+                throw new IllegalStateException("현재 로그인된 UniSchedule 사용자를 찾을 수 없습니다.");
+            }
+
+            String memberEmail = currentAuth.getName();
+            Member member = memberRawService.findMemberByEmail(memberEmail);;
 
             // 4. GoogleAuthToken 저장 또는 업데이트
             googleAuthTokenRepository.findByMember(member)
@@ -54,23 +61,22 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
                             authToken -> {
                                 authToken.updateRefreshToken(refreshToken);
                                 googleAuthTokenRepository.save(authToken);
-                                log.info("Google Refresh Token updated for user: {}", email);
+                                log.info("Google Refresh Token updated for user: {}", memberEmail);
                             },
                             () -> {
                                 GoogleAuthToken newAuthToken = new GoogleAuthToken(member, refreshToken);
                                 googleAuthTokenRepository.save(newAuthToken);
-                                log.info("New Google Refresh Token saved for user: {}", email);
+                                log.info("New Google Refresh Token saved for user: {}", memberEmail);
                             }
                     );
 
             // 프론트엔드 리다이렉션 페이지
-            // (예: /my-page/connections)
-            getRedirectStrategy().sendRedirect(request, response, frontendRedirectUrl + "/auth/google/success");
+            getRedirectStrategy().sendRedirect(request, response, frontendRedirectUrl);
 
         } catch (Exception e) {
-            log.error("Failed to process OAuth2 success for user: {}", email, e);
+            log.error("Failed to process OAuth2 success", e);
             // 에러 페이지
-            getRedirectStrategy().sendRedirect(request, response, frontendRedirectUrl + "/auth/google/error");
+            getRedirectStrategy().sendRedirect(request, response, frontendRedirectUrl);
         }
     }
 }
