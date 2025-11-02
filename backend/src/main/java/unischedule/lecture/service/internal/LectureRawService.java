@@ -28,12 +28,17 @@ public class LectureRawService {
     
     @Transactional(readOnly = true)
     public List<Lecture> findActiveLecturesByMemberId(Long memberId) {
-        return lectureRepository.findActiveLecturesByMemberId(memberId, LocalDate.now());
+        return lectureRepository.findByEventCalendarOwnerMemberIdAndEndDateGreaterThanEqual(memberId, LocalDate.now());
     }
     
     @Transactional
     public void deleteLecture(Lecture lecture) {
         lectureRepository.delete(lecture);
+    }
+    
+    @Transactional(readOnly = true)
+    public boolean isEventLecture(Long eventId) {
+        return lectureRepository.existsByEventId(eventId);
     }
 }
 

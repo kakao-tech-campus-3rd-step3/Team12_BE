@@ -18,6 +18,7 @@ import unischedule.events.dto.RecurringInstanceModifyRequestDto;
 import unischedule.events.service.common.EventCommandService;
 import unischedule.events.service.common.EventQueryService;
 import unischedule.events.service.internal.EventRawService;
+import unischedule.lecture.service.internal.LectureRawService;
 import unischedule.member.domain.Member;
 import unischedule.member.service.internal.MemberRawService;
 import unischedule.team.domain.Team;
@@ -38,6 +39,7 @@ public class PersonalEventService {
     private final TeamMemberRawService teamMemberRawService;
     private final CalendarRawService calendarRawService;
     private final EventCommandService eventCommandService;
+    private final LectureRawService lectureRawService;
 
     @Transactional
     public EventCreateResponseDto makePersonalSingleEvent(String email, PersonalEventCreateRequestDto requestDto) {
@@ -219,7 +221,12 @@ public class PersonalEventService {
     public List<EventGetResponseDto> getUpcomingMyEvent(String email) {
         LocalDateTime start = LocalDate.now().plusDays(1).atStartOfDay();
         LocalDateTime end = LocalDate.now().plusDays(8).atStartOfDay();
-        return getPersonalEvents(email, start, end);
+        
+        List<EventGetResponseDto> allEvents = getPersonalEvents(email, start, end);
+        
+        return allEvents.stream()
+            .filter(eventDto -> !lectureRawService.isEventLecture(eventDto.eventId()))
+            .toList();
     }
     
     private List<Long> getMemberCalendarIds(Member member) {
