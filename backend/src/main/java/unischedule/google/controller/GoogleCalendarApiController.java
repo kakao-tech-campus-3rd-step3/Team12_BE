@@ -1,5 +1,7 @@
 package unischedule.google.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -17,17 +19,18 @@ import java.net.URI;
 @RestController
 @RequestMapping("/api/google/calendar")
 @RequiredArgsConstructor
-public class GoogleCalendarController {
+public class GoogleCalendarApiController {
 
     private final GoogleCalendarService googleCalendarService;
 
     /**
      * 사용자의 구글 캘린더 일정 동기화
-     * 사전에 /oauth2/authorization/google 을 통해 연동이 완료되어 있어야 함)
+     * 구글 토큰 정보 부재 시 리다이렉트 : /oauth2/authorization/google
      */
     @PostMapping("/sync")
     public ResponseEntity<Void> syncMyCalendar(
-            @AuthenticationPrincipal UserDetails userDetails
+            @AuthenticationPrincipal UserDetails userDetails,
+            HttpServletRequest request
     ) {
         String userEmail = userDetails.getUsername();
 
@@ -36,6 +39,10 @@ public class GoogleCalendarController {
             return ResponseEntity.noContent().build();
         }
         catch (IllegalStateException e) {
+            // 이메일 세션 저장
+            HttpSession session = request.getSession(true);
+            session.setAttribute("UNISCHEDULE_USER_EMAIL_FOR_LINKING", userEmail);
+
             URI googleAuthUri = URI.create("/oauth2/authorization/google");
             return ResponseEntity.status(HttpStatus.FOUND)
                     .location(googleAuthUri)

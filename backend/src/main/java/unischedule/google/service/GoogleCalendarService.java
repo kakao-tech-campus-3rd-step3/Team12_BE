@@ -54,12 +54,10 @@ public class GoogleCalendarService {
     public void syncEvents(String userEmail) {
         Member member = memberRawService.findMemberByEmail(userEmail);
         GoogleAuthToken token = tokenRepository.findByMember(member)
-                .orElseThrow(() -> new IllegalArgumentException("Google 계정이 연동되지 않았습니다."));
+                .orElseThrow(() -> new IllegalStateException("Google 계정이 연동되지 않았습니다."));
 
         try {
             final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
-            //GoogleCredential credential = new GoogleCredential().Builder()
-            //        .setClientSecretes()
 
             UserCredentials credentials = UserCredentials.newBuilder()
                     .setClientId(CLIENT_ID)
