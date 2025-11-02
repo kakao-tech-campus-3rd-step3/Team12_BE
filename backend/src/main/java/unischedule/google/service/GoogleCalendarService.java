@@ -17,7 +17,6 @@ import unischedule.calendar.service.internal.CalendarRawService;
 import unischedule.events.dto.EventCreateDto;
 import unischedule.events.service.common.EventCommandService;
 import unischedule.events.service.common.EventQueryService;
-import unischedule.events.service.internal.EventRawService;
 import unischedule.exception.InvalidInputException;
 import unischedule.google.domain.GoogleAuthToken;
 import unischedule.google.repository.GoogleAuthTokenRepository;
@@ -39,7 +38,6 @@ import java.util.List;
 public class GoogleCalendarService {
     private final MemberRawService memberRawService;
     private final EventCommandService eventCommandService;
-    private final EventRawService eventRawService;
     private final CalendarRawService calendarRawService;
     private final GoogleAuthTokenRepository tokenRepository;
     private final TeamMemberRawService teamMemberRawService;
@@ -78,13 +76,14 @@ public class GoogleCalendarService {
                             .setApplicationName(APPLICATION_NAME)
                             .build();
 
-            LocalDateTime startDate = LocalDateTime.now().minusMonths(1);
-            LocalDateTime endDate = LocalDateTime.now().plusMonths(6);
+            ZoneId kst = ZoneId.of("Asia/Seoul");
+            long startTime = LocalDateTime.now().minusMonths(1).atZone(kst).toInstant().toEpochMilli();
+            long endTime = LocalDateTime.now().plusMonths(6).atZone(kst).toInstant().toEpochMilli();
 
             // 한 달 전 ~ 향후 6개월 일정까지
             Events events = client.events().list("primary")
-                    .setTimeMin(new DateTime(startDate.toString())) // 최근 30일
-                    .setTimeMax(new DateTime(endDate.toString())) // 앞으로 90일
+                    .setTimeMin(new DateTime(startTime)) // 최근 30일
+                    .setTimeMax(new DateTime(endTime)) // 앞으로 90일
                     .setMaxResults(1000)
                     .setOrderBy("startTime")
                     .setSingleEvents(true)
@@ -92,7 +91,7 @@ public class GoogleCalendarService {
 
             List<com.google.api.services.calendar.model.Event> items = events.getItems();
 
-            if (items != null && items.isEmpty()) {
+            if (items != null && !items.isEmpty()) {
                 mapAndSaveEvents(items, member);
             }
         }
@@ -118,6 +117,7 @@ public class GoogleCalendarService {
                 continue;
             }
 
+            boolean isOverlapping;
             try {
                 eventQueryService.checkNewSingleEventOverlapForMember(
                         member,
@@ -125,11 +125,13 @@ public class GoogleCalendarService {
                         dto.startTime(),
                         dto.endTime()
                 );
-
-                eventCommandService.createSingleEvent(personalCalendar, dto);
+                isOverlapping = false;
+            } catch (InvalidInputException e) {
+                isOverlapping = true;
             }
-            catch (InvalidInputException e) {
-                // 중복 일정 건너뛰기
+
+            if (!isOverlapping) {
+                eventCommandService.createSingleEvent(personalCalendar, dto);
             }
         }
     }
