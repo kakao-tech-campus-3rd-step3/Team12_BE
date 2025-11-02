@@ -17,6 +17,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import unischedule.auth.jwt.JwtAuthenticationFilter;
 import unischedule.auth.jwt.JwtTokenProvider;
+import unischedule.google.handler.OAuth2LoginSuccessHandler;
 
 import java.util.Arrays;
 import java.util.List;
@@ -28,6 +29,7 @@ public class SecurityConfig {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -64,9 +66,14 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/members/login", "/api/members/signup", "/api/members/refresh", "/ws/**", "/api/auth/email/send", "/api/auth/email/verify").permitAll()
                         .requestMatchers("/error", "/actuator/health", "/test").permitAll()
+                        // OAuth
+                        .requestMatchers("/login/oauth2/**", "/oauth2/**").permitAll()
                         .anyRequest().authenticated()
                 )
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .oauth2Login(oauth -> oauth
+                        .successHandler(oAuth2LoginSuccessHandler)
+                );
         return http.build();
     }
 }
