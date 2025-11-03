@@ -13,12 +13,14 @@ import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import unischedule.auth.jwt.JwtTokenProvider;
 import unischedule.auth.service.RefreshTokenService;
 import unischedule.exception.dto.EntityAlreadyExistsException;
+import unischedule.google.handler.OAuth2LoginSuccessHandler;
 import unischedule.member.dto.AccessTokenRefreshRequestDto;
 import unischedule.member.dto.LoginRequestDto;
 import unischedule.member.dto.MemberRegistrationDto;
@@ -54,6 +56,11 @@ class MemberApiControllerTest {
     private ReactiveRedisConnectionFactory reactiveRedisConnectionFactory;
     @MockitoBean
     private RedisMessageListenerContainer redisMessageListenerContainer;
+
+    @MockitoBean
+    private OAuth2AuthorizedClientService authorizedClientService;
+    @MockitoBean
+    private OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
 
     @Test
     @DisplayName("회원가입 - 200")

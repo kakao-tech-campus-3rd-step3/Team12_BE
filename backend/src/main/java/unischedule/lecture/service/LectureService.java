@@ -7,6 +7,7 @@ import unischedule.calendar.entity.Calendar;
 import unischedule.calendar.service.internal.CalendarRawService;
 import unischedule.events.domain.Event;
 import unischedule.events.domain.RecurrenceRule;
+import unischedule.events.service.common.EventCommandService;
 import unischedule.events.service.internal.EventRawService;
 import unischedule.events.service.internal.RecurrenceRuleRawService;
 import unischedule.lecture.domain.Lecture;
@@ -38,6 +39,7 @@ public class LectureService {
     private final CalendarRawService calendarRawService;
     private final EventRawService eventRawService;
     private final RecurrenceRuleRawService recurrenceRuleRawService;
+    private final EventCommandService eventCommandService;
     
     public List<LectureResponseDto> getMyLectures(String email) {
         Member member = memberRawService.findMemberByEmail(email);
@@ -53,7 +55,7 @@ public class LectureService {
         List<Lecture> activeLectures = lectureRawService.findActiveLecturesByMemberId(member.getMemberId());
         activeLectures.forEach(lecture -> {
             lectureRawService.deleteLecture(lecture);
-            eventRawService.deleteEvent(lecture.getEvent());
+            eventCommandService.deleteRecurringEvent(lecture.getEvent());
         });
         
         Calendar calendar = calendarRawService.getMyPersonalCalendar(member);

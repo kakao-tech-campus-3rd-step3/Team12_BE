@@ -8,11 +8,13 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import unischedule.auth.jwt.JwtTokenProvider;
 import unischedule.common.config.SecurityConfig;
+import unischedule.google.handler.OAuth2LoginSuccessHandler;
 import unischedule.lecture.dto.LectureCreateResponseDto;
 import unischedule.lecture.dto.LectureResponseDto;
 import unischedule.lecture.dto.LecturesCreateRequestDto;
@@ -48,6 +50,11 @@ class LectureControllerTest {
 
     @MockitoBean
     private JwtTokenProvider jwtTokenProvider;
+
+    @MockitoBean
+    private OAuth2AuthorizedClientService authorizedClientService;
+    @MockitoBean
+    private OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
 
     @Test
     @WithMockUser(username = "test@test.com")

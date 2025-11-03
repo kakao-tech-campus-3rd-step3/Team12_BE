@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -21,6 +22,7 @@ import unischedule.events.dto.RecurringEventCreateRequestDto;
 import unischedule.events.dto.RecurringInstanceDeleteRequestDto;
 import unischedule.events.dto.RecurringInstanceModifyRequestDto;
 import unischedule.events.service.PersonalEventService;
+import unischedule.google.handler.OAuth2LoginSuccessHandler;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
@@ -49,6 +51,11 @@ public class PersonalEventControllerTest {
     private PersonalEventService eventService;
     @MockitoBean
     private JwtTokenProvider jwtTokenProvider;
+
+    @MockitoBean
+    private OAuth2AuthorizedClientService authorizedClientService;
+    @MockitoBean
+    private OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
 
     @Test
     @WithMockUser(username = "test@example.com")
