@@ -51,3 +51,17 @@ data "aws_ssm_parameter" "mail_password" {
   name            = "/uni-schedule/mail/password"
   with_decryption = true
 }
+
+data "aws_ssm_parameter" "google_client_id" {
+  name            = "/uni-schedule/calendar/google_client_id"
+  with_decryption = true
+}
+
+data "aws_ssm_parameter" "google_client_secret" {
+  name            = "/uni-schedule/calendar/google_client_secret"
+  with_decryption = true
+}
+
+data "aws_ssm_parameter" "google_redirect_url" {
+  name = "/uni-schedule/calendar/google_redirect_url"
+}

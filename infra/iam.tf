@@ -60,6 +60,8 @@ resource "aws_iam_role_policy" "ecs_task_execution_ssm" {
           data.aws_ssm_parameter.redis_password.arn,
           data.aws_ssm_parameter.mail_username.arn,
           data.aws_ssm_parameter.mail_password.arn,
+          data.aws_ssm_parameter.google_client_id,
+          data.aws_ssm_parameter.google_client_secret,
         ]
       }
     ]

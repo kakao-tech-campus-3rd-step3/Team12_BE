@@ -31,7 +31,8 @@ resource "aws_ecs_task_definition" "this" {
         { name = "JWT_REFRESH_TOKEN_TIMEOUT_SEC", value = data.aws_ssm_parameter.jwt_refresh_token_timeout_sec.value },
         { name = "REDIS_HOST", value = data.aws_ssm_parameter.redis_host.value },
         { name = "REDIS_USERNAME", value = data.aws_ssm_parameter.redis_username.value },
-        { name = "REDIS_PORT", value = "17830" }
+        { name = "REDIS_PORT", value = "17830" },
+        { name = "GOOGLE_REDIRECT_URI", value = data.aws_ssm_parameter.google_redirect_url.value }
       ]
 
       secrets = [
@@ -41,7 +42,9 @@ resource "aws_ecs_task_definition" "this" {
         { name = "OPENAI_API_KEY", valueFrom = data.aws_ssm_parameter.openai_api_key.arn },
         { name = "REDIS_PASSWORD", valueFrom = data.aws_ssm_parameter.redis_password.arn },
         { name = "MAIL_USERNAME", valueFrom = data.aws_ssm_parameter.mail_username.arn },
-        { name = "MAIL_PASSWORD", valueFrom = data.aws_ssm_parameter.mail_password.arn }
+        { name = "MAIL_PASSWORD", valueFrom = data.aws_ssm_parameter.mail_password.arn },
+        { name = "GOOGLE_CLIENT_ID", valueFrom = data.aws_ssm_parameter.google_client_id.arn },
+        { name = "GOOGLE_CLIENT_SECRET", valueFrom = data.aws_ssm_parameter.google_client_secret.arn }
       ]
 
       logConfiguration = {
