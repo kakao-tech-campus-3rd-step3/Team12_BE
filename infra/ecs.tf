@@ -119,7 +119,7 @@ resource "aws_ecs_service" "this" {
   name                              = "uni-schedule-service"
   cluster                           = aws_ecs_cluster.this.id
   task_definition                   = aws_ecs_task_definition.this.arn
-  desired_count                     = 2
+  desired_count                     = 1
   launch_type                       = "FARGATE"
   health_check_grace_period_seconds = 300
 
@@ -149,7 +149,7 @@ resource "aws_cloudwatch_log_group" "backend" {
 
 resource "aws_appautoscaling_target" "ecs" {
   max_capacity       = 5
-  min_capacity       = 2
+  min_capacity       = 1
   resource_id        = "service/${aws_ecs_cluster.this.name}/${aws_ecs_service.this.name}"
   scalable_dimension = "ecs:service:DesiredCount"
   service_namespace  = "ecs"
