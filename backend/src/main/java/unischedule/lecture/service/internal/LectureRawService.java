@@ -1,5 +1,6 @@
 package unischedule.lecture.service.internal;
 
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,8 +38,8 @@ public class LectureRawService {
     }
     
     @Transactional(readOnly = true)
-    public boolean isEventLecture(Long eventId) {
-        return lectureRepository.existsByEventId(eventId);
+    public Set<Long> getAllLectureEventIds(String email) {
+        return lectureRepository.findAllEventIds(email);
     }
 }
 

@@ -1,6 +1,7 @@
 package unischedule.event.service;
 
 import java.util.Collections;
+import java.util.Set;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -739,9 +740,8 @@ class PersonalEventServiceTest {
                 serviceDto2
             ));
         
-        // LectureRawService 설정
-        given(lectureRawService.isEventLecture(1L)).willReturn(true);  // Lecture인 이벤트
-        given(lectureRawService.isEventLecture(2L)).willReturn(false); // 일반 이벤트
+        // LectureRawService 설정 (강의 이벤트 ID 집합)
+        given(lectureRawService.getAllLectureEventIds(email)).willReturn(Set.of(1L));
         
         // when
         List<EventGetResponseDto> result = eventService.getUpcomingMyEvent(email);
@@ -750,5 +750,7 @@ class PersonalEventServiceTest {
         assertThat(result)
             .extracting(EventGetResponseDto::eventId)
             .containsExactly(2L); // Lecture가 아닌 이벤트만 남아야 함
+        
+        assertThat(result.get(0).startTime()).isBeforeOrEqualTo(result.get(result.size() - 1).startTime());
     }
 }
