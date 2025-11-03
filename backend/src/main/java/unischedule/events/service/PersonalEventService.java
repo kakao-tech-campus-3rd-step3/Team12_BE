@@ -1,5 +1,7 @@
 package unischedule.events.service;
 
+import java.util.Comparator;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -223,9 +225,11 @@ public class PersonalEventService {
         LocalDateTime end = LocalDate.now().plusDays(8).atStartOfDay();
         
         List<EventGetResponseDto> allEvents = getPersonalEvents(email, start, end);
+        Set<Long> lectureEventIds = lectureRawService.getAllLectureEventIds(email);
         
         return allEvents.stream()
-            .filter(eventDto -> !lectureRawService.isEventLecture(eventDto.eventId()))
+            .filter(eventDto -> !lectureEventIds.contains(eventDto.eventId()))
+            .sorted(Comparator.comparing(EventGetResponseDto::startTime))
             .toList();
     }
     
