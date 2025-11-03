@@ -13,6 +13,7 @@ import unischedule.events.dto.RecurringEventCreateRequestDto;
 import unischedule.events.dto.RecurringInstanceDeleteRequestDto;
 import unischedule.events.dto.RecurringInstanceModifyRequestDto;
 import unischedule.events.service.internal.EventOverrideRawService;
+import unischedule.events.service.internal.EventParticipantRawService;
 import unischedule.events.service.internal.EventRawService;
 import unischedule.events.service.internal.RecurrenceRuleRawService;
 import unischedule.events.service.internal.RecurringEventRawService;
@@ -27,6 +28,7 @@ public class EventCommandService {
     private final EventOverrideRawService eventOverrideRawService;
     private final RecurringEventRawService recurringEventRawService;
     private final RecurrenceRuleRawService recurrenceRuleRawService;
+    private final EventParticipantRawService eventParticipantRawService;
 
     @Transactional
     public Event createSingleEvent(
@@ -116,6 +118,8 @@ public class EventCommandService {
             throw new InvalidInputException("단일 일정이 아닙니다.");
         }
 
+        eventParticipantRawService.deleteAllByEvent(eventToDelete);
+
         eventRawService.deleteEvent(eventToDelete);
     }
 
@@ -124,6 +128,8 @@ public class EventCommandService {
         if (eventToDelete.getRecurrenceRule() == null) {
             throw new InvalidInputException("반복 일정이 아닙니다.");
         }
+
+        eventParticipantRawService.deleteAllByEvent(eventToDelete);
 
         recurringEventRawService.deleteRecurringEvent(eventToDelete);
     }
