@@ -1,5 +1,6 @@
 package unischedule.events.service;
 
+import java.util.Comparator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -208,7 +209,10 @@ public class TeamEventService {
     public List<EventGetResponseDto> getUpcomingTeamEvents(String email, Long teamId) {
         LocalDateTime start = LocalDate.now().plusDays(1).atStartOfDay();
         LocalDateTime end = LocalDate.now().plusDays(8).atStartOfDay();
-        return getTeamEvents(email, teamId, start, end);
+        return getTeamEvents(email, teamId, start, end)
+            .stream()
+            .sorted(Comparator.comparing(EventGetResponseDto::startTime))
+            .toList();
     }
 
     @Transactional
