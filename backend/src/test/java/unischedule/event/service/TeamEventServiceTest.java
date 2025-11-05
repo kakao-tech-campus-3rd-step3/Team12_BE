@@ -26,7 +26,6 @@ import unischedule.events.service.common.EventCommandService;
 import unischedule.events.service.common.EventQueryService;
 import unischedule.events.service.internal.EventParticipantRawService;
 import unischedule.events.service.internal.EventRawService;
-import unischedule.exception.InvalidInputException;
 import unischedule.member.domain.Member;
 import unischedule.member.service.internal.MemberRawService;
 import unischedule.team.domain.Team;
@@ -42,14 +41,12 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -105,10 +102,6 @@ class TeamEventServiceTest {
         List<TeamMember> teamMembers = List.of(new TeamMember(team, member, TeamRole.MEMBER));
         given(teamMemberRawService.findByTeam(team)).willReturn(teamMembers);
 
-        given(calendarRawService.getMyPersonalCalendar(any())).willReturn(TestUtil.makePersonalCalendar(member));
-        given(teamMemberRawService.findByMember(member)).willReturn(teamMembers);
-        doNothing().when(eventQueryService).checkNewSingleEventOverlapForMember(any(), anyList(), any(), any());
-
         given(eventCommandService.createSingleEvent(eq(teamCalendar), any(EventCreateDto.class)))
                 .willReturn(savedEvent);
 
@@ -122,11 +115,8 @@ class TeamEventServiceTest {
         verify(memberRawService).findMemberByEmail(email);
         verify(teamRawService).findTeamById(teamId);
         verify(teamMemberRawService).checkTeamAndMember(team, member);
-        verify(calendarRawService, times(2)).getTeamCalendar(team);
+        verify(calendarRawService).getTeamCalendar(team);
         verify(teamMemberRawService).findByTeam(team);
-        verify(calendarRawService).getMyPersonalCalendar(member);
-        verify(teamMemberRawService).findByMember(member);
-        verify(eventQueryService).checkNewSingleEventOverlapForMember(any(), anyList(), any(), any());
         verify(eventCommandService).createSingleEvent(eq(teamCalendar), any(EventCreateDto.class));
     }
 
@@ -159,10 +149,6 @@ class TeamEventServiceTest {
         given(memberRawService.findMemberById(1L)).willReturn(member);
         doNothing().when(teamMemberRawService).checkTeamAndMember(team, member);
 
-        given(calendarRawService.getMyPersonalCalendar(any())).willReturn(TestUtil.makePersonalCalendar(member));
-        given(teamMemberRawService.findByMember(member)).willReturn(List.of(new TeamMember(team, member, TeamRole.MEMBER)));
-        doNothing().when(eventQueryService).checkNewRecurringEventOverlapForMember(any(), anyList(), any(), any(), any());
-
         given(eventCommandService.createRecurringEvent(eq(teamCalendar), eq(requestDto)))
                 .willReturn(savedEvent);
 
@@ -178,11 +164,8 @@ class TeamEventServiceTest {
         verify(memberRawService).findMemberByEmail(email);
         verify(teamRawService).findTeamById(teamId);
         verify(teamMemberRawService, times(2)).checkTeamAndMember(team, member);
-        verify(calendarRawService, times(2)).getTeamCalendar(team);
+        verify(calendarRawService).getTeamCalendar(team);
         verify(memberRawService).findMemberById(1L);
-        verify(calendarRawService).getMyPersonalCalendar(member);
-        verify(teamMemberRawService).findByMember(member);
-        verify(eventQueryService).checkNewRecurringEventOverlapForMember(any(), anyList(), any(), any(), any());
         verify(eventCommandService).createRecurringEvent(eq(teamCalendar), eq(requestDto));
         verify(eventParticipantRawService).deleteAllParticipantsByEvent(savedEvent);
         verify(eventParticipantRawService).saveAllParticipantsForEvent(eq(savedEvent), anyList());
@@ -267,12 +250,6 @@ class TeamEventServiceTest {
         doNothing().when(teamMemberRawService).checkTeamAndMember(team, member);
 
         List<TeamMember> teamMembers = List.of(new TeamMember(team, member, TeamRole.MEMBER));
-        given(teamMemberRawService.findByTeam(team)).willReturn(teamMembers);
-        given(calendarRawService.getMyPersonalCalendar(any())).willReturn(TestUtil.makePersonalCalendar(member));
-        given(teamMemberRawService.findByMember(member)).willReturn(teamMembers);
-        given(calendarRawService.getTeamCalendar(team)).willReturn(teamCalendar);
-        doNothing().when(eventQueryService).checkEventUpdateOverlapForMember(any(), anyList(), any(), any(), any());
-
         given(eventCommandService.modifyRecurringInstance(eq(originalEvent), eq(requestDto)))
                 .willReturn(updatedOverride);
 
@@ -284,68 +261,11 @@ class TeamEventServiceTest {
         verify(eventRawService).findEventById(eventId);
         verify(teamMemberRawService).checkTeamAndMember(team, member);
 
-        verify(teamMemberRawService).findByTeam(team);
-        verify(calendarRawService).getMyPersonalCalendar(member);
-        verify(teamMemberRawService).findByMember(member);
-        verify(calendarRawService).getTeamCalendar(team);
-        verify(eventQueryService).checkEventUpdateOverlapForMember(any(), anyList(), any(), any(), any());
-
         verify(eventCommandService).modifyRecurringInstance(eq(originalEvent), eq(requestDto));
 
         assertThat(result.title()).isEqualTo("두 번째 수정");
         assertThat(result.description()).isEqualTo("내용도 수정");
         assertThat(result.isRecurring()).isTrue();
-    }
-
-    @Test
-    @DisplayName("팀 일정 생성 실패 - 멤버 시간 중복")
-    void createTeamEventFail() {
-        // given
-        String email = "test@example.com";
-        Long teamId = 1L;
-        Member member = TestUtil.makeMember();
-        Team team = TestUtil.makeTeam();
-        Calendar teamCalendar = TestUtil.makeTeamCalendar(member, team);
-
-        TeamEventCreateRequestDto requestDto = new TeamEventCreateRequestDto(
-                teamId,
-                "팀 회의",
-                "주간 보고",
-                LocalDateTime.now(),
-                LocalDateTime.now().plusHours(1),
-                null // 전체 참여
-        );
-
-        given(memberRawService.findMemberByEmail(email)).willReturn(member);
-        given(teamRawService.findTeamById(teamId)).willReturn(team);
-        doNothing().when(teamMemberRawService).checkTeamAndMember(team, member);
-        given(calendarRawService.getTeamCalendar(team)).willReturn(teamCalendar);
-
-        List<TeamMember> teamMembers = List.of(new TeamMember(team, member, TeamRole.MEMBER));
-        given(teamMemberRawService.findByTeam(team)).willReturn(teamMembers);
-
-        given(calendarRawService.getMyPersonalCalendar(member)).willReturn(TestUtil.makePersonalCalendar(member));
-        given(teamMemberRawService.findByMember(member)).willReturn(teamMembers);
-
-        doThrow(new InvalidInputException("겹치는 일정이 있어 등록할 수 없습니다."))
-                .when(eventQueryService)
-                .checkNewSingleEventOverlapForMember(any(), anyList(), any(), any());
-
-        // when & then
-        assertThatThrownBy(() -> teamEventService.createTeamSingleEvent(email, requestDto))
-                .isInstanceOf(InvalidInputException.class)
-                .hasMessage("겹치는 일정이 있어 등록할 수 없습니다.");
-
-        verify(memberRawService).findMemberByEmail(email);
-        verify(teamRawService).findTeamById(teamId);
-        verify(teamMemberRawService).checkTeamAndMember(team, member);
-        verify(calendarRawService, times(2)).getTeamCalendar(team);
-        verify(teamMemberRawService).findByTeam(team);
-        verify(calendarRawService).getMyPersonalCalendar(member);
-        verify(teamMemberRawService).findByMember(member);
-        verify(eventQueryService).checkNewSingleEventOverlapForMember(any(), anyList(), any(), any());
-
-        verify(eventCommandService, never()).createSingleEvent(any(), any(EventCreateDto.class));
     }
 
     @Test
@@ -370,10 +290,6 @@ class TeamEventServiceTest {
 
         List<TeamMember> teamMembers = List.of(new TeamMember(team, member, TeamRole.MEMBER));
         given(teamMemberRawService.findByTeam(team)).willReturn(teamMembers);
-        given(calendarRawService.getMyPersonalCalendar(any())).willReturn(TestUtil.makePersonalCalendar(member));
-        given(calendarRawService.getTeamCalendar(any(Team.class))).willReturn(teamCalendar);
-        given(teamMemberRawService.findByMember(member)).willReturn(teamMembers);
-        doNothing().when(eventQueryService).checkEventUpdateOverlapForMember(any(), anyList(), any(), any(), any());
 
         doAnswer(invocation -> {
             Event eventToModify = invocation.getArgument(0);
@@ -396,12 +312,7 @@ class TeamEventServiceTest {
         verify(event).validateIsTeamEvent();
         verify(teamMemberRawService).checkTeamAndMember(team, member);
 
-        verify(teamMemberRawService, times(2)).findByTeam(team);
-        verify(calendarRawService).getMyPersonalCalendar(member);
-        verify(calendarRawService).getTeamCalendar(any(Team.class));
-        verify(teamMemberRawService).findByMember(member);
-        verify(eventQueryService).checkEventUpdateOverlapForMember(any(), anyList(), any(), any(), any());
-
+        verify(teamMemberRawService).findByTeam(team);
         verify(eventCommandService).modifySingleEvent(eq(event), any(EventUpdateDto.class));
         verify(eventParticipantRawService).deleteAllParticipantsByEvent(event);
         verify(event).updateIsSelective(false);
