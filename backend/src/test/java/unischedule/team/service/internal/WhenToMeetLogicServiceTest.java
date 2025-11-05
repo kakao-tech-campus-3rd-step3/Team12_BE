@@ -249,6 +249,65 @@ class WhenToMeetLogicServiceTest {
     }
     
     @Test
+    @DisplayName("applyMemberEvents: 멤버 1명이 겹치는 일정 2개(9:00~9:30, 9:20~9:50)를 가져도, 겹치는 슬롯은 1씩만 감소해야 한다")
+    void applyMemberEvents_WithOverlappingEvents_Success() {
+        //Given
+        Member member1 = TestUtil.makeMember(); // Alice
+        Member member2 = TestUtil.makeMember(); // Bob
+        List<Member> members = List.of(member1, member2); // 총 2명
+        
+        LocalDateTime dayStart = LocalDateTime.of(2025, 11, 1, 9, 0);
+        // 9:50 일정을 포함하기 위해 dayEnd를 10:00 이후로 설정
+        LocalDateTime dayEnd = LocalDateTime.of(2025, 11, 1, 10, 30);
+        List<LocalDateTime> intervalStarts = List.of(dayStart);
+        List<LocalDateTime> intervalEnds = List.of(dayEnd);
+        
+        // 1. 테스트할 슬롯 (초기값: 2명) - 9:00 ~ 10:15 범위
+        List<WhenToMeet> slots = List.of(
+            new WhenToMeet(dayStart, dayStart.plusMinutes(15), 2L),                   // 09:00~09:15
+            new WhenToMeet(dayStart.plusMinutes(15), dayStart.plusMinutes(30), 2L), // 09:15~09:30
+            new WhenToMeet(dayStart.plusMinutes(30), dayStart.plusMinutes(45), 2L), // 09:30~09:45
+            new WhenToMeet(dayStart.plusMinutes(45), dayStart.plusMinutes(60), 2L), // 09:45~10:00
+            new WhenToMeet(dayStart.plusMinutes(60), dayStart.plusMinutes(75), 2L)  // 10:00~10:15
+        );
+        
+        // 2. Mock RawService 설정:
+        // Alice(member1)는 겹치는 일정 2개가 있다.
+        LocalDateTime eventA_Start = LocalDateTime.of(2025, 11, 1, 9, 0);  // 9:00
+        LocalDateTime eventA_End = LocalDateTime.of(2025, 11, 1, 9, 30);    // 9:30
+        EventGetResponseDto aliceEventA = new EventGetResponseDto(1L, "일정 A", "", eventA_Start, eventA_End, false);
+        
+        LocalDateTime eventB_Start = LocalDateTime.of(2025, 11, 1, 9, 20); // 9:20
+        LocalDateTime eventB_End = LocalDateTime.of(2025, 11, 1, 9, 50);    // 9:50
+        EventGetResponseDto aliceEventB = new EventGetResponseDto(2L, "일정 B", "", eventB_Start, eventB_End, false);
+        
+        // Alice는 두 일정을 모두 반환받는다.
+        when(whenToMeetRawService.findMemberEvents(member1, dayStart, dayEnd))
+            .thenReturn(List.of(aliceEventA, aliceEventB));
+        
+        // Bob(member2)는 일정이 없다.
+        when(whenToMeetRawService.findMemberEvents(member2, dayStart, dayEnd)).thenReturn(List.of());
+        
+        //When
+        whenToMeetLogicService.applyMemberEvents(slots, members, intervalStarts, intervalEnds, whenToMeetRawService);
+        
+        //Then
+        // Alice의 "합쳐진" 일정(9:00~9:50)과 겹치는 슬롯은 모두 1이 되어야 한다.
+        
+        // 09:00~09:15 (일정 A와 겹침)
+        assertThat(slots.get(0).getAvailableMember()).isEqualTo(1L);
+        // 09:15~09:30 (일정 A, B 모두와 겹침) -> 2번 차감되지 않고 1이 되어야 함
+        assertThat(slots.get(1).getAvailableMember()).isEqualTo(1L);
+        // 09:30~09:45 (일정 B와 겹침)
+        assertThat(slots.get(2).getAvailableMember()).isEqualTo(1L);
+        // 09:45~10:00 (일정 B와 겹침. B는 9:50에 끝남)
+        assertThat(slots.get(3).getAvailableMember()).isEqualTo(1L);
+        
+        // 10:00~10:15 (겹치지 않는 슬롯)
+        assertThat(slots.get(4).getAvailableMember()).isEqualTo(2L); // 기존 2명 그대로
+    }
+    
+    @Test
     @DisplayName("통합 테스트: 슬롯 생성(generateSlots)부터 이벤트 적용(applyMemberEvents)까지")
     void generateAndApplyEvents_IntegrationTest_Success() {
         
