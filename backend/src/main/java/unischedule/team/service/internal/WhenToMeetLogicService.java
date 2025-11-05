@@ -104,18 +104,10 @@ public class WhenToMeetLogicService {
      * @return 겹치는 일정이 하나라도 있으면 true, 그렇지 않으면 false
      */
     private boolean isMemberBusyForSlot(WhenToMeet slot, List<EventGetResponseDto> events) {
-        for (EventGetResponseDto event : events) {
-            // (SlotStart < EventEnd) AND (SlotEnd > EventStart)
-            boolean isOverlap = slot.getStartTime().isBefore(event.endTime()) &&
-                slot.getEndTime().isAfter(event.startTime());
-            
-            if (isOverlap) {
-                // 하나라도 겹치면 이 멤버는 이 슬롯에서 '바쁨'
-                return true;
-            }
-        }
-        // 모든 일정을 확인했는데도 겹치지 않으면 '가능'
-        return false;
+        return events.stream().anyMatch(event ->
+            slot.getStartTime().isBefore(event.endTime()) &&
+                slot.getEndTime().isAfter(event.startTime())
+        );
     }
     
     public List<WhenToMeetResponseDto> toResponse(List<WhenToMeet> slots) {
