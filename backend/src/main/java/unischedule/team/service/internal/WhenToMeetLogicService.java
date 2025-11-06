@@ -81,10 +81,33 @@ public class WhenToMeetLogicService {
         for (Member member : members) {
             List<EventGetResponseDto> events = rawService.findMemberEvents(member, start, end);
             
-            for (EventGetResponseDto event : events) {
-                applyOverlap(slots, event, start, end);
+            if (events.isEmpty()) {
+                continue;
+            }
+            
+            for (WhenToMeet slot : slots) {
+                // "이 멤버가 이 슬롯에 바쁜가?"를 확인
+                boolean isBusyInThisSlot = isMemberBusyForSlot(slot, events);
+                
+                if (isBusyInThisSlot) {
+                    slot.discountAvailable();
+                }
             }
         }
+    }
+    
+    /**
+     * 주어진 슬롯(WhenToMeet)이 멤버의 일정(events) 목록 중 하나라도 겹치는지 확인합니다.
+     *
+     * @param slot   확인할 시간 슬롯
+     * @param events 멤버의 전체 일정 목록
+     * @return 겹치는 일정이 하나라도 있으면 true, 그렇지 않으면 false
+     */
+    private boolean isMemberBusyForSlot(WhenToMeet slot, List<EventGetResponseDto> events) {
+        return events.stream().anyMatch(event ->
+            slot.getStartTime().isBefore(event.endTime()) &&
+                slot.getEndTime().isAfter(event.startTime())
+        );
     }
     
     public List<WhenToMeetResponseDto> toResponse(List<WhenToMeet> slots) {
@@ -95,24 +118,6 @@ public class WhenToMeetLogicService {
                 slot.getAvailableMember()
             ))
             .toList();
-    }
-    
-    private void applyOverlap(List<WhenToMeet> slots,
-        EventGetResponseDto event,
-        LocalDateTime intervalStart,
-        LocalDateTime intervalEnd) {
-        
-        LocalDateTime eventStart = event.startTime();
-        LocalDateTime eventEnd = event.endTime();
-        
-        for (WhenToMeet slot : slots) {
-            if (slot.getStartTime().isBefore(intervalStart) || slot.getEndTime().isAfter(intervalEnd))
-                continue;
-            
-            if (slot.getStartTime().isBefore(eventEnd) && slot.getEndTime().isAfter(eventStart)) {
-                slot.discountAvailable();
-            }
-        }
     }
     
     private List<DailyInterval> generateDailyIntervals(LocalDateTime start, LocalDateTime end) {

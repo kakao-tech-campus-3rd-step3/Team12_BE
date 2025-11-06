@@ -18,6 +18,7 @@ import unischedule.events.service.internal.EventRawService;
 import unischedule.events.service.internal.RecurrenceRuleRawService;
 import unischedule.events.service.internal.RecurringEventRawService;
 import unischedule.exception.InvalidInputException;
+import unischedule.lecture.repository.LectureRepository;
 
 import java.util.Optional;
 
@@ -29,6 +30,7 @@ public class EventCommandService {
     private final RecurringEventRawService recurringEventRawService;
     private final RecurrenceRuleRawService recurrenceRuleRawService;
     private final EventParticipantRawService eventParticipantRawService;
+    private final LectureRepository lectureRepository;
 
     @Transactional
     public Event createSingleEvent(
@@ -118,8 +120,8 @@ public class EventCommandService {
             throw new InvalidInputException("단일 일정이 아닙니다.");
         }
 
+        deleteLectureIfExists(eventToDelete);
         eventParticipantRawService.deleteAllByEvent(eventToDelete);
-
         eventRawService.deleteEvent(eventToDelete);
     }
 
@@ -129,9 +131,13 @@ public class EventCommandService {
             throw new InvalidInputException("반복 일정이 아닙니다.");
         }
 
+        deleteLectureIfExists(eventToDelete);
         eventParticipantRawService.deleteAllByEvent(eventToDelete);
-
         recurringEventRawService.deleteRecurringEvent(eventToDelete);
+    }
+
+    private void deleteLectureIfExists(Event event) {
+        lectureRepository.findByEvent(event).ifPresent(lectureRepository::delete);
     }
 
 
