@@ -160,7 +160,11 @@ public class PersonalEventService {
     public List<EventGetResponseDto> getTodayMyEvent(String email) {
         LocalDateTime start = LocalDate.now().atStartOfDay();
         LocalDateTime end = LocalDate.now().plusDays(1).atStartOfDay();
-        return getPersonalEvents(email, start, end);
+        List<EventGetResponseDto> allEvents = getPersonalEvents(email, start, end);
+        
+        return allEvents.stream()
+            .sorted(Comparator.comparing(EventGetResponseDto::startTime))
+            .toList();
     }
     
     @Transactional(readOnly = true)

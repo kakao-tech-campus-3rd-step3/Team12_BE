@@ -178,7 +178,11 @@ public class TeamEventService {
     public List<EventGetResponseDto> getTodayTeamEvents(String email, Long teamId) {
         LocalDateTime start = LocalDate.now().atStartOfDay();
         LocalDateTime end = LocalDate.now().plusDays(1).atStartOfDay();
-        return getTeamEvents(email, teamId, start, end);
+        List<EventGetResponseDto> allEvents = getTeamEvents(email, teamId, start, end);
+        
+        return allEvents.stream()
+            .sorted(Comparator.comparing(EventGetResponseDto::startTime))
+            .toList();
     }
     
     @Transactional(readOnly = true)
