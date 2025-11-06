@@ -21,12 +21,12 @@ import unischedule.events.dto.RecurringEventCreateRequestDto;
 import unischedule.events.dto.RecurringInstanceDeleteRequestDto;
 import unischedule.events.dto.RecurringInstanceModifyRequestDto;
 import unischedule.events.dto.TeamEventCreateRequestDto;
+import unischedule.events.dto.TeamEventGetResponseDto;
 import unischedule.events.service.TeamEventService;
 import unischedule.events.service.common.EventCommandService;
 import unischedule.events.service.common.EventQueryService;
 import unischedule.events.service.internal.EventParticipantRawService;
 import unischedule.events.service.internal.EventRawService;
-import unischedule.exception.InvalidInputException;
 import unischedule.member.domain.Member;
 import unischedule.member.service.internal.MemberRawService;
 import unischedule.team.domain.Team;
@@ -42,14 +42,12 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -105,10 +103,6 @@ class TeamEventServiceTest {
         List<TeamMember> teamMembers = List.of(new TeamMember(team, member, TeamRole.MEMBER));
         given(teamMemberRawService.findByTeam(team)).willReturn(teamMembers);
 
-        given(calendarRawService.getMyPersonalCalendar(any())).willReturn(TestUtil.makePersonalCalendar(member));
-        given(teamMemberRawService.findByMember(member)).willReturn(teamMembers);
-        doNothing().when(eventQueryService).checkNewSingleEventOverlapForMember(any(), anyList(), any(), any());
-
         given(eventCommandService.createSingleEvent(eq(teamCalendar), any(EventCreateDto.class)))
                 .willReturn(savedEvent);
 
@@ -122,11 +116,8 @@ class TeamEventServiceTest {
         verify(memberRawService).findMemberByEmail(email);
         verify(teamRawService).findTeamById(teamId);
         verify(teamMemberRawService).checkTeamAndMember(team, member);
-        verify(calendarRawService, times(2)).getTeamCalendar(team);
+        verify(calendarRawService).getTeamCalendar(team);
         verify(teamMemberRawService).findByTeam(team);
-        verify(calendarRawService).getMyPersonalCalendar(member);
-        verify(teamMemberRawService).findByMember(member);
-        verify(eventQueryService).checkNewSingleEventOverlapForMember(any(), anyList(), any(), any());
         verify(eventCommandService).createSingleEvent(eq(teamCalendar), any(EventCreateDto.class));
     }
 
@@ -159,10 +150,6 @@ class TeamEventServiceTest {
         given(memberRawService.findMemberById(1L)).willReturn(member);
         doNothing().when(teamMemberRawService).checkTeamAndMember(team, member);
 
-        given(calendarRawService.getMyPersonalCalendar(any())).willReturn(TestUtil.makePersonalCalendar(member));
-        given(teamMemberRawService.findByMember(member)).willReturn(List.of(new TeamMember(team, member, TeamRole.MEMBER)));
-        doNothing().when(eventQueryService).checkNewRecurringEventOverlapForMember(any(), anyList(), any(), any(), any());
-
         given(eventCommandService.createRecurringEvent(eq(teamCalendar), eq(requestDto)))
                 .willReturn(savedEvent);
 
@@ -178,11 +165,8 @@ class TeamEventServiceTest {
         verify(memberRawService).findMemberByEmail(email);
         verify(teamRawService).findTeamById(teamId);
         verify(teamMemberRawService, times(2)).checkTeamAndMember(team, member);
-        verify(calendarRawService, times(2)).getTeamCalendar(team);
+        verify(calendarRawService).getTeamCalendar(team);
         verify(memberRawService).findMemberById(1L);
-        verify(calendarRawService).getMyPersonalCalendar(member);
-        verify(teamMemberRawService).findByMember(member);
-        verify(eventQueryService).checkNewRecurringEventOverlapForMember(any(), anyList(), any(), any(), any());
         verify(eventCommandService).createRecurringEvent(eq(teamCalendar), eq(requestDto));
         verify(eventParticipantRawService).deleteAllParticipantsByEvent(savedEvent);
         verify(eventParticipantRawService).saveAllParticipantsForEvent(eq(savedEvent), anyList());
@@ -267,12 +251,6 @@ class TeamEventServiceTest {
         doNothing().when(teamMemberRawService).checkTeamAndMember(team, member);
 
         List<TeamMember> teamMembers = List.of(new TeamMember(team, member, TeamRole.MEMBER));
-        given(teamMemberRawService.findByTeam(team)).willReturn(teamMembers);
-        given(calendarRawService.getMyPersonalCalendar(any())).willReturn(TestUtil.makePersonalCalendar(member));
-        given(teamMemberRawService.findByMember(member)).willReturn(teamMembers);
-        given(calendarRawService.getTeamCalendar(team)).willReturn(teamCalendar);
-        doNothing().when(eventQueryService).checkEventUpdateOverlapForMember(any(), anyList(), any(), any(), any());
-
         given(eventCommandService.modifyRecurringInstance(eq(originalEvent), eq(requestDto)))
                 .willReturn(updatedOverride);
 
@@ -284,68 +262,11 @@ class TeamEventServiceTest {
         verify(eventRawService).findEventById(eventId);
         verify(teamMemberRawService).checkTeamAndMember(team, member);
 
-        verify(teamMemberRawService).findByTeam(team);
-        verify(calendarRawService).getMyPersonalCalendar(member);
-        verify(teamMemberRawService).findByMember(member);
-        verify(calendarRawService).getTeamCalendar(team);
-        verify(eventQueryService).checkEventUpdateOverlapForMember(any(), anyList(), any(), any(), any());
-
         verify(eventCommandService).modifyRecurringInstance(eq(originalEvent), eq(requestDto));
 
         assertThat(result.title()).isEqualTo("두 번째 수정");
         assertThat(result.description()).isEqualTo("내용도 수정");
         assertThat(result.isRecurring()).isTrue();
-    }
-
-    @Test
-    @DisplayName("팀 일정 생성 실패 - 멤버 시간 중복")
-    void createTeamEventFail() {
-        // given
-        String email = "test@example.com";
-        Long teamId = 1L;
-        Member member = TestUtil.makeMember();
-        Team team = TestUtil.makeTeam();
-        Calendar teamCalendar = TestUtil.makeTeamCalendar(member, team);
-
-        TeamEventCreateRequestDto requestDto = new TeamEventCreateRequestDto(
-                teamId,
-                "팀 회의",
-                "주간 보고",
-                LocalDateTime.now(),
-                LocalDateTime.now().plusHours(1),
-                null // 전체 참여
-        );
-
-        given(memberRawService.findMemberByEmail(email)).willReturn(member);
-        given(teamRawService.findTeamById(teamId)).willReturn(team);
-        doNothing().when(teamMemberRawService).checkTeamAndMember(team, member);
-        given(calendarRawService.getTeamCalendar(team)).willReturn(teamCalendar);
-
-        List<TeamMember> teamMembers = List.of(new TeamMember(team, member, TeamRole.MEMBER));
-        given(teamMemberRawService.findByTeam(team)).willReturn(teamMembers);
-
-        given(calendarRawService.getMyPersonalCalendar(member)).willReturn(TestUtil.makePersonalCalendar(member));
-        given(teamMemberRawService.findByMember(member)).willReturn(teamMembers);
-
-        doThrow(new InvalidInputException("겹치는 일정이 있어 등록할 수 없습니다."))
-                .when(eventQueryService)
-                .checkNewSingleEventOverlapForMember(any(), anyList(), any(), any());
-
-        // when & then
-        assertThatThrownBy(() -> teamEventService.createTeamSingleEvent(email, requestDto))
-                .isInstanceOf(InvalidInputException.class)
-                .hasMessage("겹치는 일정이 있어 등록할 수 없습니다.");
-
-        verify(memberRawService).findMemberByEmail(email);
-        verify(teamRawService).findTeamById(teamId);
-        verify(teamMemberRawService).checkTeamAndMember(team, member);
-        verify(calendarRawService, times(2)).getTeamCalendar(team);
-        verify(teamMemberRawService).findByTeam(team);
-        verify(calendarRawService).getMyPersonalCalendar(member);
-        verify(teamMemberRawService).findByMember(member);
-        verify(eventQueryService).checkNewSingleEventOverlapForMember(any(), anyList(), any(), any());
-
-        verify(eventCommandService, never()).createSingleEvent(any(), any(EventCreateDto.class));
     }
 
     @Test
@@ -370,10 +291,6 @@ class TeamEventServiceTest {
 
         List<TeamMember> teamMembers = List.of(new TeamMember(team, member, TeamRole.MEMBER));
         given(teamMemberRawService.findByTeam(team)).willReturn(teamMembers);
-        given(calendarRawService.getMyPersonalCalendar(any())).willReturn(TestUtil.makePersonalCalendar(member));
-        given(calendarRawService.getTeamCalendar(any(Team.class))).willReturn(teamCalendar);
-        given(teamMemberRawService.findByMember(member)).willReturn(teamMembers);
-        doNothing().when(eventQueryService).checkEventUpdateOverlapForMember(any(), anyList(), any(), any(), any());
 
         doAnswer(invocation -> {
             Event eventToModify = invocation.getArgument(0);
@@ -396,12 +313,7 @@ class TeamEventServiceTest {
         verify(event).validateIsTeamEvent();
         verify(teamMemberRawService).checkTeamAndMember(team, member);
 
-        verify(teamMemberRawService, times(2)).findByTeam(team);
-        verify(calendarRawService).getMyPersonalCalendar(member);
-        verify(calendarRawService).getTeamCalendar(any(Team.class));
-        verify(teamMemberRawService).findByMember(member);
-        verify(eventQueryService).checkEventUpdateOverlapForMember(any(), anyList(), any(), any(), any());
-
+        verify(teamMemberRawService).findByTeam(team);
         verify(eventCommandService).modifySingleEvent(eq(event), any(EventUpdateDto.class));
         verify(eventParticipantRawService).deleteAllParticipantsByEvent(event);
         verify(event).updateIsSelective(false);
@@ -476,15 +388,23 @@ class TeamEventServiceTest {
         String email = "team@test.com";
         Long teamId = 1L;
 
-        Member member = TestUtil.makeMember();
-        Team team = TestUtil.makeTeam();
+        Member member1 = TestUtil.makeMember();
+        ReflectionTestUtils.setField(member1, "memberId", 123L);
+        Member member2 = TestUtil.makeMember();
+        ReflectionTestUtils.setField(member2, "memberId", 456L);
 
-        Calendar teamCalendar = spy(TestUtil.makeTeamCalendar(member, team));
+        Team team = TestUtil.makeTeam();
+        Calendar teamCalendar = spy(TestUtil.makeTeamCalendar(member1, team));
         when(teamCalendar.getCalendarId()).thenReturn(100L);
+
+        List<TeamMember> teamMemberList = List.of(
+                new TeamMember(team, member1, TeamRole.MEMBER),
+                new TeamMember(team, member2, TeamRole.MEMBER)
+        );
 
         EventServiceDto event1 = new EventServiceDto(
                 1L,
-                "회의",
+                "선택 참여 회의",
                 "주간 회의",
                 LocalDateTime.of(2025, 9, 10, 10, 0),
                 LocalDateTime.of(2025, 9, 10, 11, 0),
@@ -493,7 +413,7 @@ class TeamEventServiceTest {
 
         EventServiceDto event2 = new EventServiceDto(
                 2L,
-                "워크샵",
+                "전체 참여 워크샵",
                 "분기별 워크샵",
                 LocalDateTime.of(2025, 9, 15, 14, 0),
                 LocalDateTime.of(2025, 9, 15, 17, 0),
@@ -503,24 +423,48 @@ class TeamEventServiceTest {
         LocalDateTime start = LocalDate.now().plusDays(1).atStartOfDay();
         LocalDateTime end = LocalDate.now().plusDays(8).atStartOfDay();
 
-        when(memberRawService.findMemberByEmail(email)).thenReturn(member);
+        when(memberRawService.findMemberByEmail(email)).thenReturn(member1);
         when(teamRawService.findTeamById(teamId)).thenReturn(team);
         when(calendarRawService.getTeamCalendar(team)).thenReturn(teamCalendar);
-        doNothing().when(teamMemberRawService).checkTeamAndMember(team, member);
+        doNothing().when(teamMemberRawService).checkTeamAndMember(team, member1);
         when(eventQueryService.getEvents(anyList(), eq(start), eq(end))).thenReturn(List.of(event1, event2));
 
+        // 선택 참여
+        Event event1_entity = spy(TestUtil.makeEvent("선택 참여 회의", ""));
+        when(event1_entity.isForAllMembers()).thenReturn(false);
+        when(eventRawService.findEventById(1L)).thenReturn(event1_entity);
+        when(eventParticipantRawService.getParticipantsForEvent(event1_entity)).thenReturn(List.of(member1));
+
+        // 2번 이벤트 (전체 참여)
+        Event event2_entity = spy(TestUtil.makeEvent("전체 참여 워크샵", ""));
+        when(event2_entity.isForAllMembers()).thenReturn(true);
+        when(event2_entity.getCalendar()).thenReturn(teamCalendar);
+        when(eventRawService.findEventById(2L)).thenReturn(event2_entity);
+        when(teamMemberRawService.findByTeam(team)).thenReturn(teamMemberList);
+
         // when
-        List<EventGetResponseDto> result = teamEventService.getUpcomingTeamEvents(email, teamId);
+        List<TeamEventGetResponseDto> result = teamEventService.getUpcomingTeamEvents(email, teamId);
 
         // then
-        assertThat(result).hasSize(2);
-        assertThat(result.get(0).title()).isEqualTo("회의");
+        assertThat(result.get(0).title()).isEqualTo("선택 참여 회의");
+        assertThat(result.get(0).eventParticipants())
+                .describedAs("member1만 포함해야 함")
+                .containsExactly(123L);
+
+        assertThat(result.get(1).title()).isEqualTo("전체 참여 워크샵");
+        assertThat(result.get(1).eventParticipants())
+                .describedAs("member1, member2 포함")
+                .containsExactlyInAnyOrder(123L, 456L);
 
         verify(memberRawService).findMemberByEmail(email);
         verify(teamRawService).findTeamById(teamId);
         verify(calendarRawService).getTeamCalendar(team);
-        verify(teamMemberRawService).checkTeamAndMember(team, member);
+        verify(teamMemberRawService).checkTeamAndMember(team, member1);
         verify(eventQueryService).getEvents(anyList(), eq(start), eq(end));
+        verify(eventRawService).findEventById(1L);
+        verify(eventRawService).findEventById(2L);
+        verify(eventParticipantRawService).getParticipantsForEvent(event1_entity);
+        verify(teamMemberRawService).findByTeam(team);
     }
 
     @Test
@@ -531,26 +475,20 @@ class TeamEventServiceTest {
         Long teamId = 1L;
 
         Member member = TestUtil.makeMember();
+        ReflectionTestUtils.setField(member, "memberId", 123L);
         Team team = TestUtil.makeTeam();
 
         Calendar teamCalendar = spy(TestUtil.makeTeamCalendar(member, team));
         when(teamCalendar.getCalendarId()).thenReturn(100L);
 
+        List<TeamMember> teamMemberList = List.of(new TeamMember(team, member, TeamRole.MEMBER));
+
         EventServiceDto event1 = new EventServiceDto(
                 1L,
-                "회의",
+                "오늘 회의",
                 "주간 회의",
                 LocalDateTime.of(2025, 9, 10, 10, 0),
                 LocalDateTime.of(2025, 9, 10, 11, 0),
-                false
-        );
-
-        EventServiceDto event2 = new EventServiceDto(
-                2L,
-                "워크샵",
-                "분기별 워크샵",
-                LocalDateTime.of(2025, 9, 15, 14, 0),
-                LocalDateTime.of(2025, 9, 15, 17, 0),
                 false
         );
 
@@ -561,21 +499,31 @@ class TeamEventServiceTest {
         when(teamRawService.findTeamById(teamId)).thenReturn(team);
         when(calendarRawService.getTeamCalendar(team)).thenReturn(teamCalendar);
         doNothing().when(teamMemberRawService).checkTeamAndMember(team, member);
-        when(eventQueryService.getEvents(anyList(), eq(start), eq(end))).thenReturn(List.of(event1, event2));
+        when(eventQueryService.getEvents(anyList(), eq(start), eq(end))).thenReturn(List.of(event1));
+
+        Event event1_entity = spy(TestUtil.makeEvent("오늘 회의", ""));
+        when(event1_entity.isForAllMembers()).thenReturn(true);
+        when(event1_entity.getCalendar()).thenReturn(teamCalendar);
+        when(eventRawService.findEventById(1L)).thenReturn(event1_entity);
+        when(teamMemberRawService.findByTeam(team)).thenReturn(teamMemberList);
 
         // when
-        List<EventGetResponseDto> result = teamEventService.getTodayTeamEvents(email, teamId);
+        List<TeamEventGetResponseDto> result = teamEventService.getTodayTeamEvents(email, teamId);
 
         // then
-        assertThat(result).hasSize(2);
-        assertThat(result.get(0).title()).isEqualTo("회의");
-        assertThat(result.get(1).title()).isEqualTo("워크샵");
+        assertThat(result).hasSize(1);
+        assertThat(result.getFirst().title()).isEqualTo("오늘 회의");
+        assertThat(result.getFirst().eventParticipants())
+                .describedAs("member1 포함")
+                .containsExactly(123L);
 
         verify(memberRawService).findMemberByEmail(email);
         verify(teamRawService).findTeamById(teamId);
         verify(calendarRawService).getTeamCalendar(team);
         verify(teamMemberRawService).checkTeamAndMember(team, member);
         verify(eventQueryService).getEvents(anyList(), eq(start), eq(end));
+        verify(eventRawService).findEventById(1L);
+        verify(teamMemberRawService).findByTeam(team);
     }
 
 }

@@ -1,7 +1,5 @@
 package unischedule.events.service;
 
-import java.util.Comparator;
-import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,7 +10,6 @@ import unischedule.events.domain.EventOverride;
 import unischedule.events.dto.EventCreateResponseDto;
 import unischedule.events.dto.EventGetResponseDto;
 import unischedule.events.dto.EventModifyRequestDto;
-import unischedule.events.dto.EventServiceDto;
 import unischedule.events.dto.PersonalEventCreateRequestDto;
 import unischedule.events.dto.RecurringEventCreateRequestDto;
 import unischedule.events.dto.RecurringInstanceDeleteRequestDto;
@@ -30,7 +27,9 @@ import unischedule.team.service.internal.TeamMemberRawService;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -49,15 +48,6 @@ public class PersonalEventService {
         Calendar targetCalendar = calendarRawService.getMyPersonalCalendar(member);
         targetCalendar.validateOwner(member);
 
-        List<Long> conflictCheckCalendarIds = getMemberCalendarIds(member);
-
-        eventQueryService.checkNewSingleEventOverlapForMember(
-                member,
-                conflictCheckCalendarIds,
-                requestDto.startTime(),
-                requestDto.endTime()
-        );
-
         Event saved = eventCommandService.createSingleEvent(targetCalendar, requestDto.toDto());
 
         return EventCreateResponseDto.from(saved);
@@ -68,16 +58,6 @@ public class PersonalEventService {
         Member member = memberRawService.findMemberByEmail(email);
         Calendar targetCalendar = calendarRawService.getMyPersonalCalendar(member);
         targetCalendar.validateOwner(member);
-
-        List<Long> conflictCheckCalendarIds = getMemberCalendarIds(member);
-
-        eventQueryService.checkNewRecurringEventOverlapForMember(
-                member,
-                conflictCheckCalendarIds,
-                requestDto.firstStartTime(),
-                requestDto.firstEndTime(),
-                requestDto.rrule()
-        );
 
         Event saved = eventCommandService.createRecurringEvent(targetCalendar, requestDto);
 
@@ -117,17 +97,6 @@ public class PersonalEventService {
         Event findEvent = eventRawService.findEventById(eventId);
         findEvent.validateEventOwner(member);
 
-        List<Long> conflictCheckCalendarIds = getMemberCalendarIds(member);
-
-        LocalDateTime newStartAt = getValueOrDefault(requestDto.startTime(), findEvent.getStartAt());
-        LocalDateTime newEndTime = getValueOrDefault(requestDto.endTime(), findEvent.getEndAt());
-        eventQueryService.checkEventUpdateOverlapForMember(
-                member,
-                conflictCheckCalendarIds,
-                newStartAt,
-                newEndTime,
-                findEvent
-        );
         eventCommandService.modifySingleEvent(findEvent, requestDto.toDto());
 
         return EventGetResponseDto.fromSingleEvent(findEvent);
@@ -139,18 +108,6 @@ public class PersonalEventService {
         Event foundEvent = eventRawService.findEventById(eventId);
         foundEvent.validateEventOwner(member);
 
-        List<Long> conflictCheckCalendarIds = getMemberCalendarIds(member);
-
-        LocalDateTime newStartAt = getValueOrDefault(requestDto.startTime(), foundEvent.getStartAt());
-        LocalDateTime newEndTime = getValueOrDefault(requestDto.endTime(), foundEvent.getEndAt());
-        eventQueryService.checkEventUpdateOverlapForMember(
-                member,
-                conflictCheckCalendarIds,
-                newStartAt,
-                newEndTime,
-                foundEvent
-        );
-
         eventCommandService.modifyRecurringEvent(foundEvent, requestDto.toDto());
 
         return EventGetResponseDto.fromRecurringEvent(foundEvent);
@@ -161,19 +118,6 @@ public class PersonalEventService {
         Member member = memberRawService.findMemberByEmail(email);
         Event originalEvent = eventRawService.findEventById(eventId);
         originalEvent.validateEventOwner(member);
-        List<Long> conflictCheckCalendars = getMemberCalendarIds(member);
-
-        if (requestDto.startTime() != null || requestDto.endTime() != null) {
-            LocalDateTime newStartAt = getValueOrDefault(requestDto.startTime(), originalEvent.getStartAt());
-            LocalDateTime newEndAt = getValueOrDefault(requestDto.endTime(), originalEvent.getEndAt());
-            eventQueryService.checkEventUpdateOverlapForMember(
-                    member,
-                    conflictCheckCalendars,
-                    newStartAt,
-                    newEndAt,
-                    originalEvent
-            );
-        }
 
         EventOverride savedOverride = eventCommandService.modifyRecurringInstance(originalEvent, requestDto);
 
@@ -216,7 +160,11 @@ public class PersonalEventService {
     public List<EventGetResponseDto> getTodayMyEvent(String email) {
         LocalDateTime start = LocalDate.now().atStartOfDay();
         LocalDateTime end = LocalDate.now().plusDays(1).atStartOfDay();
-        return getPersonalEvents(email, start, end);
+        List<EventGetResponseDto> allEvents = getPersonalEvents(email, start, end);
+        
+        return allEvents.stream()
+            .sorted(Comparator.comparing(EventGetResponseDto::startTime))
+            .toList();
     }
     
     @Transactional(readOnly = true)
