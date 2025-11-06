@@ -132,10 +132,6 @@ public class TeamService {
         Member findMember = memberRawService.findMemberByEmail(email);
 
         TeamMember findRelation = teamMemberRawService.findByTeamAndMember(findTeam, findMember);
-        
-        /*
-        팀 탈퇴 전 해야할 일이 생긴다면 여기 추가
-         */
 
         teamMemberRawService.deleteTeamMember(findRelation);
     }
@@ -157,10 +153,6 @@ public class TeamService {
         TeamMember findRelation = teamMemberRawService.findByTeamAndMember(findTeam, findMember);
 
         findRelation.checkLeader();
-        
-        /*
-        팀 삭제 전 해야할 일이 생긴다면 여기 추가
-         */
 
         List<TeamMember> findTeamMember = teamMemberRawService.findByTeam(findTeam);
         teamMemberRawService.deleteTeamMemberAll(findTeamMember);
@@ -176,7 +168,6 @@ public class TeamService {
      * @param teamId
      * @return 겹치는 일정 리스트
      */
-    //현재 "겹치는 일정"이 없다고 보고 만든 코드
     public List<WhenToMeetResponseDto> getTeamMembersWhenToMeet(Long teamId) {
         List<Member> members = whenToMeetRawService.findTeamMembers(teamId);
         List<LocalDateTime> starts = whenToMeetLogicService.generateIntervalStarts();
