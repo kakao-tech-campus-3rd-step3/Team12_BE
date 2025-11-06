@@ -107,11 +107,6 @@
 **1. 일정 관리 구조**
 
 ```mermaid
----
-config:
-  look: handDrawn
-  theme: neo
----
 flowchart LR
  subgraph subGraph0["Controllers"]
     direction TB
