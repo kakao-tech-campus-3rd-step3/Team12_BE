@@ -21,6 +21,7 @@ import unischedule.events.dto.RecurringEventCreateRequestDto;
 import unischedule.events.dto.RecurringInstanceDeleteRequestDto;
 import unischedule.events.dto.RecurringInstanceModifyRequestDto;
 import unischedule.events.dto.TeamEventCreateRequestDto;
+import unischedule.events.dto.TeamEventGetResponseDto;
 import unischedule.events.service.TeamEventService;
 import unischedule.events.service.common.EventCommandService;
 import unischedule.events.service.common.EventQueryService;
@@ -387,15 +388,23 @@ class TeamEventServiceTest {
         String email = "team@test.com";
         Long teamId = 1L;
 
-        Member member = TestUtil.makeMember();
-        Team team = TestUtil.makeTeam();
+        Member member1 = TestUtil.makeMember();
+        ReflectionTestUtils.setField(member1, "memberId", 123L);
+        Member member2 = TestUtil.makeMember();
+        ReflectionTestUtils.setField(member2, "memberId", 456L);
 
-        Calendar teamCalendar = spy(TestUtil.makeTeamCalendar(member, team));
+        Team team = TestUtil.makeTeam();
+        Calendar teamCalendar = spy(TestUtil.makeTeamCalendar(member1, team));
         when(teamCalendar.getCalendarId()).thenReturn(100L);
+
+        List<TeamMember> teamMemberList = List.of(
+                new TeamMember(team, member1, TeamRole.MEMBER),
+                new TeamMember(team, member2, TeamRole.MEMBER)
+        );
 
         EventServiceDto event1 = new EventServiceDto(
                 1L,
-                "회의",
+                "선택 참여 회의",
                 "주간 회의",
                 LocalDateTime.of(2025, 9, 10, 10, 0),
                 LocalDateTime.of(2025, 9, 10, 11, 0),
@@ -404,7 +413,7 @@ class TeamEventServiceTest {
 
         EventServiceDto event2 = new EventServiceDto(
                 2L,
-                "워크샵",
+                "전체 참여 워크샵",
                 "분기별 워크샵",
                 LocalDateTime.of(2025, 9, 15, 14, 0),
                 LocalDateTime.of(2025, 9, 15, 17, 0),
@@ -414,24 +423,48 @@ class TeamEventServiceTest {
         LocalDateTime start = LocalDate.now().plusDays(1).atStartOfDay();
         LocalDateTime end = LocalDate.now().plusDays(8).atStartOfDay();
 
-        when(memberRawService.findMemberByEmail(email)).thenReturn(member);
+        when(memberRawService.findMemberByEmail(email)).thenReturn(member1);
         when(teamRawService.findTeamById(teamId)).thenReturn(team);
         when(calendarRawService.getTeamCalendar(team)).thenReturn(teamCalendar);
-        doNothing().when(teamMemberRawService).checkTeamAndMember(team, member);
+        doNothing().when(teamMemberRawService).checkTeamAndMember(team, member1);
         when(eventQueryService.getEvents(anyList(), eq(start), eq(end))).thenReturn(List.of(event1, event2));
 
+        // 선택 참여
+        Event event1_entity = spy(TestUtil.makeEvent("선택 참여 회의", ""));
+        when(event1_entity.isForAllMembers()).thenReturn(false);
+        when(eventRawService.findEventById(1L)).thenReturn(event1_entity);
+        when(eventParticipantRawService.getParticipantsForEvent(event1_entity)).thenReturn(List.of(member1));
+
+        // 2번 이벤트 (전체 참여)
+        Event event2_entity = spy(TestUtil.makeEvent("전체 참여 워크샵", ""));
+        when(event2_entity.isForAllMembers()).thenReturn(true);
+        when(event2_entity.getCalendar()).thenReturn(teamCalendar);
+        when(eventRawService.findEventById(2L)).thenReturn(event2_entity);
+        when(teamMemberRawService.findByTeam(team)).thenReturn(teamMemberList);
+
         // when
-        List<EventGetResponseDto> result = teamEventService.getUpcomingTeamEvents(email, teamId);
+        List<TeamEventGetResponseDto> result = teamEventService.getUpcomingTeamEvents(email, teamId);
 
         // then
-        assertThat(result).hasSize(2);
-        assertThat(result.get(0).title()).isEqualTo("회의");
+        assertThat(result.get(0).title()).isEqualTo("선택 참여 회의");
+        assertThat(result.get(0).eventParticipants())
+                .describedAs("member1만 포함해야 함")
+                .containsExactly(123L);
+
+        assertThat(result.get(1).title()).isEqualTo("전체 참여 워크샵");
+        assertThat(result.get(1).eventParticipants())
+                .describedAs("member1, member2 포함")
+                .containsExactlyInAnyOrder(123L, 456L);
 
         verify(memberRawService).findMemberByEmail(email);
         verify(teamRawService).findTeamById(teamId);
         verify(calendarRawService).getTeamCalendar(team);
-        verify(teamMemberRawService).checkTeamAndMember(team, member);
+        verify(teamMemberRawService).checkTeamAndMember(team, member1);
         verify(eventQueryService).getEvents(anyList(), eq(start), eq(end));
+        verify(eventRawService).findEventById(1L);
+        verify(eventRawService).findEventById(2L);
+        verify(eventParticipantRawService).getParticipantsForEvent(event1_entity);
+        verify(teamMemberRawService).findByTeam(team);
     }
 
     @Test
@@ -442,26 +475,20 @@ class TeamEventServiceTest {
         Long teamId = 1L;
 
         Member member = TestUtil.makeMember();
+        ReflectionTestUtils.setField(member, "memberId", 123L);
         Team team = TestUtil.makeTeam();
 
         Calendar teamCalendar = spy(TestUtil.makeTeamCalendar(member, team));
         when(teamCalendar.getCalendarId()).thenReturn(100L);
 
+        List<TeamMember> teamMemberList = List.of(new TeamMember(team, member, TeamRole.MEMBER));
+
         EventServiceDto event1 = new EventServiceDto(
                 1L,
-                "회의",
+                "오늘 회의",
                 "주간 회의",
                 LocalDateTime.of(2025, 9, 10, 10, 0),
                 LocalDateTime.of(2025, 9, 10, 11, 0),
-                false
-        );
-
-        EventServiceDto event2 = new EventServiceDto(
-                2L,
-                "워크샵",
-                "분기별 워크샵",
-                LocalDateTime.of(2025, 9, 15, 14, 0),
-                LocalDateTime.of(2025, 9, 15, 17, 0),
                 false
         );
 
@@ -472,21 +499,31 @@ class TeamEventServiceTest {
         when(teamRawService.findTeamById(teamId)).thenReturn(team);
         when(calendarRawService.getTeamCalendar(team)).thenReturn(teamCalendar);
         doNothing().when(teamMemberRawService).checkTeamAndMember(team, member);
-        when(eventQueryService.getEvents(anyList(), eq(start), eq(end))).thenReturn(List.of(event1, event2));
+        when(eventQueryService.getEvents(anyList(), eq(start), eq(end))).thenReturn(List.of(event1));
+
+        Event event1_entity = spy(TestUtil.makeEvent("오늘 회의", ""));
+        when(event1_entity.isForAllMembers()).thenReturn(true);
+        when(event1_entity.getCalendar()).thenReturn(teamCalendar);
+        when(eventRawService.findEventById(1L)).thenReturn(event1_entity);
+        when(teamMemberRawService.findByTeam(team)).thenReturn(teamMemberList);
 
         // when
-        List<EventGetResponseDto> result = teamEventService.getTodayTeamEvents(email, teamId);
+        List<TeamEventGetResponseDto> result = teamEventService.getTodayTeamEvents(email, teamId);
 
         // then
-        assertThat(result).hasSize(2);
-        assertThat(result.get(0).title()).isEqualTo("회의");
-        assertThat(result.get(1).title()).isEqualTo("워크샵");
+        assertThat(result).hasSize(1);
+        assertThat(result.getFirst().title()).isEqualTo("오늘 회의");
+        assertThat(result.getFirst().eventParticipants())
+                .describedAs("member1 포함")
+                .containsExactly(123L);
 
         verify(memberRawService).findMemberByEmail(email);
         verify(teamRawService).findTeamById(teamId);
         verify(calendarRawService).getTeamCalendar(team);
         verify(teamMemberRawService).checkTeamAndMember(team, member);
         verify(eventQueryService).getEvents(anyList(), eq(start), eq(end));
+        verify(eventRawService).findEventById(1L);
+        verify(teamMemberRawService).findByTeam(team);
     }
 
 }

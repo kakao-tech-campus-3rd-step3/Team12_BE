@@ -10,10 +10,12 @@ import unischedule.events.domain.EventOverride;
 import unischedule.events.dto.EventCreateResponseDto;
 import unischedule.events.dto.EventGetResponseDto;
 import unischedule.events.dto.EventModifyRequestDto;
+import unischedule.events.dto.EventServiceDto;
 import unischedule.events.dto.RecurringEventCreateRequestDto;
 import unischedule.events.dto.RecurringInstanceDeleteRequestDto;
 import unischedule.events.dto.RecurringInstanceModifyRequestDto;
 import unischedule.events.dto.TeamEventCreateRequestDto;
+import unischedule.events.dto.TeamEventGetResponseDto;
 import unischedule.events.service.common.EventCommandService;
 import unischedule.events.service.common.EventQueryService;
 import unischedule.events.service.internal.EventParticipantRawService;
@@ -96,7 +98,11 @@ public class TeamEventService {
     }
 
     @Transactional(readOnly = true)
-    public List<EventGetResponseDto> getTeamEvents(String email, Long teamId, LocalDateTime startAt, LocalDateTime endAt) {
+    public List<TeamEventGetResponseDto> getTeamEvents(String email, Long teamId, LocalDateTime startAt, LocalDateTime endAt) {
+        return getTeamAllEvent(email, teamId, startAt, endAt);
+    }
+
+    private List<TeamEventGetResponseDto> getTeamAllEvent(String email, Long teamId, LocalDateTime startAt, LocalDateTime endAt) {
         Member member = memberRawService.findMemberByEmail(email);
         Team team = teamRawService.findTeamById(teamId);
 
@@ -104,9 +110,15 @@ public class TeamEventService {
 
         Calendar teamCalendar = calendarRawService.getTeamCalendar(team);
 
-        return eventQueryService.getEvents(List.of(teamCalendar.getCalendarId()), startAt, endAt)
-                .stream()
-                .map(EventGetResponseDto::fromServiceDto)
+        List<EventServiceDto> serviceDtos = eventQueryService.getEvents(List.of(teamCalendar.getCalendarId()), startAt, endAt);
+
+        return serviceDtos.stream()
+                .map(dto -> {
+                    Event event = eventRawService.findEventById(dto.eventId());
+                    List<Long> participantIds = getParticipantIdsForEvent(event);
+
+                    return TeamEventGetResponseDto.from(dto, participantIds);
+                })
                 .toList();
     }
 
@@ -175,23 +187,23 @@ public class TeamEventService {
     }
     
     @Transactional(readOnly = true)
-    public List<EventGetResponseDto> getTodayTeamEvents(String email, Long teamId) {
+    public List<TeamEventGetResponseDto> getTodayTeamEvents(String email, Long teamId) {
         LocalDateTime start = LocalDate.now().atStartOfDay();
         LocalDateTime end = LocalDate.now().plusDays(1).atStartOfDay();
-        List<EventGetResponseDto> allEvents = getTeamEvents(email, teamId, start, end);
+        List<TeamEventGetResponseDto> allEvents = getTeamAllEvent(email, teamId, start, end);
         
         return allEvents.stream()
-            .sorted(Comparator.comparing(EventGetResponseDto::startTime))
+            .sorted(Comparator.comparing(TeamEventGetResponseDto::startTime))
             .toList();
     }
     
     @Transactional(readOnly = true)
-    public List<EventGetResponseDto> getUpcomingTeamEvents(String email, Long teamId) {
+    public List<TeamEventGetResponseDto> getUpcomingTeamEvents(String email, Long teamId) {
         LocalDateTime start = LocalDate.now().plusDays(1).atStartOfDay();
         LocalDateTime end = LocalDate.now().plusDays(8).atStartOfDay();
-        return getTeamEvents(email, teamId, start, end)
+        return getTeamAllEvent(email, teamId, start, end)
             .stream()
-            .sorted(Comparator.comparing(EventGetResponseDto::startTime))
+            .sorted(Comparator.comparing(TeamEventGetResponseDto::startTime))
             .toList();
     }
 
@@ -243,6 +255,26 @@ public class TeamEventService {
             participants.add(member);
         }
         return participants;
+    }
+
+    private List<Long> getParticipantIdsForEvent(Event event) {
+        if (event.isForAllMembers()) {
+            Team team = event.getCalendar().getTeam();
+            if (team == null) {
+                return List.of();
+            }
+
+            return teamMemberRawService.findByTeam(team)
+                    .stream()
+                    .map(TeamMember::getMember)
+                    .map(Member::getMemberId)
+                    .toList();
+        }
+
+        return eventParticipantRawService.getParticipantsForEvent(event)
+                .stream()
+                .map(Member::getMemberId)
+                .toList();
     }
 
     private void handleEventParticipants(Event event, List<Member> allParticipants, List<Long> newParticipantIds) {

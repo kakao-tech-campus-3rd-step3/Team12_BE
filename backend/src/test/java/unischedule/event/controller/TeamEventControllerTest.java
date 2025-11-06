@@ -21,6 +21,7 @@ import unischedule.events.dto.RecurringEventCreateRequestDto;
 import unischedule.events.dto.RecurringInstanceDeleteRequestDto;
 import unischedule.events.dto.RecurringInstanceModifyRequestDto;
 import unischedule.events.dto.TeamEventCreateRequestDto;
+import unischedule.events.dto.TeamEventGetResponseDto;
 import unischedule.events.service.TeamEventService;
 import unischedule.google.handler.OAuth2LoginSuccessHandler;
 
@@ -138,8 +139,8 @@ public class TeamEventControllerTest {
     void getTeamEvents() throws Exception {
         // given
         Long teamId = 1L;
-        EventGetResponseDto responseDto = new EventGetResponseDto(1L, "팀 회의", "내용",
-                LocalDateTime.now(), LocalDateTime.now().plusHours(1), false);
+        TeamEventGetResponseDto responseDto = new TeamEventGetResponseDto(1L, "팀 회의", "내용",
+                LocalDateTime.now(), LocalDateTime.now().plusHours(1), false, List.of(1L));
         given(teamEventService.getTeamEvents(anyString(), anyLong(), any(LocalDateTime.class), any(LocalDateTime.class)))
                 .willReturn(List.of(responseDto));
 

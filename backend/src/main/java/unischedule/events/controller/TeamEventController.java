@@ -6,7 +6,6 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,6 +23,7 @@ import unischedule.events.dto.RecurringEventCreateRequestDto;
 import unischedule.events.dto.RecurringInstanceDeleteRequestDto;
 import unischedule.events.dto.RecurringInstanceModifyRequestDto;
 import unischedule.events.dto.TeamEventCreateRequestDto;
+import unischedule.events.dto.TeamEventGetResponseDto;
 import unischedule.events.service.TeamEventService;
 
 import java.time.LocalDateTime;
@@ -75,7 +75,7 @@ public class TeamEventController {
     }
 
     @GetMapping("/{teamId}")
-    public ResponseEntity<List<EventGetResponseDto>> getTeamEvents(
+    public ResponseEntity<List<TeamEventGetResponseDto>> getTeamEvents(
             @AuthenticationPrincipal
             UserDetails userDetails,
             @PathVariable
@@ -85,7 +85,7 @@ public class TeamEventController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
             LocalDateTime endAt
     ) {
-        List<EventGetResponseDto> responseDto = teamEventService.getTeamEvents(
+        List<TeamEventGetResponseDto> responseDto = teamEventService.getTeamEvents(
                 userDetails.getUsername(),
                 teamId,
                 startAt,
@@ -160,13 +160,13 @@ public class TeamEventController {
     }
     
     @GetMapping("/{teamId}/upcomming")
-    public ResponseEntity<List<EventGetResponseDto>> upcomingTeamEvents(
+    public ResponseEntity<List<TeamEventGetResponseDto>> upcomingTeamEvents(
         @AuthenticationPrincipal
         UserDetails userDetails,
         @PathVariable
         Long teamId
     ) {
-        List<EventGetResponseDto> upcomingEvents = teamEventService.getUpcomingTeamEvents(
+        List<TeamEventGetResponseDto> upcomingEvents = teamEventService.getUpcomingTeamEvents(
             userDetails.getUsername(), teamId
         );
         
@@ -174,13 +174,13 @@ public class TeamEventController {
     }
     
     @GetMapping("/{teamId}/today")
-    public ResponseEntity<List<EventGetResponseDto>> todayTeamEvents(
+    public ResponseEntity<List<TeamEventGetResponseDto>> todayTeamEvents(
         @AuthenticationPrincipal
         UserDetails userDetails,
         @PathVariable
         Long teamId
     ) {
-        List<EventGetResponseDto> todayEvents = teamEventService.getTodayTeamEvents(
+        List<TeamEventGetResponseDto> todayEvents = teamEventService.getTodayTeamEvents(
             userDetails.getUsername(), teamId
         );
         
