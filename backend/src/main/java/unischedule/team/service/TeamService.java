@@ -132,7 +132,9 @@ public class TeamService {
         Member findMember = memberRawService.findMemberByEmail(email);
 
         TeamMember findRelation = teamMemberRawService.findByTeamAndMember(findTeam, findMember);
-
+        
+        findRelation.validateRemovable();
+        
         teamMemberRawService.deleteTeamMember(findRelation);
     }
 
