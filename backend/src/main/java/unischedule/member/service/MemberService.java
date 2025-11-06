@@ -8,7 +8,7 @@ import unischedule.auth.repository.RefreshTokenRepository;
 import unischedule.calendar.entity.Calendar;
 import unischedule.calendar.repository.CalendarRepository;
 import unischedule.events.domain.Event;
-import unischedule.events.service.internal.EventOverrideRawService;
+import unischedule.events.service.common.EventCommandService;
 import unischedule.events.service.internal.EventParticipantRawService;
 import unischedule.events.service.internal.EventRawService;
 import unischedule.exception.InvalidInputException;
@@ -34,11 +34,11 @@ public class MemberService {
     private final MemberRawService memberRawService;
 
     private final RefreshTokenRepository refreshTokenRepository;
-    private final EventOverrideRawService eventOverrideRawService;
     private final ChatMessageRepository chatMessageRepository;
     private final TeamMemberRawService teamMemberRawService;
     private final EventRawService eventRawService;
     private final EventParticipantRawService eventParticipantRawService;
+    private final EventCommandService eventCommandService;
 
     /**
      * 회원가입 시 기본 개인 캘린더 생성
@@ -128,11 +128,14 @@ public class MemberService {
                     List<Event> events = eventRawService.findByCalendar(personalCalendar);
 
                     for (Event event : events) {
-                        eventParticipantRawService.deleteAllByEvent(event);
-                        eventOverrideRawService.deleteAllEventOverrideByEvent(event);
+                        if (event.getRecurrenceRule() == null) {
+                            eventCommandService.deleteSingleEvent(event);
+                        }
+                        else {
+                            eventCommandService.deleteRecurringEvent(event);
+                        }
                     }
 
-                    eventRawService.deleteAll(events);
                     calendarRepository.delete(personalCalendar);
                 });
     }

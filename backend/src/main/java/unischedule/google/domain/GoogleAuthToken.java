@@ -35,7 +35,7 @@ public class GoogleAuthToken {
     }
 
     public void updateRefreshToken(String refreshToken) {
-        if (refreshToken != null && refreshToken.isBlank()) {
+        if (refreshToken != null && !refreshToken.isBlank()) {
             this.refreshToken = refreshToken;
         }
     }
