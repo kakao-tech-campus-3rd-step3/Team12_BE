@@ -7,7 +7,10 @@
 #### 1.1. 국내외 시장 현황 및 문제점
 
 - 기존 캘린더 서비스의 한계
-    - Google 캘린더 등 기존 서비스는 범용적이지만 
+    - Google 캘린더 
+        - 팀원 간의 실질적인 공통 가용 시간을 파악하기 위해 복잡한 공유 설정이 필요합니다. 특히, 팀 공유 기능은 유료 Workspace 구독이 필요해 접근성이 낮습니다.
+    - When2Meet 등 일회성 일정 조율 도구
+        - 일회성 조율 조구는 지속적인 일정 관리가 어렵고 캘린더 기능이 부족합니다.
 
 #### 1.2. 필요성과 기대효과
 
@@ -99,6 +102,10 @@
 | | Docker | `backend/Dockerfile` |
 | | GitHub Actions (CI/CD) | `.github/workflows/ci.yml` |
 | **Cloud** | AWS (ECS, ECR, RDS, S3, ALB, Route53, VPC) | `infra/` |
+
+#### 3.3. ERD 다이어그램
+
+![UniSchedule_ERD](./uni_schedule_erd_.png)
 
 ### 4\. 개발 결과
 
@@ -309,10 +316,10 @@ SPRING_DATASOURCE_USERNAME=...
 SPRING_DATASOURCE_PASSWORD=...
 
 # Redis
-REDIS\_HOST=...
-REDIS\_PORT=...
-REDIS\_USERNAME=...
-REDIS\_PASSWORD=...
+REDIS_HOST=...
+REDIS_PORT=...
+REDIS_USERNAME=...
+REDIS_PASSWORD=...
 
 # Google OAuth
 GOOGLE_CLIENT_ID=...
@@ -326,6 +333,7 @@ MAIL_PASSWORD=...
 # External APIs
 OPENAI_API_KEY=...
 ```
+
 3.  **애플리케이션 실행 (Local)**
     로컬에 Redis, MySQL이 실행 중이어야 합니다.
 
