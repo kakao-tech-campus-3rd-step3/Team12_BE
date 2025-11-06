@@ -7,7 +7,10 @@
 #### 1.1. 국내외 시장 현황 및 문제점
 
 - 기존 캘린더 서비스의 한계
-    - Google 캘린더 등 기존 서비스는 범용적이지만 
+    - Google 캘린더 
+        - 팀원 간의 실질적인 공통 가용 시간을 파악하기 위해 복잡한 공유 설정이 필요합니다. 특히, 팀 공유 기능은 유료 Workspace 구독이 필요해 접근성이 낮습니다.
+    - When2Meet 등 일회성 일정 조율 도구
+        - 일회성 조율 조구는 지속적인 일정 관리가 어렵고 캘린더 기능이 부족합니다.
 
 #### 1.2. 필요성과 기대효과
 
@@ -100,6 +103,10 @@
 | | GitHub Actions (CI/CD) | `.github/workflows/ci.yml` |
 | **Cloud** | AWS (ECS, ECR, RDS, S3, ALB, Route53, VPC) | `infra/` |
 
+#### 3.3. ERD 다이어그램
+
+![UniSchedule_ERD](./uni_schedule_erd_.png)
+
 ### 4\. 개발 결과
 
 #### 4.1. 핵심 기능 흐름도
@@ -107,6 +114,11 @@
 **1. 일정 관리 구조**
 
 ```mermaid
+---
+config:
+  look: handDrawn
+  theme: neo
+---
 flowchart LR
  subgraph subGraph0["Controllers"]
     direction TB
@@ -295,40 +307,49 @@ backend
 2.  **환경 변수 설정**
     `backend/src/main/resources/` 경로에 `.env` 파일을 생성하고, `application.properties` 및 `infra/ssm.tf`에 정의된 환경 변수를 입력합니다.
 
-> **backend/src/main/resources/.env**
+    > **backend/src/main/resources/.env**
 
-```properties
-# JWT
-JWT_SECRET=...
-JWT_ACCESS_TOKEN_TIMEOUT_SEC=...
-JWT_REFRESH_TOKEN_TIMEOUT_SEC=...
+    > ```properties
+    > # JWT
+    > JWT_SECRET=...
+    > JWT_ACCESS_TOKEN_TIMEOUT_SEC=3600
+    > JWT_REFRESH_TOKEN_TIMEOUT_SEC=604800
+    > ```
 
-# Database (MySQL)
-SPRING_DATASOURCE_URL=...
-SPRING_DATASOURCE_USERNAME=...
-SPRING_DATASOURCE_PASSWORD=...
+    > # Database (MySQL)
 
-# Redis
-REDIS\_HOST=...
-REDIS\_PORT=...
-REDIS\_USERNAME=...
-REDIS\_PASSWORD=...
+    > SPRING\_DATASOURCE\_URL=jdbc:mysql://localhost:3306/unischedule\_db
+    > SPRING\_DATASOURCE\_USERNAME=...
+    > SPRING\_DATASOURCE\_PASSWORD=...
 
-# Google OAuth
-GOOGLE_CLIENT_ID=...
-GOOGLE_CLIENT_SECRET=...
-GOOGLE_REDIRECT_URI=...
+    > # Redis
 
-# Mail (Gmail SMTP)
-MAIL_USERNAME=...
-MAIL_PASSWORD=...
+    > REDIS\_HOST=localhost
+    > REDIS\_PORT=6379
+    > REDIS\_USERNAME=...
+    > REDIS\_PASSWORD=...
 
-# External APIs
-OPENAI_API_KEY=...
-```
+    > # Google OAuth
+
+    > GOOGLE\_CLIENT\_ID=...
+    > GOOGLE\_CLIENT\_SECRET=...
+    > GOOGLE\_REDIRECT\_URI=http://localhost:8080/login/oauth2/code/google
+
+    > # Mail (Gmail SMTP)
+
+    > MAIL\_USERNAME=...
+    > MAIL\_PASSWORD=...
+
+    > # External APIs
+
+    > OPENAI\_API\_KEY=...
+
+    > ```
+    > ```
+
 3.  **애플리케이션 실행 (Local)**
     로컬에 Redis, MySQL이 실행 중이어야 합니다.
 
-```bash
-./gradlew bootRun
-```
+    ```bash
+    ./gradlew bootRun
+    ```
