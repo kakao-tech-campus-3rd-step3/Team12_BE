@@ -26,8 +26,7 @@ public class OpenAiClient {
         try {
             String base64Image = Base64.getEncoder().encodeToString(file.getBytes());
             Map<String, Object> request = Map.of(
-                    "model", "gpt-5-nano",
-                    "reasoning", Map.of("effort", "low"),
+                    "model", "gpt-4.1-mini",
                     "input", List.of(
                             Map.of("role", "user", "content", List.of(
                                     Map.of("type", "input_text", "text",
@@ -102,7 +101,7 @@ public class OpenAiClient {
                     .bodyToMono(JsonNode.class)
                     .handle((resp, sink) -> {
                         try {
-                            String content = resp.get("output").get(1).get("content").get(0)
+                            String content = resp.get("output").get(0).get("content").get(0)
                                     .get("text").textValue();
                             TimetableDetailDto result = objectMapper.readValue(content,
                                     TimetableDetailDto.class);
