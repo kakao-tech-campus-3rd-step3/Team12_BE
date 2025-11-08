@@ -283,7 +283,7 @@ public class TeamService {
         return recommendBestSlots(slots, requiredTime, requiredCnt, Long.valueOf(members.size()));
     }
     
-    public List<WhenToMeetRecommendResponseDto> recommendBestSlots(
+    private List<WhenToMeetRecommendResponseDto> recommendBestSlots(
         List<WhenToMeet> slots,
         Long durationMinutes,
         Long topN,
