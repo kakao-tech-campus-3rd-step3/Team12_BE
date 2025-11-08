@@ -207,6 +207,37 @@ class WhenToMeetLogicServiceTest {
     }
     
     @Test
+    @DisplayName("generateSlotsV2: 1시간(9:00~10:00) 범위에 30분 단위 슬롯 2개가 생성되어야 한다")
+    void generateSlotsV2_Success() {
+        //Given
+        Member member1 = TestUtil.makeMember();
+        Member member2 = TestUtil.makeMember();
+        List<Member> members = List.of(member1, member2);
+        long memberCount = members.size(); // 2명
+        
+        LocalDateTime start = LocalDateTime.of(2025, 11, 1, 9, 0);
+        LocalDateTime end = LocalDateTime.of(2025, 11, 1, 10, 0); // 1시간
+        List<LocalDateTime> starts = List.of(start);
+        List<LocalDateTime> ends = List.of(end);
+        
+        //When
+        List<WhenToMeet> slots = whenToMeetLogicService.generateSlotsV2(members, 30L, starts, ends);
+        
+        //Then
+        assertThat(slots).hasSize(2); // 1시간 = 30분 * 2
+        
+        // 1번째 슬롯 검증
+        assertThat(slots.get(0).getStartTime()).isEqualTo("2025-11-01T09:00:00");
+        assertThat(slots.get(0).getEndTime()).isEqualTo("2025-11-01T09:30:00");
+        assertThat(slots.get(0).getAvailableMember()).isEqualTo(memberCount);
+        
+        // 마지막(4번째) 슬롯 검증
+        assertThat(slots.get(1).getStartTime()).isEqualTo("2025-11-01T09:30:00");
+        assertThat(slots.get(1).getEndTime()).isEqualTo("2025-11-01T10:00:00");
+        assertThat(slots.get(1).getAvailableMember()).isEqualTo(memberCount);
+    }
+    
+    @Test
     @DisplayName("applyMemberEvents: 멤버 1명이 9:00~9:30에 일정이 있으면 해당 슬롯 2개의 카운트가 1 감소해야 한다")
     void applyMemberEvents_Success() {
         //Given

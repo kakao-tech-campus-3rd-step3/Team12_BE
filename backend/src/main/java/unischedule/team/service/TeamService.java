@@ -180,6 +180,17 @@ public class TeamService {
 
         return whenToMeetLogicService.toResponse(slots);
     }
+    
+    public List<WhenToMeetResponseDto> getTeamMembersWhenToMeetV2(Long teamId, Long slotTime, LocalDate startTime, LocalDate endTime) {
+        List<Member> members = whenToMeetRawService.findTeamMembers(teamId);
+        List<LocalDateTime> starts = whenToMeetLogicService.generateIntervalStarts(startTime.atStartOfDay().plusHours(9), endTime.atStartOfDay());
+        List<LocalDateTime> ends = whenToMeetLogicService.generateIntervalEnds(startTime.atStartOfDay().plusHours(9), endTime.plusDays(1).atStartOfDay());
+        
+        List<WhenToMeet> slots = whenToMeetLogicService.generateSlotsV2(members, slotTime, starts, ends);
+        whenToMeetLogicService.applyMemberEvents(slots, members, starts, ends, whenToMeetRawService);
+        
+        return whenToMeetLogicService.toResponse(slots);
+    }
 
     /**
      * 사용자가 속한 팀들을 페이징 처리하여 조회하는 메서드

@@ -68,6 +68,29 @@ public class WhenToMeetLogicService {
         return slots;
     }
     
+    public List<WhenToMeet> generateSlotsV2(List<Member> members,
+        Long slotTime,
+        List<LocalDateTime> starts,
+        List<LocalDateTime> ends) {
+        List<WhenToMeet> slots = new ArrayList<>();
+        
+        for (int i = 0; i < starts.size(); i++) {
+            LocalDateTime start = starts.get(i);
+            LocalDateTime end = ends.get(i);
+            LocalDateTime cursor = start;
+            
+            while (cursor.isBefore(end)) {
+                LocalDateTime slotStart = cursor;
+                LocalDateTime slotEnd = cursor.plusMinutes(slotTime);
+                if (slotEnd.isAfter(end)) slotEnd = end;
+                
+                slots.add(new WhenToMeet(slotStart, slotEnd, (long) members.size()));
+                cursor = slotEnd;
+            }
+        }
+        return slots;
+    }
+    
     @Transactional
     public void applyMemberEvents(List<WhenToMeet> slots,
         List<Member> members,
