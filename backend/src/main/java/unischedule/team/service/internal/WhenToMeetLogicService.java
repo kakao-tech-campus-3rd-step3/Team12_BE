@@ -142,41 +142,7 @@ public class WhenToMeetLogicService {
         Long topN,
         Long memberCnt) {
         
-        int requiredSlots = (int) ((durationMinutes + 14) / 15);
-        
-        List<WhenToMeet> recommendedWindows = new ArrayList<>();
-        
-        // 하루별로 슬롯 그룹화
-        Map<LocalDate, List<WhenToMeet>> slotsByDate = slots.stream()
-            .collect(Collectors.groupingBy(s -> s.getStartTime().toLocalDate()));
-        
-        // 하루 단위 연속 슬롯 탐색
-        for (List<WhenToMeet> daySlots : slotsByDate.values()) {
-            for (int i = 0; i <= daySlots.size() - requiredSlots; i++) {
-                List<WhenToMeet> windowSlots = daySlots.subList(i, i + requiredSlots);
-                
-                long minAvailable = windowSlots.stream()
-                    .mapToLong(WhenToMeet::getAvailableMember)
-                    .min()
-                    .orElse(0);
-                
-                recommendedWindows.add(new WhenToMeet(
-                    windowSlots.get(0).getStartTime(),
-                    windowSlots.get(windowSlots.size() - 1).getEndTime(),
-                    minAvailable
-                ));
-            }
-        }
-        
-        return recommendedWindows.stream()
-            .sorted((a, b) -> {
-                int cmp = Long.compare(b.getAvailableMember(), a.getAvailableMember());
-                if (cmp != 0) return cmp;
-                return a.getStartTime().compareTo(b.getStartTime());
-            })
-            .limit(topN)
-            .map(window -> WhenToMeetRecommendResponseDto.from(window, memberCnt)) // DTO.from 호출
-            .toList();
+        return recommendBestSlotsV2(slots, 15L, durationMinutes, topN, memberCnt);
     }
     
     public List<WhenToMeetRecommendResponseDto> recommendBestSlotsV2(
