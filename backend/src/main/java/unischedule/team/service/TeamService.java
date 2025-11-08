@@ -170,6 +170,7 @@ public class TeamService {
      * @param teamId
      * @return 겹치는 일정 리스트
      */
+    @Transactional(readOnly = true)
     public List<WhenToMeetResponseDto> getTeamMembersWhenToMeet(Long teamId) {
         List<Member> members = whenToMeetRawService.findTeamMembers(teamId);
         List<LocalDateTime> starts = whenToMeetLogicService.generateIntervalStarts();
@@ -181,6 +182,7 @@ public class TeamService {
         return whenToMeetLogicService.toResponse(slots);
     }
     
+    @Transactional(readOnly = true)
     public List<WhenToMeetResponseDto> getTeamMembersWhenToMeetV2(Long teamId, Long slotTime, LocalDate startTime, LocalDate endTime) {
         List<Member> members = whenToMeetRawService.findTeamMembers(teamId);
         List<LocalDateTime> starts = whenToMeetLogicService.generateIntervalStarts(startTime.atStartOfDay().plusHours(9), endTime.atStartOfDay());
