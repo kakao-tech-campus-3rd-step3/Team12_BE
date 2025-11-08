@@ -280,50 +280,23 @@ public class TeamService {
         whenToMeetLogicService.applyMemberEvents(slots, members, intervalStarts, intervalEnds, whenToMeetRawService);
         
         // 추천 N개 계산
-        return recommendBestSlots(slots, requiredTime, requiredCnt, Long.valueOf(members.size()));
+        return whenToMeetLogicService.recommendBestSlots(slots, requiredTime, requiredCnt, Long.valueOf(members.size()));
     }
     
-    private List<WhenToMeetRecommendResponseDto> recommendBestSlots(
-        List<WhenToMeet> slots,
-        Long durationMinutes,
-        Long topN,
-        Long memberCnt) {
+    public List<WhenToMeetRecommendResponseDto> getOptimalTimeWhenToMeetV2(LocalDateTime startTime, LocalDateTime endTime, Long slotTime, Long requiredTime, Long requiredCnt, Long teamId) {
+        // 팀 멤버 조회
+        List<Member> members = whenToMeetRawService.findTeamMembers(teamId);
         
-        int requiredSlots = (int) ((durationMinutes + 14) / 15);
+        // 슬롯 생성
+        List<LocalDateTime> intervalStarts = whenToMeetLogicService.generateIntervalStarts(startTime, endTime);
+        List<LocalDateTime> intervalEnds = whenToMeetLogicService.generateIntervalEnds(startTime, endTime);
+        List<WhenToMeet> slots = whenToMeetLogicService.generateSlotsV2(members, slotTime, intervalStarts, intervalEnds);
         
-        List<WhenToMeet> recommendedWindows = new ArrayList<>();
+        // 멤버 이벤트 반영
+        whenToMeetLogicService.applyMemberEvents(slots, members, intervalStarts, intervalEnds, whenToMeetRawService);
         
-        // 하루별로 슬롯 그룹화
-        Map<LocalDate, List<WhenToMeet>> slotsByDate = slots.stream()
-            .collect(Collectors.groupingBy(s -> s.getStartTime().toLocalDate()));
-        
-        // 하루 단위 연속 슬롯 탐색
-        for (List<WhenToMeet> daySlots : slotsByDate.values()) {
-            for (int i = 0; i <= daySlots.size() - requiredSlots; i++) {
-                List<WhenToMeet> windowSlots = daySlots.subList(i, i + requiredSlots);
-                
-                long minAvailable = windowSlots.stream()
-                    .mapToLong(WhenToMeet::getAvailableMember)
-                    .min()
-                    .orElse(0);
-                
-                recommendedWindows.add(new WhenToMeet(
-                    windowSlots.get(0).getStartTime(),
-                    windowSlots.get(windowSlots.size() - 1).getEndTime(),
-                    minAvailable
-                ));
-            }
-        }
-        
-        return recommendedWindows.stream()
-            .sorted((a, b) -> {
-                int cmp = Long.compare(b.getAvailableMember(), a.getAvailableMember());
-                if (cmp != 0) return cmp;
-                return a.getStartTime().compareTo(b.getStartTime());
-            })
-            .limit(topN)
-            .map(window -> WhenToMeetRecommendResponseDto.from(window, memberCnt)) // DTO.from 호출
-            .toList();
+        // 추천 N개 계산
+        return whenToMeetLogicService.recommendBestSlotsV2(slots, slotTime, requiredTime, requiredCnt, Long.valueOf(members.size()));
     }
   
     /**

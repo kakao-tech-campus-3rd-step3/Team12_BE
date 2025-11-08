@@ -122,6 +122,22 @@ public class TeamController {
         return ResponseEntity.ok(result);
     }
     
+    @GetMapping("/{teamId}/when-to-meet/recommend/v2")
+    public ResponseEntity<List<WhenToMeetRecommendResponseDto>> getOptimalTimeWhenToMeetV2(
+        @RequestParam("start_time") LocalDateTime startTime,
+        @RequestParam("end_time") LocalDateTime endTime,
+        @RequestParam("required_time") Long requiredTime,
+        @RequestParam("N") Long requiredCnt,
+        @RequestParam(name = "slot_time", required = false, defaultValue = "15") Long slotTime,
+        @PathVariable Long teamId
+    ) {
+        List<WhenToMeetRecommendResponseDto> result = teamService.getOptimalTimeWhenToMeetV2(
+            startTime, endTime, slotTime, requiredTime, requiredCnt, teamId
+        );
+        
+        return ResponseEntity.ok(result);
+    }
+    
     @GetMapping
     public ResponseEntity<PageResponseDto<TeamResponseDto>> findMyTeamsWithMembers(
             @AuthenticationPrincipal UserDetails userDetails,

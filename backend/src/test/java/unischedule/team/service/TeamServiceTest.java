@@ -363,9 +363,11 @@ class TeamServiceTest {
         Long requiredTime = 60L; // 60분 (4슬롯)
         Long requiredCnt = 1L;   // 1개 추천
         
-        Member member1 = TestUtil.makeMember(); // (실제 Member 객체 또는 Mock 객체)
+        Member member1 = TestUtil.makeMember();
         Member member2 = TestUtil.makeMember();
         List<Member> members = List.of(member1, member2);
+        Long totalMembers = (long) members.size(); // 2L
+        
         when(whenToMeetRawService.findTeamMembers(teamId)).thenReturn(members);
         
         List<LocalDateTime> intervalStarts = List.of(startTime);
@@ -375,7 +377,7 @@ class TeamServiceTest {
         
         List<WhenToMeet> initialSlots = TestUtil.createInitialSlots(startTime, endTime, members.size());
         when(whenToMeetLogicService.generateSlots(members, intervalStarts, intervalEnds)).thenReturn(initialSlots);
-        
+
         doAnswer(invocation -> {
             List<WhenToMeet> slotsToModify = invocation.getArgument(0);
             slotsToModify.get(4).discountAvailable(); // 10:00-10:15
@@ -387,37 +389,51 @@ class TeamServiceTest {
             eq(initialSlots), eq(members), eq(intervalStarts), eq(intervalEnds), eq(whenToMeetRawService)
         );
         
+        WhenToMeetRecommendResponseDto expectedRecommendation = new WhenToMeetRecommendResponseDto(
+            "토",
+            "최적",
+            LocalDateTime.of(2025, 11, 1, 9, 0),  // startTime
+            LocalDateTime.of(2025, 11, 1, 10, 0), // endTime (requiredTime 60분 뒤)
+            totalMembers
+        );
+        List<WhenToMeetRecommendResponseDto> expectedResultList = List.of(expectedRecommendation);
+        
+        when(whenToMeetLogicService.recommendBestSlots(
+            eq(initialSlots), // applyMemberEvents에 의해 수정된 바로 그 리스트
+            eq(requiredTime), // 60L
+            eq(requiredCnt),  // 1L
+            eq(totalMembers)  // 2L
+        )).thenReturn(expectedResultList);
+        
+        
         // WHEN
         List<WhenToMeetRecommendResponseDto> result = teamService.getOptimalTimeWhenToMeet(
             startTime, endTime, requiredTime, requiredCnt, teamId
         );
         
         // THEN
-        // recommendBestSlots는 60분(4슬롯) 윈도우를 찾습니다.
-        // - 09:00~10:00 (슬롯 0,1,2,3): minAvailable = 2
-        // - 09:15~10:15 (슬롯 1,2,3,4): minAvailable = 1 (4번 슬롯 때문)
-        // - ...
-        // - 11:00~12:00 (슬롯 8,9,10,11): minAvailable = 2
-        //
-        // 정렬 기준: 1. available(내림), 2. startTime(오름)
-        // 1순위: 09:00~10:00 (available=2)
-        // 2순위: 11:00~12:00 (available=2)
-        // ... (나머지 available=1)
-        
         assertThat(result).isNotNull();
         assertThat(result).hasSize(1); // requiredCnt = 1
         
         WhenToMeetRecommendResponseDto topPick = result.get(0);
         assertThat(topPick.available()).isEqualTo(2L);
         assertThat(topPick.status()).isEqualTo("최적");
-        assertThat(topPick.week()).isEqualTo("토"); // 2025-11-01은 토요일
+        assertThat(topPick.week()).isEqualTo("토");
         assertThat(topPick.startTime()).isEqualTo(LocalDateTime.of(2025, 11, 1, 9, 0));
-        assertThat(topPick.endTime()).isEqualTo(LocalDateTime.of(2025, 11, 1, 10, 0)); // 60분 뒤
+        assertThat(topPick.endTime()).isEqualTo(LocalDateTime.of(2025, 11, 1, 10, 0));
         
         // VERIFY
+        // 모든 의존성 메서드들이 올바른 인자들로 호출되었는지 검증합니다.
         verify(whenToMeetRawService).findTeamMembers(teamId);
-        verify(whenToMeetLogicService).generateSlots(any(), any(), any());
-        verify(whenToMeetLogicService).applyMemberEvents(any(), any(), any(), any(), any());
+        verify(whenToMeetLogicService).generateIntervalStarts(startTime, endTime);
+        verify(whenToMeetLogicService).generateIntervalEnds(startTime, endTime);
+        verify(whenToMeetLogicService).generateSlots(members, intervalStarts, intervalEnds);
+        verify(whenToMeetLogicService).applyMemberEvents(initialSlots, members, intervalStarts, intervalEnds, whenToMeetRawService);
+        
+        // recommendBestSlots가 마지막에 올바른 인자들로 호출되었는지 검증합니다.
+        verify(whenToMeetLogicService).recommendBestSlots(
+            initialSlots, requiredTime, requiredCnt, totalMembers
+        );
     }
     
     @Test
@@ -433,7 +449,7 @@ class TeamServiceTest {
         Member member1 = TestUtil.makeMember();
         Member member2 = TestUtil.makeMember();
         List<Member> members = List.of(member1, member2);
-        long totalMembers = members.size();
+        long totalMembers = members.size(); // 2L
         when(whenToMeetRawService.findTeamMembers(teamId)).thenReturn(members);
         
         List<LocalDateTime> intervalStarts = List.of(startTime);
@@ -444,6 +460,7 @@ class TeamServiceTest {
         List<WhenToMeet> initialSlots = TestUtil.createInitialSlots(startTime, endTime, totalMembers);
         when(whenToMeetLogicService.generateSlots(members, intervalStarts, intervalEnds)).thenReturn(initialSlots);
         
+        // applyMemberEvents가 initialSlots를 수정하는 것을 시뮬레이션
         doAnswer(invocation -> {
             List<WhenToMeet> slotsToModify = invocation.getArgument(0);
             slotsToModify.get(4).discountAvailable(); // 10:00-10:15 (available=1)
@@ -455,37 +472,53 @@ class TeamServiceTest {
             eq(initialSlots), eq(members), eq(intervalStarts), eq(intervalEnds), eq(whenToMeetRawService)
         );
         
+        WhenToMeetRecommendResponseDto expectedTop1 = new WhenToMeetRecommendResponseDto(
+            "목",    // week
+            "최적",   // status
+            LocalDateTime.of(2025, 10, 30, 9, 0),  // startTime
+            LocalDateTime.of(2025, 10, 30, 10, 0), // endTime
+            2L       // available
+        );
+        
+        WhenToMeetRecommendResponseDto expectedTop2 = new WhenToMeetRecommendResponseDto(
+            "목",    // week
+            "최적",   // status
+            LocalDateTime.of(2025, 10, 30, 11, 0), // startTime
+            LocalDateTime.of(2025, 10, 30, 12, 0), // endTime
+            2L       // available
+        );
+        
+        WhenToMeetRecommendResponseDto expectedTop3 = new WhenToMeetRecommendResponseDto(
+            "목",    // week
+            "보통",   // status
+            LocalDateTime.of(2025, 10, 30, 9, 15), // startTime
+            LocalDateTime.of(2025, 10, 30, 10, 15),// endTime
+            1L       // available
+        );
+        List<WhenToMeetRecommendResponseDto> expectedResultList = List.of(expectedTop1, expectedTop2, expectedTop3);
+        
+        when(whenToMeetLogicService.recommendBestSlots(
+            eq(initialSlots), // applyMemberEvents에 의해 수정된 바로 그 리스트
+            eq(requiredTime), // 60L
+            eq(requiredCnt),  // 3L
+            eq(totalMembers)  // 2L
+        )).thenReturn(expectedResultList);
+        
+        
         // WHEN
         List<WhenToMeetRecommendResponseDto> result = teamService.getOptimalTimeWhenToMeet(
             startTime, endTime, requiredTime, requiredCnt, teamId
         );
         
         //THEN
-        
-        // [시나리오 분석 (60분/4슬롯 윈도우)]
-        // (0) 09:00~10:00 (슬롯 0,1,2,3) : minAvailable = 2 ("최적")
-        // (1) 09:15~10:15 (슬롯 1,2,3,4) : minAvailable = 1 ("보통") - 4번 슬롯(1)
-        // (2) 09:30~10:30 (슬롯 2,3,4,5) : minAvailable = 1 ("보통") - 4,5번 슬롯(1)
-        // (3) 09:45~10:45 (슬롯 3,4,5,6) : minAvailable = 1 ("보통") - 4,5,6번 슬롯(1)
-        // (4) 10:00~11:00 (슬롯 4,5,6,7) : minAvailable = 1 ("보통") - 4,5,6,7번 슬롯(1)
-        // (5) 10:15~11:15 (슬롯 5,6,7,8) : minAvailable = 1 ("보통") - 5,6,7번 슬롯(1)
-        // (6) 10:30~11:30 (슬롯 6,7,8,9) : minAvailable = 1 ("보통") - 6,7번 슬롯(1)
-        // (7) 10:45~11:45 (슬롯 7,8,9,10): minAvailable = 1 ("보통") - 7번 슬롯(1)
-        // (8) 11:00~12:00 (슬롯 8,9,10,11): minAvailable = 2 ("보통")
-        
-        // [정렬 후 Top 3]
-        // 1. 09:00~10:00 (available=2, status="최적")
-        // 2. 11:00~12:00 (available=2, status="최적")
-        // 3. 09:15~10:15 (available=1, status="좋음")
-        
         assertThat(result).isNotNull();
-        assertThat(result).hasSize(3); // 3개 반환 확인
+        assertThat(result).hasSize(3); // 3개 반환 확인 (GIVEN에서 설정한대로)
         
         // 1순위 검증
         WhenToMeetRecommendResponseDto top1 = result.get(0);
         assertThat(top1.available()).isEqualTo(2L);
         assertThat(top1.status()).isEqualTo("최적");
-        assertThat(top1.week()).isEqualTo("목"); // 2025-10-30은 목요일
+        assertThat(top1.week()).isEqualTo("목");
         assertThat(top1.startTime()).isEqualTo(LocalDateTime.of(2025, 10, 30, 9, 0));
         assertThat(top1.endTime()).isEqualTo(LocalDateTime.of(2025, 10, 30, 10, 0));
         
@@ -500,15 +533,19 @@ class TeamServiceTest {
         // 3순위 검증
         WhenToMeetRecommendResponseDto top3 = result.get(2);
         assertThat(top3.available()).isEqualTo(1L);
-        assertThat(top3.status()).isEqualTo("보통"); // (2명 중 1명 가능 = 1명 불참)
+        assertThat(top3.status()).isEqualTo("보통");
         assertThat(top3.week()).isEqualTo("목");
         assertThat(top3.startTime()).isEqualTo(LocalDateTime.of(2025, 10, 30, 9, 15));
         assertThat(top3.endTime()).isEqualTo(LocalDateTime.of(2025, 10, 30, 10, 15));
         
         //VERIFY
+        // 기존 verify 호출 확인
         verify(whenToMeetRawService).findTeamMembers(teamId);
         verify(whenToMeetLogicService).generateSlots(any(), any(), any());
         verify(whenToMeetLogicService).applyMemberEvents(any(), any(), any(), any(), any());
+        verify(whenToMeetLogicService).recommendBestSlots(
+            eq(initialSlots), eq(requiredTime), eq(requiredCnt), eq(totalMembers)
+        );
     }
   
     @Test

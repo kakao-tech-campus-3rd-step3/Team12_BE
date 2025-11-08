@@ -6,6 +6,7 @@ import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,6 +19,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import unischedule.events.dto.EventGetResponseDto;
 import unischedule.member.domain.Member;
 import unischedule.team.domain.WhenToMeet;
+import unischedule.team.dto.WhenToMeetRecommendResponseDto;
 import unischedule.util.TestUtil;
 
 @ExtendWith(MockitoExtension.class) // Mockito 사용 시
@@ -383,5 +385,163 @@ class WhenToMeetLogicServiceTest {
         // 겹치지 않는 슬롯
         assertThat(slots.get(2).getAvailableMember()).isEqualTo(2L); // 9:30~09:45 (2명 그대로)
         assertThat(slots.get(3).getAvailableMember()).isEqualTo(2L); // 9:45~10:00 (2명 그대로)
+    }
+    
+    @Test
+    @DisplayName("recommendBestSlots: 60분(4슬롯) 요청 시, 최적(2명) 2개, 보통(1명) 1개를 순서대로 반환한다")
+    void recommendBestSlots_Success_Top3() {
+        // GIVEN
+        Long durationMinutes = 60L; // 4 슬롯
+        Long topN = 3L;
+        Long memberCnt = 2L; // 총 멤버 2명
+        
+        LocalDateTime day = LocalDateTime.of(2025, 10, 30, 9, 0); // 목요일
+        
+        // [시나리오]
+        // 09:00~10:00 (4슬롯) : [2, 2, 2, 2] -> 윈도우 (min: 2)
+        // 10:00~11:00 (4슬롯) : [1, 1, 1, 1] -> 윈도우 (min: 1)
+        // 11:00~12:00 (4슬롯) : [2, 2, 2, 2] -> 윈도우 (min: 2)
+        // 중간 윈도우 (e.g., 09:15~10:15) : [2, 2, 2, 1] -> 윈도우 (min: 1)
+        
+        List<WhenToMeet> inputSlots = new ArrayList<>();
+        // 09:00 ~ 10:00 (슬롯 0,1,2,3) - 2명
+        for (int i = 0; i < 4; i++) {
+            inputSlots.add(new WhenToMeet(day.plusMinutes(i * 15), day.plusMinutes((i + 1) * 15), 2L));
+        }
+        // 10:00 ~ 11:00 (슬롯 4,5,6,7) - 1명
+        for (int i = 4; i < 8; i++) {
+            inputSlots.add(new WhenToMeet(day.plusMinutes(i * 15), day.plusMinutes((i + 1) * 15), 1L));
+        }
+        // 11:00 ~ 12:00 (슬롯 8,9,10,11) - 2명
+        for (int i = 8; i < 12; i++) {
+            inputSlots.add(new WhenToMeet(day.plusMinutes(i * 15), day.plusMinutes((i + 1) * 15), 2L));
+        }
+        
+        // [정렬 순서 예상]
+        // 1. 09:00~10:00 (available=2, startTime=09:00)
+        // 2. 11:00~12:00 (available=2, startTime=11:00)
+        // 3. 09:15~10:15 (available=1, startTime=09:15)
+        
+        // WHEN
+        List<WhenToMeetRecommendResponseDto> result = whenToMeetLogicService.recommendBestSlots(
+            inputSlots, durationMinutes, topN, memberCnt
+        );
+        
+        // THEN
+        assertThat(result).hasSize(3);
+        
+        // 1순위 검증
+        WhenToMeetRecommendResponseDto top1 = result.get(0);
+        assertThat(top1.available()).isEqualTo(2L);
+        assertThat(top1.status()).isEqualTo("최적");
+        assertThat(top1.week()).isEqualTo("목");
+        assertThat(top1.startTime()).isEqualTo(LocalDateTime.of(2025, 10, 30, 9, 0));
+        assertThat(top1.endTime()).isEqualTo(LocalDateTime.of(2025, 10, 30, 10, 0));
+        
+        // 2순위 검증
+        WhenToMeetRecommendResponseDto top2 = result.get(1);
+        assertThat(top2.available()).isEqualTo(2L);
+        assertThat(top2.status()).isEqualTo("최적");
+        assertThat(top2.week()).isEqualTo("목");
+        assertThat(top2.startTime()).isEqualTo(LocalDateTime.of(2025, 10, 30, 11, 0));
+        assertThat(top2.endTime()).isEqualTo(LocalDateTime.of(2025, 10, 30, 12, 0));
+        
+        // 3순위 검증
+        WhenToMeetRecommendResponseDto top3 = result.get(2);
+        assertThat(top3.available()).isEqualTo(1L);
+        assertThat(top3.status()).isEqualTo("보통");
+        assertThat(top3.week()).isEqualTo("목");
+        assertThat(top3.startTime()).isEqualTo(LocalDateTime.of(2025, 10, 30, 9, 15));
+        assertThat(top3.endTime()).isEqualTo(LocalDateTime.of(2025, 10, 30, 10, 15));
+    }
+    
+    @Test
+    @DisplayName("recommendBestSlots: 날짜가 바뀌는 경계(자정)를 윈도우로 묶지 않아야 한다")
+    void recommendBestSlots_ShouldNotCrossDateBoundary() {
+        // GIVEN
+        Long durationMinutes = 60L; // 4 슬롯
+        Long topN = 3L;
+        Long memberCnt = 2L;
+        
+        LocalDateTime day1 = LocalDateTime.of(2025, 11, 1, 23, 30); // 토
+        LocalDateTime day2 = LocalDateTime.of(2025, 11, 2, 0, 0);  // 일
+        
+        // 4슬롯(60분)을 만들 수 있지만, 날짜가 갈라지는 시나리오
+        List<WhenToMeet> inputSlots = List.of(
+            // Day 1 (토) - 2슬롯
+            new WhenToMeet(day1, day1.plusMinutes(15), 2L), // 23:30
+            new WhenToMeet(day1.plusMinutes(15), day2, 2L), // 23:45
+            // Day 2 (일) - 2슬롯
+            new WhenToMeet(day2, day2.plusMinutes(15), 2L), // 00:00
+            new WhenToMeet(day2.plusMinutes(15), day2.plusMinutes(30), 2L)  // 00:15
+        );
+        
+        // WHEN
+        // `slotsByDate`로 인해 Day1(2슬롯), Day2(2슬롯)으로 나뉨
+        // 4슬롯(requiredSlots=4)을 만족하는 윈도우는 어느 날짜에도 없음
+        List<WhenToMeetRecommendResponseDto> result = whenToMeetLogicService.recommendBestSlots(
+            inputSlots, durationMinutes, topN, memberCnt
+        );
+        
+        // THEN
+        assertThat(result).isNotNull();
+        assertThat(result).isEmpty(); // 4슬롯 윈도우가 없으므로 비어있어야 함
+    }
+    
+    @Test
+    @DisplayName("recommendBestSlots: 여러 날짜 중 참여율이 가장 높은 날짜/시간을 1순위로 반환한다")
+    void recommendBestSlots_MultiDaySorting() {
+        // GIVEN
+        Long durationMinutes = 30L; // 2 슬롯
+        Long topN = 3L;
+        Long memberCnt = 3L; // 총 3명
+        
+        LocalDateTime day1 = LocalDateTime.of(2025, 11, 1, 10, 0); // 토
+        LocalDateTime day2 = LocalDateTime.of(2025, 11, 2, 9, 0);  // 일
+        
+        List<WhenToMeet> inputSlots = List.of(
+            // Day 1 (토)
+            new WhenToMeet(day1, day1.plusMinutes(15), 2L), // 10:00
+            new WhenToMeet(day1.plusMinutes(15), day1.plusMinutes(30), 2L), // 10:15
+            new WhenToMeet(day1.plusMinutes(30), day1.plusMinutes(45), 1L), // 10:30
+            // Day 2 (일)
+            new WhenToMeet(day2, day2.plusMinutes(15), 3L), // 09:00
+            new WhenToMeet(day2.plusMinutes(15), day2.plusMinutes(30), 3L), // 09:15
+            new WhenToMeet(day2.plusMinutes(30), day2.plusMinutes(45), 2L)  // 09:30
+        );
+        
+        // [윈도우 분석 (2슬롯)]
+        // Day 1:
+        // - 10:00~10:30 [2, 2] -> min: 2
+        // - 10:15~10:45 [2, 1] -> min: 1
+        // Day 2:
+        // - 09:00~09:30 [3, 3] -> min: 3
+        // - 09:15~09:45 [3, 2] -> min: 2
+        
+        // WHEN
+        List<WhenToMeetRecommendResponseDto> result = whenToMeetLogicService.recommendBestSlots(
+            inputSlots, durationMinutes, topN, memberCnt
+        );
+        
+        // THEN
+        assertThat(result).hasSize(3);
+        
+        // 1순위: Day 2 (최적)
+        assertThat(result.get(0).available()).isEqualTo(3L);
+        assertThat(result.get(0).status()).isEqualTo("최적");
+        assertThat(result.get(0).week()).isEqualTo("일");
+        assertThat(result.get(0).startTime()).isEqualTo(day2); // 09:00
+        
+        // 2순위: Day 1 (보통) - 11월 1일 10:00
+        assertThat(result.get(1).available()).isEqualTo(2L);
+        assertThat(result.get(1).status()).isEqualTo("보통");
+        assertThat(result.get(1).week()).isEqualTo("토");
+        assertThat(result.get(1).startTime()).isEqualTo(day1); // 10:00
+        
+        // 3순위: Day 2 (보통) - 11월 2일 09:15
+        assertThat(result.get(2).available()).isEqualTo(2L);
+        assertThat(result.get(2).status()).isEqualTo("보통");
+        assertThat(result.get(2).week()).isEqualTo("일");
+        assertThat(result.get(2).startTime()).isEqualTo(day2.plusMinutes(15)); // 09:15
     }
 }
