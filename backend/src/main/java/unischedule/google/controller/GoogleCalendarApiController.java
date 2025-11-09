@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import unischedule.google.service.GoogleCalendarService;
 
-import java.net.URI;
+import java.util.Map;
 
 @Slf4j
 @RestController
@@ -28,7 +28,7 @@ public class GoogleCalendarApiController {
      * 구글 토큰 정보 부재 시 리다이렉트 : /oauth2/authorization/google
      */
     @PostMapping("/sync")
-    public ResponseEntity<Void> syncMyCalendar(
+    public ResponseEntity<?> syncMyCalendar(
             @AuthenticationPrincipal UserDetails userDetails,
             HttpServletRequest request
     ) {
@@ -43,10 +43,14 @@ public class GoogleCalendarApiController {
             HttpSession session = request.getSession(true);
             session.setAttribute("UNISCHEDULE_USER_EMAIL_FOR_LINKING", userEmail);
 
-            URI googleAuthUri = URI.create("/oauth2/authorization/google");
-            return ResponseEntity.status(HttpStatus.FOUND)
-                    .location(googleAuthUri)
-                    .build();
+            String googleAuthUrl = "/oauth2/authorization/google";
+            Map<String, String> responseBody = Map.of(
+                    "message", "Google authentication required",
+                    "redirect_url", googleAuthUrl
+            );
+
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(responseBody);
         }
     }
 }
