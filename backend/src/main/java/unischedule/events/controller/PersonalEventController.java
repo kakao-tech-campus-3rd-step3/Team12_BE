@@ -20,6 +20,7 @@ import unischedule.events.dto.EventCreateResponseDto;
 import unischedule.events.dto.EventGetResponseDto;
 import unischedule.events.dto.EventModifyRequestDto;
 import unischedule.events.dto.PersonalEventCreateRequestDto;
+import unischedule.events.dto.PersonalEventGetResponseDto;
 import unischedule.events.dto.RecurringEventCreateRequestDto;
 import unischedule.events.dto.RecurringInstanceDeleteRequestDto;
 import unischedule.events.dto.RecurringInstanceModifyRequestDto;
@@ -57,16 +58,16 @@ public class PersonalEventController {
     }
 
     @GetMapping("/{eventId}")
-    public ResponseEntity<EventGetResponseDto> getMyEvent(
+    public ResponseEntity<PersonalEventGetResponseDto> getMyEvent(
             @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable Long eventId
     ) {
-        EventGetResponseDto responseDto = eventService.getPersonalEvent(userDetails.getUsername(), eventId);
+        PersonalEventGetResponseDto responseDto = eventService.getPersonalEvent(userDetails.getUsername(), eventId);
         return ResponseEntity.ok(responseDto);
     }
 
     @GetMapping
-    public ResponseEntity<List<EventGetResponseDto>> getMyEvents(
+    public ResponseEntity<List<PersonalEventGetResponseDto>> getMyEvents(
             @AuthenticationPrincipal
             UserDetails userDetails,
             @RequestParam
@@ -76,7 +77,7 @@ public class PersonalEventController {
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
             LocalDateTime endAt
     ) {
-        List<EventGetResponseDto> responseDto = eventService.getPersonalEvents(
+        List<PersonalEventGetResponseDto> responseDto = eventService.getPersonalEvents(
                 userDetails.getUsername(),
                 startAt,
                 endAt
