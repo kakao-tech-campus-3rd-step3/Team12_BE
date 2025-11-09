@@ -51,8 +51,8 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
         HttpSession session = request.getSession(false);
         String memberEmail = null;
 
-        String successUrl = frontendRedirectUrl + "?google_sync=success";
-        String errorUrl = frontendRedirectUrl + "?google_sync=error";
+        String successUrl = org.springframework.web.util.UriComponentsBuilder.fromHttpUrl(frontendRedirectUrl).queryParam("google_sync", "success").toUriString();
+        String errorUrl = org.springframework.web.util.UriComponentsBuilder.fromHttpUrl(frontendRedirectUrl).queryParam("google_sync", "error").toUriString();
 
         if (session != null) {
             Object emailAttr = session.getAttribute("UNISCHEDULE_USER_EMAIL_FOR_LINKING");
