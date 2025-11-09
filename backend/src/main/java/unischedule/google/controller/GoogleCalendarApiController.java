@@ -1,9 +1,10 @@
 package unischedule.google.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import unischedule.google.dto.GoogleSyncRequestDto;
 import unischedule.google.service.GoogleCalendarService;
 
+import java.util.Base64;
 import java.util.Map;
 
 @Slf4j
@@ -23,6 +25,10 @@ import java.util.Map;
 public class GoogleCalendarApiController {
 
     private final GoogleCalendarService googleCalendarService;
+    private final ObjectMapper objectMapper;
+
+    @Value("${frontend.redirect.url}")
+    private String frontendRedirectUrl;
 
     /**
      * 사용자의 구글 캘린더 일정 동기화
@@ -42,21 +48,33 @@ public class GoogleCalendarApiController {
             return ResponseEntity.noContent().build();
         }
         catch (IllegalStateException e) {
-            // 이메일 세션 저장
-            HttpSession session = request.getSession(true);
-            session.setAttribute("UNISCHEDULE_USER_EMAIL_FOR_LINKING", userEmail);
+            String redirectUrl = (requestDto != null && requestDto.redirectUrl() != null && !requestDto.redirectUrl().isBlank())
+                    ? requestDto.redirectUrl()
+                    : frontendRedirectUrl;
 
-            if (requestDto != null && requestDto.redirectUrl() != null && !requestDto.redirectUrl().isBlank()) {
-                session.setAttribute("UNISCHEDULE_OAUTH_REDIRECT_URI", requestDto.redirectUrl());
-            }
+            String state = createOauthState(userEmail, redirectUrl);
 
-            String googleAuthUrl = "/oauth2/authorization/google";
+            String googleAuthUrl = "/oauth2/authorization/google?state=" + state;
             Map<String, String> responseBody = Map.of(
                     "message", "Google authentication required",
                     "redirect_url", googleAuthUrl
             );
 
             return ResponseEntity.ok(responseBody);
+        }
+    }
+
+    private String createOauthState(String email, String redirectUrl) {
+        try {
+            Map<String, String> stateMap = Map.of(
+                    "email", email,
+                    "redirectUrl", redirectUrl
+            );
+            String jsonState = objectMapper.writeValueAsString(stateMap);
+            return Base64.getUrlEncoder().withoutPadding().encodeToString(jsonState.getBytes());
+        }
+        catch (Exception e) {
+            throw new IllegalArgumentException("Failed to create OAuth state", e);
         }
     }
 }

@@ -1,9 +1,10 @@
 package unischedule.google.handler;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,6 +23,8 @@ import unischedule.member.domain.Member;
 import unischedule.member.service.internal.MemberRawService;
 
 import java.io.IOException;
+import java.util.Base64;
+import java.util.Map;
 
 @Slf4j
 @Component
@@ -32,6 +35,7 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
     private final MemberRawService memberRawService;
     private final OAuth2AuthorizedClientService authorizedClientService;
     private final GoogleCalendarService googleCalendarService;
+    private final ObjectMapper objectMapper;
 
     @Value("${frontend.redirect.url}")
     private String frontendRedirectUrl;
@@ -49,24 +53,11 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
         OAuth2RefreshToken googleRefreshToken = client.getRefreshToken();
         String refreshTokenString = (googleRefreshToken != null) ? googleRefreshToken.getTokenValue() : null;
 
-        HttpSession session = request.getSession(false);
-        String memberEmail = null;
+        String state = request.getParameter("state");
+        Map<String, String> stateMap = decodeOauthState(state);
 
-        String baseUrl = frontendRedirectUrl;
-
-        if (session != null) {
-            Object redirectUriAttr = session.getAttribute("UNISCHEDULE_OAUTH_REDIRECT_URI");
-            if (redirectUriAttr != null) {
-                baseUrl = (String) redirectUriAttr;
-                session.removeAttribute("UNISCHEDULE_OAUTH_REDIRECT_URI");
-            }
-
-            Object emailAttr = session.getAttribute("UNISCHEDULE_USER_EMAIL_FOR_LINKING");
-            if (emailAttr != null) {
-                memberEmail = (String) emailAttr;
-                session.removeAttribute("UNISCHEDULE_USER_EMAIL_FOR_LINKING");
-            }
-        }
+        String memberEmail = stateMap.get("email");
+        String baseUrl = stateMap.getOrDefault("redirectUrl", frontendRedirectUrl); // state의 redirectUrl 사용
 
         String successUrl = UriComponentsBuilder.fromHttpUrl(baseUrl).queryParam("google_sync", "success").toUriString();
         String errorUrl = UriComponentsBuilder.fromHttpUrl(baseUrl).queryParam("google_sync", "error").toUriString();
@@ -106,13 +97,21 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
                 getRedirectStrategy().sendRedirect(request, response, errorUrl);
             }
 
-            // 프론트 리다이렉션 페이지
-            //getRedirectStrategy().sendRedirect(request, response, frontendRedirectUrl);
-
         } catch (Exception e) {
             log.error("Failed to process OAuth2 success", e);
             // 에러 페이지
             getRedirectStrategy().sendRedirect(request, response, errorUrl);
+        }
+    }
+
+    private Map<String, String> decodeOauthState(String state) {
+        try {
+            byte[] decodedBytes = Base64.getUrlDecoder().decode(state);
+            String jsonState = new String(decodedBytes);
+            return objectMapper.readValue(jsonState, new TypeReference<Map<String, String>>() {});
+        } catch (Exception e) {
+            log.warn("Failed to decode OAuth state: {}", state, e);
+            return Map.of();
         }
     }
 }
