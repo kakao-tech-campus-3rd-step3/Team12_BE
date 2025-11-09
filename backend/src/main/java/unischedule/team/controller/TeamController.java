@@ -2,6 +2,7 @@ package unischedule.team.controller;
 
 import jakarta.validation.Valid;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -85,6 +86,27 @@ public class TeamController {
         return ResponseEntity.ok(whenToMeetList);
     }
     
+    //개선된 방향의 whenToMeet 기능
+    @GetMapping("/{teamId}/when-to-meet/v2")
+    ResponseEntity<List<WhenToMeetResponseDto>> getTeamMembersWhenToMeetV2(
+        @PathVariable Long teamId,
+        @RequestParam(name = "slot_time", required = false, defaultValue = "15") Long slotTime,
+        @RequestParam(name = "start_time", required = false) LocalDate startTime,
+        @RequestParam(name = "end_time", required = false) LocalDate endTime
+    ) {
+        if(startTime == null) {
+            startTime = LocalDateTime.now().plusDays(1).toLocalDate();
+        }
+        
+        if(endTime == null) {
+            endTime = LocalDateTime.now().plusDays(7).toLocalDate();
+        }
+        
+        List<WhenToMeetResponseDto> whenToMeetList = teamService.getTeamMembersWhenToMeetV2(teamId, slotTime, startTime, endTime);
+        
+        return ResponseEntity.ok(whenToMeetList);
+    }
+    
     @GetMapping("/{teamId}/when-to-meet/recommend")
     public ResponseEntity<List<WhenToMeetRecommendResponseDto>> getOptimalTimeWhenToMeet(
         @RequestParam("start_time") LocalDateTime startTime,
@@ -99,6 +121,23 @@ public class TeamController {
         
         return ResponseEntity.ok(result);
     }
+    
+    @GetMapping("/{teamId}/when-to-meet/recommend/v2")
+    public ResponseEntity<List<WhenToMeetRecommendResponseDto>> getOptimalTimeWhenToMeetV2(
+        @RequestParam("start_time") LocalDateTime startTime,
+        @RequestParam("end_time") LocalDateTime endTime,
+        @RequestParam("required_time") Long requiredTime,
+        @RequestParam("N") Long requiredCnt,
+        @RequestParam(name = "slot_time", required = false, defaultValue = "15") Long slotTime,
+        @PathVariable Long teamId
+    ) {
+        List<WhenToMeetRecommendResponseDto> result = teamService.getOptimalTimeWhenToMeetV2(
+            startTime, endTime, slotTime, requiredTime, requiredCnt, teamId
+        );
+        
+        return ResponseEntity.ok(result);
+    }
+    
     @GetMapping
     public ResponseEntity<PageResponseDto<TeamResponseDto>> findMyTeamsWithMembers(
             @AuthenticationPrincipal UserDetails userDetails,
