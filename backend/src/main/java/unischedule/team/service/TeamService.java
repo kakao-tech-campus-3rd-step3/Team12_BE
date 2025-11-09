@@ -185,7 +185,7 @@ public class TeamService {
     @Transactional(readOnly = true)
     public List<WhenToMeetResponseDto> getTeamMembersWhenToMeetV2(Long teamId, Long slotTime, LocalDate startTime, LocalDate endTime) {
         List<Member> members = whenToMeetRawService.findTeamMembers(teamId);
-        List<LocalDateTime> starts = whenToMeetLogicService.generateIntervalStarts(startTime.atStartOfDay().plusHours(9), endTime.atStartOfDay());
+        List<LocalDateTime> starts = whenToMeetLogicService.generateIntervalStarts(startTime.atStartOfDay().plusHours(9), endTime.plusDays(1).atStartOfDay());
         List<LocalDateTime> ends = whenToMeetLogicService.generateIntervalEnds(startTime.atStartOfDay().plusHours(9), endTime.plusDays(1).atStartOfDay());
         
         List<WhenToMeet> slots = whenToMeetLogicService.generateSlotsV2(members, slotTime, starts, ends);
