@@ -10,7 +10,9 @@ import unischedule.events.domain.EventOverride;
 import unischedule.events.dto.EventCreateResponseDto;
 import unischedule.events.dto.EventGetResponseDto;
 import unischedule.events.dto.EventModifyRequestDto;
+import unischedule.events.dto.EventServiceDto;
 import unischedule.events.dto.PersonalEventCreateRequestDto;
+import unischedule.events.dto.PersonalEventGetResponseDto;
 import unischedule.events.dto.RecurringEventCreateRequestDto;
 import unischedule.events.dto.RecurringInstanceDeleteRequestDto;
 import unischedule.events.dto.RecurringInstanceModifyRequestDto;
@@ -65,29 +67,39 @@ public class PersonalEventService {
     }
 
     @Transactional(readOnly = true)
-    public EventGetResponseDto getPersonalEvent(String email, Long eventId) {
+    public PersonalEventGetResponseDto getPersonalEvent(String email, Long eventId) {
         Member member = memberRawService.findMemberByEmail(email);
         Event event = eventRawService.findEventById(eventId);
 
         event.validateEventOwner(member);
 
+        Set<Long> lectureEventIds = lectureRawService.getAllLectureEventIds(email);
+        String eventType = determineEventType(event, lectureEventIds);
+
         if (event.getRecurrenceRule() == null) {
-            return EventGetResponseDto.fromSingleEvent(event);
+            return PersonalEventGetResponseDto.fromSingleEvent(event, eventType);
         }
         else {
-            return EventGetResponseDto.fromRecurringEvent(event);
+            return PersonalEventGetResponseDto.fromRecurringEvent(event, eventType);
         }
     }
 
     @Transactional(readOnly = true)
-    public List<EventGetResponseDto> getPersonalEvents(String email, LocalDateTime startAt, LocalDateTime endAt) {
+    public List<PersonalEventGetResponseDto> getPersonalEvents(String email, LocalDateTime startAt, LocalDateTime endAt) {
         Member member = memberRawService.findMemberByEmail(email);
 
         List<Long> calendarIds = getMemberCalendarIds(member);
 
-        return eventQueryService.getEventsForMember(member, calendarIds, startAt, endAt)
-                .stream()
-                .map(EventGetResponseDto::fromServiceDto)
+        Set<Long> lectureEventIds = lectureRawService.getAllLectureEventIds(email);
+
+        List<EventServiceDto> serviceDtos = eventQueryService.getEventsForMember(member, calendarIds, startAt, endAt);
+
+        return serviceDtos.stream()
+                .map(serviceDto -> {
+                    Event originalEvent = eventRawService.findEventById(serviceDto.eventId());
+                    String eventType = determineEventType(originalEvent, lectureEventIds);
+                    return PersonalEventGetResponseDto.fromServiceDto(serviceDto, eventType);
+                })
                 .toList();
     }
 
@@ -157,27 +169,27 @@ public class PersonalEventService {
     }
     
     @Transactional(readOnly = true)
-    public List<EventGetResponseDto> getTodayMyEvent(String email) {
+    public List<PersonalEventGetResponseDto> getTodayMyEvent(String email) {
         LocalDateTime start = LocalDate.now().atStartOfDay();
         LocalDateTime end = LocalDate.now().plusDays(1).atStartOfDay();
-        List<EventGetResponseDto> allEvents = getPersonalEvents(email, start, end);
+        List<PersonalEventGetResponseDto> allEvents = getPersonalEvents(email, start, end);
         
         return allEvents.stream()
-            .sorted(Comparator.comparing(EventGetResponseDto::startTime))
+            .sorted(Comparator.comparing(PersonalEventGetResponseDto::startTime))
             .toList();
     }
     
     @Transactional(readOnly = true)
-    public List<EventGetResponseDto> getUpcomingMyEvent(String email) {
+    public List<PersonalEventGetResponseDto> getUpcomingMyEvent(String email) {
         LocalDateTime start = LocalDate.now().plusDays(1).atStartOfDay();
         LocalDateTime end = LocalDate.now().plusDays(8).atStartOfDay();
         
-        List<EventGetResponseDto> allEvents = getPersonalEvents(email, start, end);
+        List<PersonalEventGetResponseDto> allEvents = getPersonalEvents(email, start, end);
         Set<Long> lectureEventIds = lectureRawService.getAllLectureEventIds(email);
         
         return allEvents.stream()
             .filter(eventDto -> !lectureEventIds.contains(eventDto.eventId()))
-            .sorted(Comparator.comparing(EventGetResponseDto::startTime))
+            .sorted(Comparator.comparing(PersonalEventGetResponseDto::startTime))
             .toList();
     }
     
@@ -207,5 +219,16 @@ public class PersonalEventService {
             return value;
         }
         return defaultValue;
+    }
+
+    private String determineEventType(Event event, Set<Long> lectureEventIds) {
+        if (lectureEventIds.contains(event.getEventId())) {
+            return "class";
+        }
+        if (event.getCalendar() != null && event.getCalendar().hasTeam()) {
+            return "team";
+        }
+
+        return "personal";
     }
 }
