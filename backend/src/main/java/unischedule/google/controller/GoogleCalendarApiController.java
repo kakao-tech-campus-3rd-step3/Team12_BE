@@ -8,8 +8,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import unischedule.google.dto.GoogleSyncRequestDto;
 import unischedule.google.service.GoogleCalendarService;
 
 import java.util.Map;
@@ -29,7 +31,9 @@ public class GoogleCalendarApiController {
     @PostMapping("/sync")
     public ResponseEntity<?> syncMyCalendar(
             @AuthenticationPrincipal UserDetails userDetails,
-            HttpServletRequest request
+            HttpServletRequest request,
+            @RequestBody(required = false)
+            GoogleSyncRequestDto requestDto
     ) {
         String userEmail = userDetails.getUsername();
 
@@ -41,6 +45,10 @@ public class GoogleCalendarApiController {
             // 이메일 세션 저장
             HttpSession session = request.getSession(true);
             session.setAttribute("UNISCHEDULE_USER_EMAIL_FOR_LINKING", userEmail);
+
+            if (requestDto != null && requestDto.redirectUrl() != null && !requestDto.redirectUrl().isBlank()) {
+                session.setAttribute("UNISCHEDULE_OAUTH_REDIRECT_URI", requestDto.redirectUrl());
+            }
 
             String googleAuthUrl = "/oauth2/authorization/google";
             Map<String, String> responseBody = Map.of(

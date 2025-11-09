@@ -14,6 +14,7 @@ import org.springframework.security.oauth2.client.authentication.OAuth2Authentic
 import org.springframework.security.oauth2.core.OAuth2RefreshToken;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
+import org.springframework.web.util.UriComponentsBuilder;
 import unischedule.google.domain.GoogleAuthToken;
 import unischedule.google.repository.GoogleAuthTokenRepository;
 import unischedule.google.service.GoogleCalendarService;
@@ -51,16 +52,24 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
         HttpSession session = request.getSession(false);
         String memberEmail = null;
 
-        String successUrl = org.springframework.web.util.UriComponentsBuilder.fromHttpUrl(frontendRedirectUrl).queryParam("google_sync", "success").toUriString();
-        String errorUrl = org.springframework.web.util.UriComponentsBuilder.fromHttpUrl(frontendRedirectUrl).queryParam("google_sync", "error").toUriString();
+        String baseUrl = frontendRedirectUrl;
 
         if (session != null) {
+            Object redirectUriAttr = session.getAttribute("UNISCHEDULE_OAUTH_REDIRECT_URI");
+            if (redirectUriAttr != null) {
+                baseUrl = (String) redirectUriAttr;
+                session.removeAttribute("UNISCHEDULE_OAUTH_REDIRECT_URI");
+            }
+
             Object emailAttr = session.getAttribute("UNISCHEDULE_USER_EMAIL_FOR_LINKING");
             if (emailAttr != null) {
                 memberEmail = (String) emailAttr;
                 session.removeAttribute("UNISCHEDULE_USER_EMAIL_FOR_LINKING");
             }
         }
+
+        String successUrl = UriComponentsBuilder.fromHttpUrl(baseUrl).queryParam("google_sync", "success").toUriString();
+        String errorUrl = UriComponentsBuilder.fromHttpUrl(baseUrl).queryParam("google_sync", "error").toUriString();
 
         try {
             if (memberEmail == null) {
