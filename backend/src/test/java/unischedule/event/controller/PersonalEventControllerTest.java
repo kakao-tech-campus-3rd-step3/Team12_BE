@@ -18,6 +18,7 @@ import unischedule.events.dto.EventCreateResponseDto;
 import unischedule.events.dto.EventGetResponseDto;
 import unischedule.events.dto.EventModifyRequestDto;
 import unischedule.events.dto.PersonalEventCreateRequestDto;
+import unischedule.events.dto.PersonalEventGetResponseDto;
 import unischedule.events.dto.RecurringEventCreateRequestDto;
 import unischedule.events.dto.RecurringInstanceDeleteRequestDto;
 import unischedule.events.dto.RecurringInstanceModifyRequestDto;
@@ -122,8 +123,8 @@ public class PersonalEventControllerTest {
     void getMyEvent() throws Exception {
         // given
         Long eventId = 1L;
-        EventGetResponseDto responseDto = new EventGetResponseDto(eventId, "회의", "내용",
-                LocalDateTime.now(), LocalDateTime.now().plusHours(1), false);
+        PersonalEventGetResponseDto responseDto = new PersonalEventGetResponseDto(eventId, "회의", "내용",
+                LocalDateTime.now(), LocalDateTime.now().plusHours(1), false, "personal");
         given(eventService.getPersonalEvent(anyString(), anyLong())).willReturn(responseDto);
 
         // when & then
@@ -137,13 +138,14 @@ public class PersonalEventControllerTest {
     @DisplayName("개인 일정 조회")
     void getMyEvents() throws Exception {
         // given
-        EventGetResponseDto responseDto = new EventGetResponseDto(
+        PersonalEventGetResponseDto responseDto = new PersonalEventGetResponseDto(
                 1L,
                 "Test Event",
                 "Description",
                 LocalDateTime.of(2025, 9, 18, 10, 0),
                 LocalDateTime.of(2025, 9, 18, 11, 0),
-                false
+                false,
+                "personal"
         );
 
         given(eventService.getPersonalEvents(anyString(), any(LocalDateTime.class), any(LocalDateTime.class)))

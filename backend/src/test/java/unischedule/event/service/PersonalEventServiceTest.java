@@ -21,6 +21,7 @@ import unischedule.events.dto.EventModifyRequestDto;
 import unischedule.events.dto.EventServiceDto;
 import unischedule.events.dto.EventUpdateDto;
 import unischedule.events.dto.PersonalEventCreateRequestDto;
+import unischedule.events.dto.PersonalEventGetResponseDto;
 import unischedule.events.dto.RecurringEventCreateRequestDto;
 import unischedule.events.dto.RecurringInstanceDeleteRequestDto;
 import unischedule.events.dto.RecurringInstanceModifyRequestDto;
@@ -48,6 +49,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doAnswer;
@@ -211,19 +213,37 @@ class PersonalEventServiceTest {
         given(eventQueryService.getEventsForMember(eq(owner), eq(calendarIds), eq(start), eq(end)))
                 .willReturn(List.of(event1, event2));
 
+        given(lectureRawService.getAllLectureEventIds(anyString())).willReturn(Collections.emptySet());
+
+        Event mockEvent1 = mock(Event.class);
+        given(mockEvent1.getEventId()).willReturn(1L);
+        given(mockEvent1.getCalendar()).willReturn(personalCalendar);
+        given(eventRawService.findEventById(1L)).willReturn(mockEvent1);
+
+        Event mockEvent2 = mock(Event.class);
+        given(mockEvent2.getEventId()).willReturn(2L);
+        given(mockEvent2.getCalendar()).willReturn(teamCalendar);
+        given(teamCalendar.hasTeam()).willReturn(true);
+        given(eventRawService.findEventById(2L)).willReturn(mockEvent2);
         // when
-        List<EventGetResponseDto> result = eventService.getPersonalEvents(memberEmail, start, end);
+        List<PersonalEventGetResponseDto> result = eventService.getPersonalEvents(memberEmail, start, end);
 
         // then
         assertThat(result).hasSize(2);
         assertThat(result.getFirst().title()).isEqualTo(event1.title());
         assertThat(result.get(1).title()).isEqualTo(event2.title());
+        assertThat(result.getFirst().type()).isEqualTo("personal");
+        assertThat(result.get(1).type()).isEqualTo("team");
 
         verify(memberRawService).findMemberByEmail(memberEmail);
         verify(calendarRawService).getMyPersonalCalendar(owner);
         verify(teamMemberRawService).findByMember(owner);
         verify(calendarRawService).getTeamCalendar(team);
         verify(eventQueryService).getEventsForMember(eq(owner), eq(calendarIds), eq(start), eq(end));
+
+        verify(lectureRawService).getAllLectureEventIds(anyString());
+        verify(eventRawService).findEventById(1L);
+        verify(eventRawService).findEventById(2L);
     }
 
     @Test
@@ -564,8 +584,20 @@ class PersonalEventServiceTest {
         when(eventQueryService.getEventsForMember(eq(member), anyList(), eq(start), eq(end)))
                 .thenReturn(List.of(event1, event2));
 
+        given(lectureRawService.getAllLectureEventIds(anyString())).willReturn(Collections.emptySet());
+
+        Event mockEvent1 = mock(Event.class);
+        given(mockEvent1.getEventId()).willReturn(1L);
+        given(mockEvent1.getCalendar()).willReturn(personalCalendar);
+        given(eventRawService.findEventById(1L)).willReturn(mockEvent1);
+
+        Event mockEvent2 = mock(Event.class);
+        given(mockEvent2.getEventId()).willReturn(2L);
+        given(mockEvent2.getCalendar()).willReturn(teamCalendar);
+        given(eventRawService.findEventById(2L)).willReturn(mockEvent2);
+
         // when
-        List<EventGetResponseDto> result = eventService.getUpcomingMyEvent(email);
+        List<PersonalEventGetResponseDto> result = eventService.getUpcomingMyEvent(email);
 
         // then
         assertThat(result).hasSize(2);
@@ -622,8 +654,20 @@ class PersonalEventServiceTest {
 
         when(eventQueryService.getEventsForMember(eq(member), anyList(), eq(start), eq(end))).thenReturn(List.of(event1, event2));
 
+        given(lectureRawService.getAllLectureEventIds(anyString())).willReturn(Collections.emptySet());
+
+        Event mockEvent1 = mock(Event.class);
+        given(mockEvent1.getEventId()).willReturn(1L);
+        given(mockEvent1.getCalendar()).willReturn(personalCalendar);
+        given(eventRawService.findEventById(1L)).willReturn(mockEvent1);
+
+        Event mockEvent2 = mock(Event.class);
+        given(mockEvent2.getEventId()).willReturn(2L);
+        given(mockEvent2.getCalendar()).willReturn(teamCalendar);
+        given(eventRawService.findEventById(2L)).willReturn(mockEvent2);
+
         //when
-        List<EventGetResponseDto> result = eventService.getTodayMyEvent(email);
+        List<PersonalEventGetResponseDto> result = eventService.getTodayMyEvent(email);
 
         //then
         assertThat(result).hasSize(2);
@@ -635,6 +679,9 @@ class PersonalEventServiceTest {
         verify(calendarRawService).getTeamCalendar(team);
         verify(calendarRawService).getMyPersonalCalendar(member);
         verify(eventQueryService).getEventsForMember(eq(member), anyList(), eq(start), eq(end));
+        verify(lectureRawService).getAllLectureEventIds(anyString());
+        verify(eventRawService).findEventById(1L);
+        verify(eventRawService).findEventById(2L);
     }
     
     @Test
@@ -660,16 +707,24 @@ class PersonalEventServiceTest {
                 serviceDto1,
                 serviceDto2
             ));
-        
-        // LectureRawService 설정 (강의 이벤트 ID 집합)
+
         given(lectureRawService.getAllLectureEventIds(email)).willReturn(Set.of(1L));
-        
+
+        Event lectureEvent = mock(Event.class);
+        given(lectureEvent.getEventId()).willReturn(1L);
+
+        Event normalEvent = mock(Event.class);
+        given(normalEvent.getEventId()).willReturn(2L);
+
+        given(eventRawService.findEventById(1L)).willReturn(lectureEvent);
+        given(eventRawService.findEventById(2L)).willReturn(normalEvent);
+
         // when
-        List<EventGetResponseDto> result = eventService.getUpcomingMyEvent(email);
+        List<PersonalEventGetResponseDto> result = eventService.getUpcomingMyEvent(email);
         
         // then
         assertThat(result)
-            .extracting(EventGetResponseDto::eventId)
+            .extracting(PersonalEventGetResponseDto::eventId)
             .containsExactly(2L); // Lecture가 아닌 이벤트만 남아야 함
         
         assertThat(result.get(0).startTime()).isBeforeOrEqualTo(result.get(result.size() - 1).startTime());

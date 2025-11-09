@@ -169,27 +169,27 @@ public class PersonalEventService {
     }
     
     @Transactional(readOnly = true)
-    public List<EventGetResponseDto> getTodayMyEvent(String email) {
+    public List<PersonalEventGetResponseDto> getTodayMyEvent(String email) {
         LocalDateTime start = LocalDate.now().atStartOfDay();
         LocalDateTime end = LocalDate.now().plusDays(1).atStartOfDay();
-        List<EventGetResponseDto> allEvents = getPersonalEvents(email, start, end);
+        List<PersonalEventGetResponseDto> allEvents = getPersonalEvents(email, start, end);
         
         return allEvents.stream()
-            .sorted(Comparator.comparing(EventGetResponseDto::startTime))
+            .sorted(Comparator.comparing(PersonalEventGetResponseDto::startTime))
             .toList();
     }
     
     @Transactional(readOnly = true)
-    public List<EventGetResponseDto> getUpcomingMyEvent(String email) {
+    public List<PersonalEventGetResponseDto> getUpcomingMyEvent(String email) {
         LocalDateTime start = LocalDate.now().plusDays(1).atStartOfDay();
         LocalDateTime end = LocalDate.now().plusDays(8).atStartOfDay();
         
-        List<EventGetResponseDto> allEvents = getPersonalEvents(email, start, end);
+        List<PersonalEventGetResponseDto> allEvents = getPersonalEvents(email, start, end);
         Set<Long> lectureEventIds = lectureRawService.getAllLectureEventIds(email);
         
         return allEvents.stream()
             .filter(eventDto -> !lectureEventIds.contains(eventDto.eventId()))
-            .sorted(Comparator.comparing(EventGetResponseDto::startTime))
+            .sorted(Comparator.comparing(PersonalEventGetResponseDto::startTime))
             .toList();
     }
     

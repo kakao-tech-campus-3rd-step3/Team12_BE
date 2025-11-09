@@ -168,20 +168,20 @@ public class PersonalEventController {
     }
     
     @GetMapping("/upcomming")
-    public ResponseEntity<List<EventGetResponseDto>> upcomingMyEvent(
+    public ResponseEntity<List<PersonalEventGetResponseDto>> upcomingMyEvent(
         @AuthenticationPrincipal
         UserDetails userDetails
     ) {
-        List<EventGetResponseDto> upcomingList = eventService.getUpcomingMyEvent(userDetails.getUsername());
+        List<PersonalEventGetResponseDto> upcomingList = eventService.getUpcomingMyEvent(userDetails.getUsername());
         return ResponseEntity.ok(upcomingList);
     }
     
     @GetMapping("/today")
-    public ResponseEntity<List<EventGetResponseDto>> todayMyEvent(
+    public ResponseEntity<List<PersonalEventGetResponseDto>> todayMyEvent(
         @AuthenticationPrincipal
         UserDetails userDetails
     ) {
-        List<EventGetResponseDto> upcomingList = eventService.getTodayMyEvent(userDetails.getUsername());
+        List<PersonalEventGetResponseDto> upcomingList = eventService.getTodayMyEvent(userDetails.getUsername());
         return ResponseEntity.ok(upcomingList);
     }
 }
