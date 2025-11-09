@@ -13,6 +13,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -255,6 +256,100 @@ class TeamServiceTest {
         // when
         List<WhenToMeetResponseDto> result = teamService.getTeamMembersWhenToMeet(teamId);
 
+        // then
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).availableMember()).isEqualTo(0);
+    }
+    
+    @Test
+    @DisplayName("V2 - 모든 팀원이 일정이 없으면 availableMember == 팀원 수 유지")
+    void getTeamMembersWhenToMeetV2_noEvents() {
+        // given
+        Long teamId = 1L;
+        Long slotTime = 60L; // 1시간 (60분) 슬롯
+        LocalDate startDate = LocalDate.of(2025, 10, 10);
+        LocalDate endDate = LocalDate.of(2025, 10, 10);
+        
+        Member member1 = new Member("email@email.com", "test", "1q2w3e4r!");
+        Member member2 = new Member("email2@email.com", "test2", "1q2w3e4r!");
+        List<Member> members = List.of(member1, member2);
+        
+        // 1시간짜리 간단한 슬롯만 가정
+        LocalDateTime start = LocalDateTime.of(2025, 10, 10, 9, 0);
+        LocalDateTime end = start.plusHours(1);
+        List<LocalDateTime> starts = List.of(start);
+        List<LocalDateTime> ends = List.of(end);
+        List<WhenToMeet> slots = List.of(new WhenToMeet(start, end, (long) members.size()));
+        
+        // mock 설정
+        when(whenToMeetRawService.findTeamMembers(teamId)).thenReturn(members);
+        // V2의 generateIntervalStarts/Ends는 LocalDateTime을 인자로 받으므로 any()로 처리
+        when(whenToMeetLogicService.generateIntervalStarts(any(LocalDateTime.class), any(LocalDateTime.class)))
+            .thenReturn(starts);
+        when(whenToMeetLogicService.generateIntervalEnds(any(LocalDateTime.class), any(LocalDateTime.class)))
+            .thenReturn(ends);
+        // V2의 generateSlotsV2 mocking
+        when(whenToMeetLogicService.generateSlotsV2(members, slotTime, starts, ends))
+            .thenReturn(slots);
+        
+        // 일정이 없으므로 applyMemberEvents는 아무 일도 하지 않음
+        doNothing().when(whenToMeetLogicService)
+            .applyMemberEvents(slots, members, starts, ends, whenToMeetRawService);
+        
+        // 반환 DTO mock
+        when(whenToMeetLogicService.toResponse(slots))
+            .thenReturn(List.of(new WhenToMeetResponseDto(start, end, (long) members.size())));
+        
+        // when
+        List<WhenToMeetResponseDto> result = teamService.getTeamMembersWhenToMeetV2(teamId, slotTime, startDate, endDate);
+        
+        // then
+        assertThat(result).isNotNull();
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).availableMember()).isEqualTo(2); // 팀원 2명 그대로 유지
+    }
+    
+    @Test
+    @DisplayName("V2 - 팀원이 일정이 있으면 해당 슬롯의 availableMember 감소")
+    void getTeamMembersWhenToMeetV2_withOverlap() {
+        // given
+        Long teamId = 1L;
+        Long slotTime = 60L;
+        LocalDate startDate = LocalDate.of(2025, 10, 10);
+        LocalDate endDate = LocalDate.of(2025, 10, 10);
+        
+        Member member = new Member("email@email.com", "test", "1q2w3e4r!");
+        List<Member> members = List.of(member);
+        
+        LocalDateTime slotStart = LocalDateTime.of(2025, 10, 10, 9, 0);
+        LocalDateTime slotEnd = slotStart.plusHours(1);
+        List<LocalDateTime> starts = List.of(slotStart);
+        List<LocalDateTime> ends = List.of(slotEnd);
+        
+        List<WhenToMeet> slots = List.of(new WhenToMeet(starts.get(0), ends.get(0), 1L)); // availableMember=1
+        
+        // mock
+        when(whenToMeetRawService.findTeamMembers(teamId)).thenReturn(members);
+        when(whenToMeetLogicService.generateIntervalStarts(any(LocalDateTime.class), any(LocalDateTime.class)))
+            .thenReturn(starts);
+        when(whenToMeetLogicService.generateIntervalEnds(any(LocalDateTime.class), any(LocalDateTime.class)))
+            .thenReturn(ends);
+        when(whenToMeetLogicService.generateSlotsV2(members, slotTime, starts, ends))
+            .thenReturn(slots);
+        
+        // applyMemberEvents()가 호출되면 slot의 availableMember를 1 감소시킴
+        doAnswer(invocation -> {
+            List<WhenToMeet> slotList = invocation.getArgument(0);
+            slotList.get(0).discountAvailable(); // 실제 로직 흉내
+            return null;
+        }).when(whenToMeetLogicService).applyMemberEvents(any(), any(), any(), any(), any());
+        
+        when(whenToMeetLogicService.toResponse(slots))
+            .thenReturn(List.of(new WhenToMeetResponseDto(starts.get(0), ends.get(0), 0L)));
+        
+        // when
+        List<WhenToMeetResponseDto> result = teamService.getTeamMembersWhenToMeetV2(teamId, slotTime, startDate, endDate);
+        
         // then
         assertThat(result).hasSize(1);
         assertThat(result.get(0).availableMember()).isEqualTo(0);
@@ -545,6 +640,206 @@ class TeamServiceTest {
         verify(whenToMeetLogicService).applyMemberEvents(any(), any(), any(), any(), any());
         verify(whenToMeetLogicService).recommendBestSlots(
             eq(initialSlots), eq(requiredTime), eq(requiredCnt), eq(totalMembers)
+        );
+    }
+    
+    @Test
+    @DisplayName("V2 - 팀 일정 추천 시, 모든 멤버가 가능한 시간을 1순위로 반환한다")
+    void getOptimalTimeWhenToMeetV2_Success() {
+        
+        //GIVEN
+        Long teamId = 1L;
+        LocalDateTime startTime = LocalDateTime.of(2025, 11, 1, 9, 0); // 11/1 (토) 09:00
+        LocalDateTime endTime = LocalDateTime.of(2025, 11, 1, 12, 0); // 11/1 (토) 12:00
+        Long slotTime = 15L;     // 15분 단위 슬롯
+        Long requiredTime = 60L; // 60분 (4슬롯)
+        Long requiredCnt = 1L;   // 1개 추천
+        
+        Member member1 = TestUtil.makeMember();
+        Member member2 = TestUtil.makeMember();
+        List<Member> members = List.of(member1, member2);
+        Long totalMembers = (long) members.size(); // 2L
+        
+        when(whenToMeetRawService.findTeamMembers(teamId)).thenReturn(members);
+        
+        List<LocalDateTime> intervalStarts = List.of(startTime);
+        List<LocalDateTime> intervalEnds = List.of(endTime);
+        when(whenToMeetLogicService.generateIntervalStarts(startTime, endTime)).thenReturn(intervalStarts);
+        when(whenToMeetLogicService.generateIntervalEnds(startTime, endTime)).thenReturn(intervalEnds);
+        
+        List<WhenToMeet> initialSlots = TestUtil.createInitialSlots(startTime, endTime, members.size());
+        // V2 메서드로 변경
+        when(whenToMeetLogicService.generateSlotsV2(members, slotTime, intervalStarts, intervalEnds))
+            .thenReturn(initialSlots);
+        
+        doAnswer(invocation -> {
+            List<WhenToMeet> slotsToModify = invocation.getArgument(0);
+            slotsToModify.get(4).discountAvailable(); // 10:00-10:15
+            slotsToModify.get(5).discountAvailable(); // 10:15-10:30
+            slotsToModify.get(6).discountAvailable(); // 10:30-10:45
+            slotsToModify.get(7).discountAvailable(); // 10:45-11:00
+            return null; // void 메서드이므로 null 반환
+        }).when(whenToMeetLogicService).applyMemberEvents(
+            eq(initialSlots), eq(members), eq(intervalStarts), eq(intervalEnds), eq(whenToMeetRawService)
+        );
+        
+        WhenToMeetRecommendResponseDto expectedRecommendation = new WhenToMeetRecommendResponseDto(
+            "토",
+            "최적",
+            LocalDateTime.of(2025, 11, 1, 9, 0),  // startTime
+            LocalDateTime.of(2025, 11, 1, 10, 0), // endTime (requiredTime 60분 뒤)
+            totalMembers
+        );
+        List<WhenToMeetRecommendResponseDto> expectedResultList = List.of(expectedRecommendation);
+        
+        // V2 메서드로 변경
+        when(whenToMeetLogicService.recommendBestSlotsV2(
+            eq(initialSlots), // applyMemberEvents에 의해 수정된 바로 그 리스트
+            eq(slotTime),     // 15L
+            eq(requiredTime), // 60L
+            eq(requiredCnt),  // 1L
+            eq(totalMembers)  // 2L
+        )).thenReturn(expectedResultList);
+        
+        
+        // WHEN
+        // V2 메서드 호출
+        List<WhenToMeetRecommendResponseDto> result = teamService.getOptimalTimeWhenToMeetV2(
+            startTime, endTime, slotTime, requiredTime, requiredCnt, teamId
+        );
+        
+        // THEN
+        assertThat(result).isNotNull();
+        assertThat(result).hasSize(1); // requiredCnt = 1
+        
+        WhenToMeetRecommendResponseDto topPick = result.get(0);
+        assertThat(topPick.available()).isEqualTo(2L);
+        assertThat(topPick.status()).isEqualTo("최적");
+        assertThat(topPick.week()).isEqualTo("토");
+        assertThat(topPick.startTime()).isEqualTo(LocalDateTime.of(2025, 11, 1, 9, 0));
+        assertThat(topPick.endTime()).isEqualTo(LocalDateTime.of(2025, 11, 1, 10, 0));
+        
+        // VERIFY
+        verify(whenToMeetRawService).findTeamMembers(teamId);
+        verify(whenToMeetLogicService).generateIntervalStarts(startTime, endTime);
+        verify(whenToMeetLogicService).generateIntervalEnds(startTime, endTime);
+        // V2 메서드 검증
+        verify(whenToMeetLogicService).generateSlotsV2(members, slotTime, intervalStarts, intervalEnds);
+        verify(whenToMeetLogicService).applyMemberEvents(initialSlots, members, intervalStarts, intervalEnds, whenToMeetRawService);
+        
+        // V2 메서드 검증
+        verify(whenToMeetLogicService).recommendBestSlotsV2(
+            initialSlots, slotTime, requiredTime, requiredCnt, totalMembers
+        );
+    }
+    
+    @Test
+    @DisplayName("V2 - 팀 일정 추천 시, 최적(2명) 2개, 보통(1명) 1개를 순서대로 반환한다")
+    void getOptimalTimeWhenToMeetV2_Success_Top3() {
+        // GIVEN
+        Long teamId = 1L;
+        LocalDateTime startTime = LocalDateTime.of(2025, 10, 30, 9, 0);
+        LocalDateTime endTime = LocalDateTime.of(2025, 10, 30, 12, 0);
+        Long slotTime = 15L;     // 15분 단위 슬롯
+        Long requiredTime = 60L; // 60분 (4슬롯)
+        Long requiredCnt = 3L;   // 3개 추천
+        
+        Member member1 = TestUtil.makeMember();
+        Member member2 = TestUtil.makeMember();
+        List<Member> members = List.of(member1, member2);
+        long totalMembers = members.size(); // 2L
+        when(whenToMeetRawService.findTeamMembers(teamId)).thenReturn(members);
+        
+        List<LocalDateTime> intervalStarts = List.of(startTime);
+        List<LocalDateTime> intervalEnds = List.of(endTime);
+        when(whenToMeetLogicService.generateIntervalStarts(startTime, endTime)).thenReturn(intervalStarts);
+        when(whenToMeetLogicService.generateIntervalEnds(startTime, endTime)).thenReturn(intervalEnds);
+        
+        List<WhenToMeet> initialSlots = TestUtil.createInitialSlots(startTime, endTime, totalMembers);
+        // V2 메서드로 변경
+        when(whenToMeetLogicService.generateSlotsV2(members, slotTime, intervalStarts, intervalEnds))
+            .thenReturn(initialSlots);
+        
+        // applyMemberEvents가 initialSlots를 수정하는 것을 시뮬레이션
+        doAnswer(invocation -> {
+            List<WhenToMeet> slotsToModify = invocation.getArgument(0);
+            slotsToModify.get(4).discountAvailable(); // 10:00-10:15 (available=1)
+            slotsToModify.get(5).discountAvailable(); // 10:15-10:30 (available=1)
+            slotsToModify.get(6).discountAvailable(); // 10:30-10:45 (available=1)
+            slotsToModify.get(7).discountAvailable(); // 10:45-11:00 (available=1)
+            return null; // void 메서드
+        }).when(whenToMeetLogicService).applyMemberEvents(
+            eq(initialSlots), eq(members), eq(intervalStarts), eq(intervalEnds), eq(whenToMeetRawService)
+        );
+        
+        WhenToMeetRecommendResponseDto expectedTop1 = new WhenToMeetRecommendResponseDto(
+            "목",    // week
+            "최적",   // status
+            LocalDateTime.of(2025, 10, 30, 9, 0),  // startTime
+            LocalDateTime.of(2025, 10, 30, 10, 0), // endTime
+            2L       // available
+        );
+        
+        WhenToMeetRecommendResponseDto expectedTop2 = new WhenToMeetRecommendResponseDto(
+            "목",    // week
+            "최적",   // status
+            LocalDateTime.of(2025, 10, 30, 11, 0), // startTime
+            LocalDateTime.of(2025, 10, 30, 12, 0), // endTime
+            2L       // available
+        );
+        
+        WhenToMeetRecommendResponseDto expectedTop3 = new WhenToMeetRecommendResponseDto(
+            "목",    // week
+            "보통",   // status
+            LocalDateTime.of(2025, 10, 30, 9, 15), // startTime
+            LocalDateTime.of(2025, 10, 30, 10, 15),// endTime
+            1L       // available
+        );
+        List<WhenToMeetRecommendResponseDto> expectedResultList = List.of(expectedTop1, expectedTop2, expectedTop3);
+        
+        // V2 메서드로 변경
+        when(whenToMeetLogicService.recommendBestSlotsV2(
+            eq(initialSlots), // applyMemberEvents에 의해 수정된 바로 그 리스트
+            eq(slotTime),     // 15L
+            eq(requiredTime), // 60L
+            eq(requiredCnt),  // 3L
+            eq(totalMembers)  // 2L
+        )).thenReturn(expectedResultList);
+        
+        
+        // WHEN
+        // V2 메서드 호출
+        List<WhenToMeetRecommendResponseDto> result = teamService.getOptimalTimeWhenToMeetV2(
+            startTime, endTime, slotTime, requiredTime, requiredCnt, teamId
+        );
+        
+        //THEN
+        assertThat(result).isNotNull();
+        assertThat(result).hasSize(3); // 3개 반환 확인
+        
+        // 1순위 검증
+        WhenToMeetRecommendResponseDto top1 = result.get(0);
+        assertThat(top1.available()).isEqualTo(2L);
+        assertThat(top1.status()).isEqualTo("최적");
+        
+        // 2순위 검증
+        WhenToMeetRecommendResponseDto top2 = result.get(1);
+        assertThat(top2.available()).isEqualTo(2L);
+        assertThat(top2.status()).isEqualTo("최적");
+        
+        // 3순위 검증
+        WhenToMeetRecommendResponseDto top3 = result.get(2);
+        assertThat(top3.available()).isEqualTo(1L);
+        assertThat(top3.status()).isEqualTo("보통");
+        
+        //VERIFY
+        verify(whenToMeetRawService).findTeamMembers(teamId);
+        // V2 메서드 검증
+        verify(whenToMeetLogicService).generateSlotsV2(members, slotTime, intervalStarts, intervalEnds);
+        verify(whenToMeetLogicService).applyMemberEvents(initialSlots, members, intervalStarts, intervalEnds, whenToMeetRawService);
+        // V2 메서드 검증
+        verify(whenToMeetLogicService).recommendBestSlotsV2(
+            eq(initialSlots), eq(slotTime), eq(requiredTime), eq(requiredCnt), eq(totalMembers)
         );
     }
   
