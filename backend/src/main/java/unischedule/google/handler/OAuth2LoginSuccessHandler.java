@@ -51,6 +51,9 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
         HttpSession session = request.getSession(false);
         String memberEmail = null;
 
+        String successUrl = frontendRedirectUrl + "?google_sync=success";
+        String errorUrl = frontendRedirectUrl + "?google_sync=error";
+
         if (session != null) {
             Object emailAttr = session.getAttribute("UNISCHEDULE_USER_EMAIL_FOR_LINKING");
             if (emailAttr != null) {
@@ -87,18 +90,20 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
             try {
                 googleCalendarService.syncEvents(memberEmail);
                 log.info("Initial calendar sync successful for user: {}", memberEmail);
+                getRedirectStrategy().sendRedirect(request, response, successUrl);
             } catch (Exception syncException) {
                 log.error("Failed but token was saved. User: {}, Error: {}",
                         memberEmail, syncException.getMessage());
+                getRedirectStrategy().sendRedirect(request, response, errorUrl);
             }
 
             // 프론트 리다이렉션 페이지
-            getRedirectStrategy().sendRedirect(request, response, frontendRedirectUrl);
+            //getRedirectStrategy().sendRedirect(request, response, frontendRedirectUrl);
 
         } catch (Exception e) {
             log.error("Failed to process OAuth2 success", e);
             // 에러 페이지
-            getRedirectStrategy().sendRedirect(request, response, frontendRedirectUrl);
+            getRedirectStrategy().sendRedirect(request, response, errorUrl);
         }
     }
 }
