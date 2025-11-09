@@ -1,5 +1,7 @@
 package unischedule.common.config;
 
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -11,9 +13,12 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.web.AuthorizationRequestRepository;
+import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.util.SerializationUtils;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -22,7 +27,9 @@ import unischedule.auth.jwt.JwtTokenProvider;
 import unischedule.google.handler.OAuth2LoginSuccessHandler;
 
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.List;
+import java.util.Optional;
 
 @Configuration
 @EnableWebSecurity
@@ -72,7 +79,7 @@ public class SecurityConfig {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/members/login", "/api/members/signup", "/api/members/refresh", "/ws/**", "/api/auth/email/send", "/api/auth/email/verify").permitAll()
                         .requestMatchers("/error", "/actuator/health", "/test").permitAll()
@@ -82,12 +89,87 @@ public class SecurityConfig {
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .oauth2Login(oauth -> oauth
+                        .authorizationEndpoint(endpoint -> endpoint
+                                .authorizationRequestRepository(new StatelessAuthorizationRequestRepository()))
                         .successHandler(oAuth2LoginSuccessHandler)
                 )
                 .exceptionHandling(exceptions -> exceptions
                         .authenticationEntryPoint(jwtAuthenticationEntryPoint())
                 );
         return http.build();
+    }
+
+    public static class StatelessAuthorizationRequestRepository implements AuthorizationRequestRepository<OAuth2AuthorizationRequest> {
+        public static final String OAUTH2_AUTHORIZATION_REQUEST_COOKIE_NAME = "oauth2_auth_request";
+        private static final int COOKIE_EXPIRE_SECONDS = 180;
+
+        @Override
+        public OAuth2AuthorizationRequest loadAuthorizationRequest(HttpServletRequest request) {
+            // 요청에서 쿠키를 읽어서 복원
+            return getCookie(request, OAUTH2_AUTHORIZATION_REQUEST_COOKIE_NAME)
+                    .map(this::deserialize)
+                    .orElse(null);
+        }
+
+        @Override
+        public void saveAuthorizationRequest(OAuth2AuthorizationRequest authorizationRequest, HttpServletRequest request, HttpServletResponse response) {
+            if (authorizationRequest == null) {
+                deleteCookie(request, response, OAUTH2_AUTHORIZATION_REQUEST_COOKIE_NAME);
+                return;
+            }
+            addCookie(response, OAUTH2_AUTHORIZATION_REQUEST_COOKIE_NAME, serialize(authorizationRequest), COOKIE_EXPIRE_SECONDS);
+        }
+
+        @Override
+        public OAuth2AuthorizationRequest removeAuthorizationRequest(HttpServletRequest request, HttpServletResponse response) {
+            OAuth2AuthorizationRequest authorizationRequest = this.loadAuthorizationRequest(request);
+            if (authorizationRequest != null) {
+                deleteCookie(request, response, OAUTH2_AUTHORIZATION_REQUEST_COOKIE_NAME);
+            }
+            return authorizationRequest;
+        }
+
+        private Optional<Cookie> getCookie(HttpServletRequest request, String name) {
+            jakarta.servlet.http.Cookie[] cookies = request.getCookies();
+            if (cookies != null) {
+                for (jakarta.servlet.http.Cookie cookie : cookies) {
+                    if (cookie.getName().equals(name)) {
+                        return Optional.of(cookie);
+                    }
+                }
+            }
+            return Optional.empty();
+        }
+
+        private void addCookie(HttpServletResponse response, String name, String value, int maxAge) {
+            jakarta.servlet.http.Cookie cookie = new jakarta.servlet.http.Cookie(name, value);
+            cookie.setPath("/");
+            cookie.setHttpOnly(true);
+            cookie.setSecure(true); // HTTPS 환경에서만 전송
+            cookie.setMaxAge(maxAge);
+            response.addCookie(cookie);
+        }
+
+        private void deleteCookie(HttpServletRequest request, HttpServletResponse response, String name) {
+            getCookie(request, name).ifPresent(cookie -> {
+                cookie.setValue("");
+                cookie.setPath("/");
+                cookie.setMaxAge(0);
+                response.addCookie(cookie);
+            });
+        }
+        private String serialize(Object object) {
+            return Base64.getUrlEncoder().encodeToString(SerializationUtils.serialize(object));
+        }
+
+        private OAuth2AuthorizationRequest deserialize(jakarta.servlet.http.Cookie cookie) {
+            byte[] data = Base64.getUrlDecoder().decode(cookie.getValue());
+            try {
+                return (OAuth2AuthorizationRequest) SerializationUtils.deserialize(data);
+            } catch (Exception e) {
+                return null;
+            }
+        }
     }
 }
 
