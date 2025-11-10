@@ -54,6 +54,7 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
         String refreshTokenString = (googleRefreshToken != null) ? googleRefreshToken.getTokenValue() : null;
 
         String state = request.getParameter("state");
+        System.out.println("state: " + state);
         Map<String, String> stateMap = decodeOauthState(state);
 
         String memberEmail = stateMap.get("email");
@@ -67,7 +68,8 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
                 throw new IllegalStateException("연동할 UniSchedule 사용자 정보를 세션에서 찾을 수 없습니다.");
             }
 
-            Member member = memberRawService.findMemberByEmail(memberEmail);;
+            Member member = memberRawService.findMemberByEmail(memberEmail);
+            ;
 
             // 4. GoogleAuthToken 저장 또는 업데이트
             googleAuthTokenRepository.findByMember(member)
@@ -108,7 +110,8 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
         try {
             byte[] decodedBytes = Base64.getUrlDecoder().decode(state);
             String jsonState = new String(decodedBytes);
-            return objectMapper.readValue(jsonState, new TypeReference<Map<String, String>>() {});
+            return objectMapper.readValue(jsonState, new TypeReference<Map<String, String>>() {
+            });
         } catch (Exception e) {
             log.warn("Failed to decode OAuth state: {}", state, e);
             return Map.of();
