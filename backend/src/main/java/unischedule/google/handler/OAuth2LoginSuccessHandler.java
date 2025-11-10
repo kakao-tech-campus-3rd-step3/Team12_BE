@@ -54,7 +54,7 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
         String refreshTokenString = (googleRefreshToken != null) ? googleRefreshToken.getTokenValue() : null;
 
         String state = request.getParameter("state");
-        System.out.println("state: " + state);
+        log.info("state: {}", state);
         Map<String, String> stateMap = decodeOauthState(state);
 
         String memberEmail = stateMap.get("email");
