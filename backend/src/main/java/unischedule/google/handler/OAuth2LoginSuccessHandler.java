@@ -55,6 +55,7 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
 
         String state = request.getParameter("state");
         log.info("state: {}", state);
+
         Map<String, String> stateMap = decodeOauthState(state);
 
         String memberEmail = stateMap.get("email");
