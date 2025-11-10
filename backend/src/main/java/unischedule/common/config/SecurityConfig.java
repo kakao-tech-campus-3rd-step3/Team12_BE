@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -181,20 +182,28 @@ public class SecurityConfig {
         }
 
         private void addCookie(HttpServletResponse response, String name, String value, int maxAge) {
-            jakarta.servlet.http.Cookie cookie = new jakarta.servlet.http.Cookie(name, value);
-            cookie.setPath("/");
-            cookie.setHttpOnly(true);
-            cookie.setSecure(true); // HTTPS 환경에서만 전송
-            cookie.setMaxAge(maxAge);
-            response.addCookie(cookie);
+            ResponseCookie cookie = ResponseCookie.from(name, value)
+                    .path("/")
+                    .httpOnly(true)
+                    .secure(true)
+                    .maxAge(maxAge)
+                    .sameSite("None")
+                    .build();
+
+            response.addHeader("Set-Cookie", cookie.toString());
         }
 
         private void deleteCookie(HttpServletRequest request, HttpServletResponse response, String name) {
             getCookie(request, name).ifPresent(cookie -> {
-                cookie.setValue("");
-                cookie.setPath("/");
-                cookie.setMaxAge(0);
-                response.addCookie(cookie);
+                ResponseCookie deletedCookie = ResponseCookie.from(name, "")
+                        .path("/")
+                        .httpOnly(true)
+                        .secure(true)
+                        .maxAge(0)
+                        .sameSite("None")
+                        .build();
+
+                response.addHeader("Set-Cookie", deletedCookie.toString());
             });
         }
         private String serialize(Object object) {
